@@ -6,7 +6,10 @@ This version avoids PyTorch dependency issues while demonstrating the core conce
 
 import numpy as np
 import matplotlib.pyplot as plt
-from additive_weights import AdditiveMultiplicativeWeights
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from src.additive_weights import AdditiveMultiplicativeWeights
 
 class NumpyTransformerMW:
     """Simplified transformer that realizes multiplicative weights using numpy operations."""
@@ -226,7 +229,7 @@ def run_comparison_demo():
     axes[1,1].grid(True, alpha=0.3)
     
     plt.tight_layout()
-    plt.savefig('numpy_transformer_comparison.png', dpi=300, bbox_inches='tight')
+    plt.savefig('../figures/numpy_transformer_comparison.png', dpi=300, bbox_inches='tight')
     plt.show()
     
     # Print summary statistics

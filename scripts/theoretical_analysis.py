@@ -9,8 +9,11 @@ architecture realizes the multiplicative weights algorithm.
 import numpy as np
 import matplotlib.pyplot as plt
 from numpy_transformer_demo import NumpyTransformerMW
-from additive_weights import AdditiveMultiplicativeWeights
-from multiplicative_weights import MultiplicativeWeights
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from src.additive_weights import AdditiveMultiplicativeWeights
+from src.multiplicative_weights import MultiplicativeWeights
 
 def analyze_regret_bounds():
     """Analyze and compare regret bounds across different MW implementations."""
@@ -90,7 +93,7 @@ def analyze_regret_bounds():
     plt.legend(fontsize=11)
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
-    plt.savefig('regret_bounds_analysis.png', dpi=300, bbox_inches='tight')
+    plt.savefig('../figures/regret_bounds_analysis.png', dpi=300, bbox_inches='tight')
     plt.show()
     
     return results
@@ -176,7 +179,7 @@ def analyze_attention_patterns():
         axes[1, i].grid(True, alpha=0.3)
     
     plt.tight_layout()
-    plt.savefig('attention_patterns_analysis.png', dpi=300, bbox_inches='tight')
+    plt.savefig('../figures/attention_patterns_analysis.png', dpi=300, bbox_inches='tight')
     plt.show()
     
     return attention_analysis

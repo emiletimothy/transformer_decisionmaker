@@ -6,7 +6,10 @@ algorithm for different types of online decision making problems.
 """
 
 import numpy as np
-from multiplicative_weights import MultiplicativeWeights, bandit_loss_function, adversarial_loss_function
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from src.multiplicative_weights import MultiplicativeWeights, bandit_loss_function, adversarial_loss_function
 import matplotlib.pyplot as plt
 
 

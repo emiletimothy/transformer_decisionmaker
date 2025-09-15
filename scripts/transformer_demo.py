@@ -9,8 +9,11 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import List, Tuple
-from transformer_mw import MultiplicativeWeightsTransformer, TokenConfig
-from additive_weights import AdditiveMultiplicativeWeights
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from src.transformer_mw import MultiplicativeWeightsTransformer, TokenConfig
+from src.additive_weights import AdditiveMultiplicativeWeights
 
 
 class TransformerMWRunner:
@@ -39,7 +42,7 @@ class TransformerMWRunner:
         self.transformer_history = {'weights': [], 'predictions': [], 'losses': []}
         self.standard_history = {'weights': [], 'predictions': [], 'losses': []}
     
-    def run_round(self, expert_predictions: List[int], true_label: int) -> Dict[str, float]:
+    def run_round(self, expert_predictions: List[int], true_label: int) -> dict[str, float]:
         """
         Run one round of the algorithm with both transformer and standard implementations.
         
@@ -122,7 +125,7 @@ class TransformerMWRunner:
             'expert_predictions': expert_predictions
         }
     
-    def get_statistics(self) -> Dict[str, float]:
+    def get_statistics(self) -> dict[str, float]:
         """Get comprehensive statistics comparing both implementations."""
         if self.round_count == 0:
             return {"message": "No rounds completed yet"}
