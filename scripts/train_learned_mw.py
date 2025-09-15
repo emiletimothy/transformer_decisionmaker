@@ -17,7 +17,7 @@ from torch.utils.data import DataLoader, random_split
 import logging
 from pathlib import Path
 import json
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import argparse
 
 from src.learned_mw_transformer import (
@@ -83,6 +83,74 @@ def create_stage_datasets(all_sequences: List[Dict], stage: int,
     
     return stage_sequences
 
+def get_optimal_mw_decisions(seq: Dict) -> np.ndarray:
+    """Get decisions made by optimal MW algorithm on a sequence."""
+    n_experts = len(seq['expert_predictions'][0])
+    learning_rate = seq['learning_rate']
+    
+    # Initialize MW algorithm
+    mw = MultiplicativeWeights(n_experts, learning_rate)
+    
+    decisions = []
+    for step in range(len(seq['true_labels'])):
+        # Get current weights
+        weights = mw.get_probabilities()
+        
+        # Get expert predictions for this step
+        expert_preds = seq['expert_predictions'][step]
+        
+        # Make weighted decision (same as MW algorithm does)
+        weighted_prediction = np.sum(weights * expert_preds)
+        decision = 1 if weighted_prediction > 0.5 else 0
+        decisions.append(decision)
+        
+        # Update MW with losses (for next step)
+        if step < len(seq['losses']):
+            step_losses = seq['losses'][step]
+            mw.update_weights(np.array(step_losses))
+    
+    return np.array(decisions)
+
+def calculate_sequence_regret(seq: Dict, learned_decisions: np.ndarray, 
+                            optimal_decisions: np.ndarray) -> Tuple[float, float]:
+    """Calculate regret for learned vs optimal decisions on a sequence."""
+    losses = seq['losses']
+    true_labels = seq['true_labels']
+    n_steps = len(true_labels)
+    
+    # Calculate cumulative losses for each decision strategy
+    learned_cumulative_loss = 0.0
+    optimal_cumulative_loss = 0.0
+    
+    # Best expert in hindsight (for regret calculation)
+    expert_cumulative_losses = np.zeros(len(losses[0]))
+    
+    for step in range(n_steps):
+        step_losses = losses[step]
+        true_label = true_labels[step]
+        
+        # Update expert cumulative losses
+        expert_cumulative_losses += step_losses
+        
+        # Learned decision loss
+        learned_decision = learned_decisions[step] if step < len(learned_decisions) else 0
+        learned_loss = 0.0 if learned_decision == true_label else 1.0
+        learned_cumulative_loss += learned_loss
+        
+        # Optimal MW decision loss  
+        optimal_decision = optimal_decisions[step] if step < len(optimal_decisions) else 0
+        optimal_loss = 0.0 if optimal_decision == true_label else 1.0
+        optimal_cumulative_loss += optimal_loss
+    
+    # Best expert loss in hindsight
+    best_expert_loss = np.min(expert_cumulative_losses)
+    
+    # Calculate regrets
+    learned_regret = learned_cumulative_loss - best_expert_loss
+    optimal_regret = optimal_cumulative_loss - best_expert_loss
+    
+    return max(0.0, learned_regret), max(0.0, optimal_regret)
+
 def evaluate_learned_model(model: LearnedMWTransformer, tokenizer: MWTokenizer,
                           test_sequences: List[Dict], device: torch.device) -> Dict:
     """Evaluate the learned model against ground truth MW algorithm."""
@@ -91,7 +159,10 @@ def evaluate_learned_model(model: LearnedMWTransformer, tokenizer: MWTokenizer,
     results = {
         'weight_mse': [],
         'prediction_accuracy': [],
-        'sequence_accuracy': []
+        'sequence_accuracy': [],
+        'learned_regret': [],
+        'optimal_regret': [],
+        'regret_ratio': []
     }
     
     with torch.no_grad():
@@ -148,6 +219,24 @@ def evaluate_learned_model(model: LearnedMWTransformer, tokenizer: MWTokenizer,
                     # Sequence-level accuracy
                     seq_correct = (pred_decisions == gt_decisions).all()
                     results['sequence_accuracy'].append(seq_correct.item())
+                    
+                    # Calculate regret for this sequence
+                    # First, get optimal MW decisions by running the algorithm
+                    optimal_mw_decisions = get_optimal_mw_decisions(seq)
+                    learned_regret, optimal_regret = calculate_sequence_regret(
+                        seq, pred_decisions.cpu().numpy(), optimal_mw_decisions
+                    )
+                    results['learned_regret'].append(learned_regret)
+                    results['optimal_regret'].append(optimal_regret)
+                    
+                    # Regret ratio (learned / optimal)
+                    if optimal_regret > 1e-6:  # Avoid division by very small numbers
+                        regret_ratio = learned_regret / optimal_regret
+                    elif learned_regret < 1e-6 and optimal_regret < 1e-6:
+                        regret_ratio = 1.0  # Both are essentially zero
+                    else:
+                        regret_ratio = 10.0  # Cap at 10x instead of infinity
+                    results['regret_ratio'].append(regret_ratio)
     
     # Aggregate results
     final_results = {}
@@ -162,6 +251,170 @@ def evaluate_learned_model(model: LearnedMWTransformer, tokenizer: MWTokenizer,
             final_results[key] = {'mean': 0.0, 'std': 0.0, 'count': 0}
     
     return final_results
+
+def plot_regret_trajectories(model, tokenizer, test_sequences, device, save_path: str = '../figures/regret_trajectories.png'):
+    """Plot regret growth over time within sequences."""
+    fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+    
+    # Select a few representative sequences of different lengths
+    short_seqs = [seq for seq in test_sequences if seq['n_steps'] == 3][:3]
+    long_seqs = [seq for seq in test_sequences if seq['n_steps'] >= 4][:3]
+    
+    model.eval()
+    
+    # Plot 1: Short sequence regret trajectories
+    with torch.no_grad():
+        for i, seq in enumerate(short_seqs):
+            learned_regret_traj, optimal_regret_traj = get_regret_trajectory(model, tokenizer, seq, device)
+            steps = list(range(1, len(learned_regret_traj) + 1))
+            
+            axes[0, 0].plot(steps, learned_regret_traj, f'r-', alpha=0.7, linewidth=2, label=f'Learned {i+1}' if i == 0 else "")
+            axes[0, 0].plot(steps, optimal_regret_traj, f'b--', alpha=0.7, linewidth=2, label=f'Optimal {i+1}' if i == 0 else "")
+    
+    axes[0, 0].set_xlabel('Time Step')
+    axes[0, 0].set_ylabel('Cumulative Regret')
+    axes[0, 0].set_title('Regret Growth: Short Sequences (3 steps)')
+    axes[0, 0].legend()
+    axes[0, 0].grid(True, alpha=0.3)
+    
+    # Plot 2: Long sequence regret trajectories  
+    with torch.no_grad():
+        for i, seq in enumerate(long_seqs):
+            learned_regret_traj, optimal_regret_traj = get_regret_trajectory(model, tokenizer, seq, device)
+            steps = list(range(1, len(learned_regret_traj) + 1))
+            
+            axes[0, 1].plot(steps, learned_regret_traj, f'r-', alpha=0.7, linewidth=2, label=f'Learned {i+1}' if i == 0 else "")
+            axes[0, 1].plot(steps, optimal_regret_traj, f'b--', alpha=0.7, linewidth=2, label=f'Optimal {i+1}' if i == 0 else "")
+    
+    axes[0, 1].set_xlabel('Time Step')
+    axes[0, 1].set_ylabel('Cumulative Regret')
+    axes[0, 1].set_title('Regret Growth: Long Sequences (4+ steps)')
+    axes[0, 1].legend()
+    axes[0, 1].grid(True, alpha=0.3)
+    
+    # Plot 3: Average regret trajectory
+    all_learned_trajs = []
+    all_optimal_trajs = []
+    
+    with torch.no_grad():
+        for seq in test_sequences[:20]:  # Sample of sequences
+            learned_traj, optimal_traj = get_regret_trajectory(model, tokenizer, seq, device)
+            all_learned_trajs.append(learned_traj)
+            all_optimal_trajs.append(optimal_traj)
+    
+    # Compute average trajectories (pad to same length)
+    max_len = max(len(traj) for traj in all_learned_trajs)
+    learned_matrix = np.full((len(all_learned_trajs), max_len), np.nan)
+    optimal_matrix = np.full((len(all_optimal_trajs), max_len), np.nan)
+    
+    for i, traj in enumerate(all_learned_trajs):
+        learned_matrix[i, :len(traj)] = traj
+    for i, traj in enumerate(all_optimal_trajs):
+        optimal_matrix[i, :len(traj)] = traj
+    
+    # Calculate means and stds (ignoring NaN)
+    learned_mean = np.nanmean(learned_matrix, axis=0)
+    learned_std = np.nanstd(learned_matrix, axis=0)
+    optimal_mean = np.nanmean(optimal_matrix, axis=0)
+    optimal_std = np.nanstd(optimal_matrix, axis=0)
+    
+    steps = np.arange(1, max_len + 1)
+    
+    axes[1, 0].plot(steps, learned_mean, 'r-', linewidth=3, label='Learned MW (mean)')
+    axes[1, 0].fill_between(steps, learned_mean - learned_std, learned_mean + learned_std, 
+                           color='red', alpha=0.2, label='Learned ±1σ')
+    axes[1, 0].plot(steps, optimal_mean, 'b-', linewidth=3, label='Optimal MW (mean)')
+    axes[1, 0].fill_between(steps, optimal_mean - optimal_std, optimal_mean + optimal_std,
+                           color='blue', alpha=0.2, label='Optimal ±1σ')
+    
+    axes[1, 0].set_xlabel('Time Step')
+    axes[1, 0].set_ylabel('Cumulative Regret')
+    axes[1, 0].set_title('Average Regret Growth (±1σ)')
+    axes[1, 0].legend()
+    axes[1, 0].grid(True, alpha=0.3)
+    
+    # Plot 4: Regret ratio over time
+    regret_ratios = learned_mean / np.maximum(optimal_mean, 0.01)  # Avoid division by zero
+    axes[1, 1].plot(steps, regret_ratios, 'g-', linewidth=3)
+    axes[1, 1].axhline(y=1.0, color='k', linestyle='--', alpha=0.5, label='Perfect Performance')
+    axes[1, 1].set_xlabel('Time Step')
+    axes[1, 1].set_ylabel('Regret Ratio (Learned/Optimal)')
+    axes[1, 1].set_title('Performance Ratio Over Time')
+    axes[1, 1].legend()
+    axes[1, 1].grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    
+    return save_path
+
+def get_regret_trajectory(model, tokenizer, seq, device):
+    """Get regret trajectory for a single sequence."""
+    # Get model decisions
+    tokens = tokenizer.encode_sequence(seq)
+    input_ids = torch.tensor([tokens['input_ids']], device=device)
+    
+    with torch.no_grad():
+        outputs = model(input_ids)
+        pred_logits = outputs['prediction_logits'][0]
+        target_mask = torch.tensor(tokens['target_mask'])
+        
+        # Handle shape mismatches
+        min_len = min(len(target_mask), len(pred_logits))
+        target_mask = target_mask[:min_len]
+        pred_logits = pred_logits[:min_len]
+        
+        if target_mask.any():
+            learned_decisions = (torch.sigmoid(pred_logits[target_mask]) > 0.5).cpu().numpy()
+        else:
+            learned_decisions = np.array([])
+    
+    # Get optimal MW decisions
+    optimal_decisions = get_optimal_mw_decisions(seq)
+    
+    # Calculate cumulative regret trajectories
+    losses = seq['losses']
+    true_labels = seq['true_labels']
+    n_steps = len(true_labels)
+    
+    # Best expert cumulative losses
+    expert_cumulative_losses = np.zeros(len(losses[0]))
+    learned_cumulative_loss = 0.0
+    optimal_cumulative_loss = 0.0
+    
+    learned_regret_traj = []
+    optimal_regret_traj = []
+    
+    for step in range(n_steps):
+        step_losses = losses[step]
+        true_label = true_labels[step]
+        
+        # Update expert cumulative losses
+        expert_cumulative_losses += step_losses
+        best_expert_loss_so_far = np.min(expert_cumulative_losses)
+        
+        # Update algorithm losses
+        if step < len(learned_decisions):
+            learned_loss = 0.0 if learned_decisions[step] == true_label else 1.0
+        else:
+            learned_loss = 0.5  # Random guess if no prediction
+        learned_cumulative_loss += learned_loss
+        
+        if step < len(optimal_decisions):
+            optimal_loss = 0.0 if optimal_decisions[step] == true_label else 1.0
+        else:
+            optimal_loss = 0.5
+        optimal_cumulative_loss += optimal_loss
+        
+        # Calculate regret at this step
+        learned_regret = max(0.0, learned_cumulative_loss - best_expert_loss_so_far)
+        optimal_regret = max(0.0, optimal_cumulative_loss - best_expert_loss_so_far)
+        
+        learned_regret_traj.append(learned_regret)
+        optimal_regret_traj.append(optimal_regret)
+    
+    return learned_regret_traj, optimal_regret_traj
 
 def analyze_attention_patterns(model: LearnedMWTransformer, tokenizer: MWTokenizer,
                               test_sequences: List[Dict], device: torch.device,
@@ -301,6 +554,7 @@ def main():
     
     # Multi-stage training
     training_history = []
+    stage_evaluations = {}
     
     for stage in range(1, train_config.max_stages + 1):
         logger.info(f"\n{'='*50}")
@@ -343,10 +597,17 @@ def main():
         })
         
         # Evaluate after each stage
-        if stage % 2 == 0:  # Evaluate every 2 stages
-            logger.info(f"Evaluating after stage {stage}...")
-            eval_results = evaluate_learned_model(model, tokenizer, all_val_sequences[:100], device)
-            logger.info(f"Evaluation results: {eval_results}")
+        logger.info(f"Evaluating after stage {stage}...")
+        eval_results = evaluate_learned_model(model, tokenizer, all_val_sequences[:100], device)
+        stage_evaluations[f'stage_{stage}'] = eval_results
+        
+        # Log key metrics
+        logger.info(f"Stage {stage} Results:")
+        logger.info(f"  Weight MSE: {eval_results['weight_mse']['mean']:.4f}")
+        logger.info(f"  Prediction Accuracy: {eval_results['prediction_accuracy']['mean']:.4f}")
+        logger.info(f"  Learned Regret: {eval_results['learned_regret']['mean']:.4f}")
+        logger.info(f"  Optimal Regret: {eval_results['optimal_regret']['mean']:.4f}")
+        logger.info(f"  Regret Ratio: {eval_results['regret_ratio']['mean']:.4f}")
     
     # Final evaluation
     logger.info("\n" + "="*50)
@@ -365,6 +626,12 @@ def main():
     logger.info("\nAnalyzing attention patterns...")
     save_path = os.path.join(args.save_dir, 'learned_mw_attention_patterns.png')
     attention_weights = analyze_attention_patterns(model, tokenizer, test_sequences, device, save_path)
+    
+    # Plot regret trajectories (showing growth over time)
+    logger.info("Generating regret trajectory plots...")
+    regret_plot_path = os.path.join(args.save_dir, 'learned_mw_regret_trajectories.png')
+    plot_regret_trajectories(model, tokenizer, test_sequences, device, regret_plot_path)
+    logger.info(f"Regret trajectories saved to {regret_plot_path}")
     
     # Save model and results
     save_dir = Path(args.save_dir)
