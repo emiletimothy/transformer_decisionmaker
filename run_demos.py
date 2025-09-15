@@ -66,7 +66,7 @@ Examples:
     
     parser.add_argument('demo', nargs='?', default='all',
                        choices=['examples', 'numpy-transformer', 'transformer', 
-                               'theoretical', 'all'],
+                               'learned-mw', 'theoretical', 'all'],
                        help='Which demonstration to run (default: all)')
     
     parser.add_argument('--list', action='store_true',
@@ -90,6 +90,11 @@ Examples:
             'script': 'transformer_demo.py',
             'description': 'Full Transformer Demonstration', 
             'info': 'Complete PyTorch transformer implementing multiplicative weights'
+        },
+        'learned-mw': {
+            'script': 'train_learned_mw.py',
+            'description': 'Learned MW Transformer Training',
+            'info': 'Train transformer to learn MW updates via gradient-based learning'
         },
         'theoretical': {
             'script': 'theoretical_analysis.py',
@@ -124,7 +129,7 @@ Examples:
     total_count = 0
     
     if args.demo == 'all':
-        # Run all demos in order
+        # Run all demos in order (skip learned-mw in 'all' since it's time-consuming)
         demo_order = ['examples', 'numpy-transformer', 'transformer', 'theoretical']
         for demo_name in demo_order:
             demo_config = demos[demo_name]
