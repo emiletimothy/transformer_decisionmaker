@@ -691,7 +691,7 @@ def main():
     print("🤖 LEARNED MULTIPLICATIVE WEIGHTS TRANSFORMER")
     print("="*60)
     print(f"✅ Model Architecture: {model_config.n_layers} layers, {model_config.d_model} dim, {model_config.n_heads} heads")
-    print(f"✅ Training: {train_config.max_stages} stages, {args.n_train} sequences")
+    print(f"✅ Training: {train_config.n_stages} stages, {args.n_train} sequences")
     print(f"✅ Final Performance:")
     for metric, values in final_results.items():
         print(f"   • {metric.replace('_', ' ').title()}: {values['mean']:.4f} ± {values['std']:.4f}")
