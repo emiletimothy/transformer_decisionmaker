@@ -22,7 +22,10 @@ import argparse
 
 from src.learned_mw_transformer import (
     LearnedMWTransformer, ModelConfig, TrainingConfig, MWTrainer,
-    MWSequenceDataset, MWTokenizer, generate_mw_training_data, collate_fn
+    MWSequenceDataset, MWTokenizer, generate_mw_training_data, collate_fn,
+    generate_sequence_with_cot,
+    ContinuousCoTTransformer, ContinuousCoTTrainer,
+    generate_sequence_with_continuous_cot
 )
 from src.multiplicative_weights import MultiplicativeWeights
 
@@ -239,6 +242,86 @@ def evaluate_learned_model(model: LearnedMWTransformer, tokenizer: MWTokenizer,
                     results['regret_ratio'].append(regret_ratio)
     
     # Aggregate results
+    final_results = {}
+    for key, values in results.items():
+        if values:
+            final_results[key] = {
+                'mean': np.mean(values),
+                'std': np.std(values),
+                'count': len(values)
+            }
+        else:
+            final_results[key] = {'mean': 0.0, 'std': 0.0, 'count': 0}
+    
+    return final_results
+
+def evaluate_with_cot(model: LearnedMWTransformer, tokenizer: MWTokenizer,
+                      test_sequences: List[Dict], device: torch.device) -> Dict:
+    """Evaluate the learned model using chain-of-thought generation.
+    
+    Instead of teacher-forced single-pass prediction, the model autoregressively
+    generates weight tokens (its reasoning steps) at each MW step before deciding.
+    """
+    model.eval()
+    
+    results = {
+        'cot_weight_mse': [],
+        'cot_prediction_accuracy': [],
+        'cot_sequence_accuracy': [],
+        'cot_learned_regret': [],
+        'cot_optimal_regret': [],
+        'cot_regret_ratio': []
+    }
+    
+    for seq in test_sequences[:50]:  # Smaller subset since CoT generation is slower
+        try:
+            cot_result = generate_sequence_with_cot(model, seq, tokenizer, device)
+        except Exception as e:
+            logger.warning(f"CoT generation failed: {e}")
+            continue
+        
+        learned_decisions = cot_result['decisions']
+        cot_weights = cot_result['cot_weights']
+        
+        # Compare generated weights to ground truth MW weights
+        gt_weights = seq['weights_sequence'][1:]  # Skip initial uniform weights
+        for i in range(min(len(cot_weights), len(gt_weights))):
+            gt_w = np.array(gt_weights[i])
+            cot_w = np.array(cot_weights[i])
+            # Normalize CoT weights to sum to 1
+            cot_w_sum = cot_w.sum()
+            if cot_w_sum > 0:
+                cot_w = cot_w / cot_w_sum
+            mse = np.mean((cot_w - gt_w) ** 2)
+            results['cot_weight_mse'].append(mse)
+        
+        # Compare decisions to ground truth labels
+        gt_labels = np.array(seq['true_labels'])
+        n_steps = min(len(learned_decisions), len(gt_labels))
+        if n_steps > 0:
+            accuracy = np.mean(learned_decisions[:n_steps] == gt_labels[:n_steps])
+            results['cot_prediction_accuracy'].append(accuracy)
+            
+            seq_correct = np.all(learned_decisions[:n_steps] == gt_labels[:n_steps])
+            results['cot_sequence_accuracy'].append(float(seq_correct))
+            
+            # Regret comparison
+            optimal_decisions = get_optimal_mw_decisions(seq)
+            learned_regret, optimal_regret = calculate_sequence_regret(
+                seq, learned_decisions, optimal_decisions
+            )
+            results['cot_learned_regret'].append(learned_regret)
+            results['cot_optimal_regret'].append(optimal_regret)
+            
+            if optimal_regret > 1e-6:
+                regret_ratio = learned_regret / optimal_regret
+            elif learned_regret < 1e-6:
+                regret_ratio = 1.0
+            else:
+                regret_ratio = 10.0
+            results['cot_regret_ratio'].append(regret_ratio)
+    
+    # Aggregate
     final_results = {}
     for key, values in results.items():
         if values:
@@ -492,7 +575,7 @@ def analyze_attention_patterns(model: LearnedMWTransformer, tokenizer: MWTokeniz
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         logger.info(f"Attention patterns saved to {save_path}")
     
-    plt.show()
+    plt.close()
     
     return attention_weights
 
@@ -504,6 +587,11 @@ def main():
     parser.add_argument('--n_val', type=int, default=500, help='Number of validation sequences')
     parser.add_argument('--max_stages', type=int, default=6, help='Maximum training stages')
     parser.add_argument('--device', type=str, default='auto', help='Device to use (auto/cpu/cuda)')
+    parser.add_argument('--cot_mode', type=str, default='discrete',
+                        choices=['discrete', 'continuous'],
+                        help='Chain-of-thought mode: discrete (token-level) or continuous (hidden-state)')
+    parser.add_argument('--n_thought_steps', type=int, default=4,
+                        help='Number of continuous thought recurrence steps (only for continuous mode)')
     parser.add_argument('--save_dir', type=str, default='../figures', help='Directory to save results')
     
     args = parser.parse_args()
@@ -528,7 +616,8 @@ def main():
         n_layers=2,
         n_experts=args.n_experts,
         vocab_size=tokenizer.vocab_size,
-        max_sequence_length=512
+        max_sequence_length=512,
+        n_thought_steps=args.n_thought_steps if args.cot_mode == 'continuous' else 0
     )
     
     # Training configuration
@@ -541,12 +630,15 @@ def main():
         stage_mixing_prob=0.1
     )
     
-    # Create model
-    model = LearnedMWTransformer(model_config).to(device)
+    # Create model and trainer based on CoT mode
+    if args.cot_mode == 'continuous':
+        model = ContinuousCoTTransformer(model_config).to(device)
+        logger.info(f"ContinuousCoTTransformer with {args.n_thought_steps} thought steps")
+        trainer = ContinuousCoTTrainer(model, train_config, model_config)
+    else:
+        model = LearnedMWTransformer(model_config).to(device)
+        trainer = MWTrainer(model, train_config, model_config)
     logger.info(f"Model has {sum(p.numel() for p in model.parameters())} parameters")
-    
-    # Create trainer
-    trainer = MWTrainer(model, train_config, model_config)
     
     # Get all training sequences for stage-wise training
     all_train_sequences = train_dataset.sequences
@@ -618,9 +710,24 @@ def main():
     test_sequences = generate_mw_training_data(200, args.max_steps, args.n_experts)
     final_results = evaluate_learned_model(model, tokenizer, test_sequences, device)
     
-    logger.info("Final Results:")
+    logger.info("Final Results (Teacher-Forced):")
     for metric, values in final_results.items():
         logger.info(f"  {metric}: {values['mean']:.4f} ± {values['std']:.4f} (n={values['count']})")
+    
+    # Chain-of-thought evaluation (autoregressive weight generation)
+    logger.info("\nEvaluating with chain-of-thought generation...")
+    cot_results = evaluate_with_cot(model, tokenizer, test_sequences, device)
+    
+    logger.info("Final Results (Chain-of-Thought):")
+    for metric, values in cot_results.items():
+        logger.info(f"  {metric}: {values['mean']:.4f} ± {values['std']:.4f} (n={values['count']})")
+    
+    # Merge CoT results into final_results for saving
+    final_results.update(cot_results)
+    
+    # Ensure save directory exists before writing any files
+    save_dir = Path(args.save_dir)
+    save_dir.mkdir(parents=True, exist_ok=True)
     
     # Analyze attention patterns
     logger.info("\nAnalyzing attention patterns...")
@@ -633,15 +740,12 @@ def main():
     plot_regret_trajectories(model, tokenizer, test_sequences, device, regret_plot_path)
     logger.info(f"Regret trajectories saved to {regret_plot_path}")
     
-    # Save model and results
-    save_dir = Path(args.save_dir)
-    save_dir.mkdir(exist_ok=True)
-    
     # Save model
     model_path = save_dir / 'learned_mw_transformer.pt'
     torch.save({
         'model_state_dict': model.state_dict(),
         'model_config': model_config,
+        'cot_mode': args.cot_mode,
         'tokenizer_config': {
             'n_experts': tokenizer.n_experts,
             'vocab_size': tokenizer.vocab_size
@@ -682,7 +786,7 @@ def main():
     
     plt.tight_layout()
     plt.savefig(save_dir / 'learned_mw_training_results.png', dpi=300, bbox_inches='tight')
-    plt.show()
+    plt.close()
     
     logger.info(f"\n🎉 Training completed! Results saved to {save_dir}")
     
@@ -691,7 +795,7 @@ def main():
     print("🤖 LEARNED MULTIPLICATIVE WEIGHTS TRANSFORMER")
     print("="*60)
     print(f"✅ Model Architecture: {model_config.n_layers} layers, {model_config.d_model} dim, {model_config.n_heads} heads")
-    print(f"✅ Training: {train_config.n_stages} stages, {args.n_train} sequences")
+    print(f"✅ Training: {train_config.max_stages} stages, {args.n_train} sequences")
     print(f"✅ Final Performance:")
     for metric, values in final_results.items():
         print(f"   • {metric.replace('_', ' ').title()}: {values['mean']:.4f} ± {values['std']:.4f}")
