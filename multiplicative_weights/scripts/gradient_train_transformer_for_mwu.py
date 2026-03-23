@@ -582,7 +582,7 @@ def analyze_attention_patterns(model: LearnedMWTransformer, tokenizer: MWTokeniz
 def main():
     parser = argparse.ArgumentParser(description='Train Learned MW Transformer')
     parser.add_argument('--n_experts', type=int, default=4, help='Number of experts')
-    parser.add_argument('--max_steps', type=int, default=8, help='Maximum sequence length')
+    parser.add_argument('--max_steps', type=int, default=10, help='Maximum sequence length')
     parser.add_argument('--n_train', type=int, default=3000, help='Number of training sequences')
     parser.add_argument('--n_val', type=int, default=500, help='Number of validation sequences')
     parser.add_argument('--max_stages', type=int, default=6, help='Maximum training stages')

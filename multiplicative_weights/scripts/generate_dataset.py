@@ -20,22 +20,29 @@ def generate_single_sequence(n_experts: int, n_steps: int, learning_rate: float)
     """Generate one MW training sequence."""
     mw = MultiplicativeWeights(n_experts, learning_rate)
 
+    # Expert qualities are fixed for the entire sequence
+    expert_qualities = [np.random.uniform(0.3, 0.9) for _ in range(n_experts)]
+
     expert_predictions = []
     losses = []
     weights_sequence = [mw.get_probabilities().tolist()]
     true_labels = []
 
     for step in range(n_steps):
-        # Random expert predictions (binary)
-        expert_preds = np.random.randint(0, 2, size=n_experts).astype(float)
-        expert_predictions.append(expert_preds.tolist())
-
         # Random true label
-        true_label = int(np.random.randint(0, 2))
+        true_label = np.random.randint(0, 2)
         true_labels.append(true_label)
 
-        # Losses: 0 if expert prediction matches true label, 1 otherwise
-        step_losses = np.abs(expert_preds - true_label).tolist()
+        # Each expert predicts correctly with its fixed quality probability
+        step_preds = []
+        step_losses = []
+        for e in range(n_experts):
+            correct = np.random.random() < expert_qualities[e]
+            pred = true_label if correct else 1 - true_label
+            step_preds.append(pred)
+            step_losses.append(0.0 if pred == true_label else 1.0)
+
+        expert_predictions.append(step_preds)
         losses.append(step_losses)
 
         # Update MW weights
@@ -56,7 +63,7 @@ def generate_mw_training_data(n_sequences: int, max_steps: int, n_experts: int):
     """Generate a batch of MW training sequences with varying lengths and learning rates."""
     sequences = []
     for _ in range(n_sequences):
-        n_steps = np.random.randint(1, max_steps + 1)
+        n_steps = np.random.randint(3, max_steps + 1)
         learning_rate = float(np.random.uniform(0.05, 0.5))
         seq = generate_single_sequence(n_experts, n_steps, learning_rate)
         sequences.append(seq)
@@ -68,7 +75,7 @@ def main():
     parser.add_argument('--n_train', type=int, default=3000, help='Number of training sequences')
     parser.add_argument('--n_val', type=int, default=500, help='Number of validation sequences')
     parser.add_argument('--n_test', type=int, default=200, help='Number of test sequences')
-    parser.add_argument('--max_steps', type=int, default=8, help='Maximum sequence length')
+    parser.add_argument('--max_steps', type=int, default=10, help='Maximum sequence length')
     parser.add_argument('--n_experts', type=int, default=4, help='Number of experts')
     parser.add_argument('--seed', type=int, default=42, help='Random seed')
     parser.add_argument('--output', type=str, default='../data/mw_dataset.json',

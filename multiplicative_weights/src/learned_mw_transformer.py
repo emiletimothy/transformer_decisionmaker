@@ -803,10 +803,13 @@ def generate_mw_training_data(n_sequences: int, max_steps: int = 10,
     sequences = []
     
     for _ in range(n_sequences):
-        n_steps = np.random.randint(2, max_steps + 1)
-        learning_rate = np.random.uniform(0.1, 0.5)
+        n_steps = np.random.randint(3, max_steps + 1)
+        learning_rate = np.random.uniform(0.05, 0.5)
         
         mw = MultiplicativeWeights(n_experts, learning_rate)
+        
+        # Expert qualities are fixed for the entire sequence
+        expert_qualities = [np.random.uniform(0.3, 0.9) for _ in range(n_experts)]
         
         expert_predictions = []
         losses = []
@@ -820,8 +823,7 @@ def generate_mw_training_data(n_sequences: int, max_steps: int = 10,
             step_preds = []
             step_losses = []
             for e in range(n_experts):
-                quality = np.random.uniform(0.3, 0.9)
-                correct = np.random.random() < quality
+                correct = np.random.random() < expert_qualities[e]
                 pred = true_label if correct else 1 - true_label
                 step_preds.append(pred)
                 step_losses.append(0.0 if pred == true_label else 1.0)
@@ -866,10 +868,8 @@ class MWTrainer:
             betas=(0.9, 0.95)
         )
         
-        # Loss functions
-        self.weight_loss_fn = nn.KLDivLoss(reduction='batchmean')
+        # Loss function: BCE on decisions at masked positions
         self.prediction_loss_fn = nn.BCEWithLogitsLoss()
-        self.cot_loss_fn = nn.CrossEntropyLoss(ignore_index=-100)
         
         self.step = 0
         self.training_history = []
@@ -908,7 +908,6 @@ class MWTrainer:
         self.optimizer.zero_grad()
         
         input_ids = batch['input_ids']
-        weight_targets = batch['weight_targets']
         prediction_targets = batch['prediction_targets']
         target_mask = batch['target_mask']
         
@@ -916,30 +915,7 @@ class MWTrainer:
         total_loss = 0.0
         batch_size = target_mask.shape[0]
         
-        # Weight prediction loss (KL divergence)
-        weight_losses = []
-        for i in range(batch_size):
-            sample_mask = target_mask[i]
-            if sample_mask.any():
-                wl = outputs['weight_logits'][i]
-                wt = weight_targets[i]
-                ml = min(len(sample_mask), wl.shape[0], wt.shape[0])
-                sample_mask = sample_mask[:ml]
-                wl = wl[:ml]
-                wt = wt[:ml]
-                if sample_mask.any():
-                    masked_logits = wl[sample_mask]
-                    masked_targets = wt[sample_mask]
-                    if len(masked_targets) > 0:
-                        valid = masked_targets.sum(dim=-1) > 0
-                        if valid.any():
-                            weight_log_probs = F.log_softmax(masked_logits[valid], dim=-1)
-                            w_loss = self.weight_loss_fn(weight_log_probs, masked_targets[valid])
-                            weight_losses.append(w_loss)
-        if weight_losses:
-            total_loss += torch.stack(weight_losses).mean()
-        
-        # Prediction loss (BCE)
+        # BCE loss on predicted decisions at masked positions
         pred_losses = []
         for i in range(batch_size):
             sample_mask = target_mask[i]
@@ -956,21 +932,7 @@ class MWTrainer:
                     if len(masked_pl) > 0:
                         pred_losses.append(self.prediction_loss_fn(masked_pl, masked_pt))
         if pred_losses:
-            total_loss += torch.stack(pred_losses).mean()
-        
-        # Discrete CoT loss (cross-entropy on weight tokens)
-        if 'cot_mask' in batch:
-            cot_mask = batch['cot_mask']
-            shift_logits = outputs['lm_logits'][:, :-1, :]
-            shift_labels = input_ids[:, 1:].clone()
-            shift_cot = cot_mask[:, 1:]
-            shift_labels[~shift_cot] = -100
-            if (shift_labels != -100).any():
-                cot_loss = self.cot_loss_fn(
-                    shift_logits.reshape(-1, shift_logits.size(-1)),
-                    shift_labels.reshape(-1)
-                )
-                total_loss += self.train_config.cot_loss_weight * cot_loss
+            total_loss = torch.stack(pred_losses).mean()
         
         if isinstance(total_loss, (int, float)):
             return 0.0
@@ -987,32 +949,12 @@ class MWTrainer:
         
         with torch.no_grad():
             for batch in val_loader:
-                input_ids = batch['input_ids']
-                weight_targets = batch['weight_targets']
                 prediction_targets = batch['prediction_targets']
                 target_mask = batch['target_mask']
                 
-                outputs = self.model(input_ids)
+                outputs = self.model(batch['input_ids'])
                 batch_loss = 0.0
                 batch_size = target_mask.shape[0]
-                
-                weight_losses = []
-                for i in range(batch_size):
-                    sm = target_mask[i]
-                    if sm.any():
-                        wl = outputs['weight_logits'][i]
-                        wt = weight_targets[i]
-                        ml = min(len(sm), wl.shape[0], wt.shape[0])
-                        sm = sm[:ml]; wl = wl[:ml]; wt = wt[:ml]
-                        if sm.any():
-                            ml2 = wl[sm]; mt2 = wt[sm]
-                            if len(mt2) > 0:
-                                v = mt2.sum(dim=-1) > 0
-                                if v.any():
-                                    wlp = F.log_softmax(ml2[v], dim=-1)
-                                    weight_losses.append(self.weight_loss_fn(wlp, mt2[v]))
-                if weight_losses:
-                    batch_loss += torch.stack(weight_losses).mean()
                 
                 pred_losses = []
                 for i in range(batch_size):
@@ -1027,20 +969,7 @@ class MWTrainer:
                             if len(mpl) > 0:
                                 pred_losses.append(self.prediction_loss_fn(mpl, mpt))
                 if pred_losses:
-                    batch_loss += torch.stack(pred_losses).mean()
-                
-                if 'cot_mask' in batch:
-                    cot_mask = batch['cot_mask']
-                    shift_logits = outputs['lm_logits'][:, :-1, :]
-                    shift_labels = input_ids[:, 1:].clone()
-                    shift_cot = cot_mask[:, 1:]
-                    shift_labels[~shift_cot] = -100
-                    if (shift_labels != -100).any():
-                        cot_loss = self.cot_loss_fn(
-                            shift_logits.reshape(-1, shift_logits.size(-1)),
-                            shift_labels.reshape(-1)
-                        )
-                        batch_loss += self.train_config.cot_loss_weight * cot_loss
+                    batch_loss = torch.stack(pred_losses).mean()
                 
                 total_loss += batch_loss.item() if not isinstance(batch_loss, float) else batch_loss
                 n_batches += 1
@@ -1073,10 +1002,8 @@ class ContinuousCoTTrainer:
             betas=(0.9, 0.95)
         )
         
-        # Loss functions
-        self.weight_loss_fn = nn.KLDivLoss(reduction='batchmean')
+        # Loss function: BCE on decisions at masked positions
         self.prediction_loss_fn = nn.BCEWithLogitsLoss()
-        self.cot_loss_fn = nn.CrossEntropyLoss(ignore_index=-100)
         
         self.step = 0
         self.training_history = []
@@ -1110,42 +1037,18 @@ class ContinuousCoTTrainer:
         return {'losses': stage_losses}
     
     def _train_batch(self, batch: Dict, stage: int) -> float:
-        """Train on a single batch with both standard and thought losses."""
+        """Train on a single batch."""
         self.optimizer.zero_grad()
         
         input_ids = batch['input_ids']
-        weight_targets = batch['weight_targets']
         prediction_targets = batch['prediction_targets']
         target_mask = batch['target_mask']
         
-        # --- Part 1: Standard forward pass losses (same as MWTrainer) ---
         outputs = self.model(input_ids)
         total_loss = 0.0
         batch_size = target_mask.shape[0]
         
-        # Weight prediction loss
-        weight_losses = []
-        for i in range(batch_size):
-            sample_mask = target_mask[i]
-            if sample_mask.any():
-                wl = outputs['weight_logits'][i]
-                wt = weight_targets[i]
-                ml = min(len(sample_mask), wl.shape[0], wt.shape[0])
-                sample_mask = sample_mask[:ml]
-                wl = wl[:ml]; wt = wt[:ml]
-                if sample_mask.any():
-                    masked_logits = wl[sample_mask]
-                    masked_targets = wt[sample_mask]
-                    if len(masked_targets) > 0:
-                        valid = masked_targets.sum(dim=-1) > 0
-                        if valid.any():
-                            weight_log_probs = F.log_softmax(masked_logits[valid], dim=-1)
-                            w_loss = self.weight_loss_fn(weight_log_probs, masked_targets[valid])
-                            weight_losses.append(w_loss)
-        if weight_losses:
-            total_loss += torch.stack(weight_losses).mean()
-        
-        # Prediction loss
+        # BCE loss on predicted decisions at masked positions
         pred_losses = []
         for i in range(batch_size):
             sample_mask = target_mask[i]
@@ -1161,63 +1064,8 @@ class ContinuousCoTTrainer:
                     if len(masked_pl) > 0:
                         pred_losses.append(self.prediction_loss_fn(masked_pl, masked_pt))
         if pred_losses:
-            total_loss += torch.stack(pred_losses).mean()
+            total_loss = torch.stack(pred_losses).mean()
         
-        # Discrete CoT loss (keeps lm_head trained)
-        if 'cot_mask' in batch:
-            cot_mask = batch['cot_mask']
-            shift_logits = outputs['lm_logits'][:, :-1, :]
-            shift_labels = input_ids[:, 1:].clone()
-            shift_cot = cot_mask[:, 1:]
-            shift_labels[~shift_cot] = -100
-            if (shift_labels != -100).any():
-                cot_loss = self.cot_loss_fn(
-                    shift_logits.reshape(-1, shift_logits.size(-1)),
-                    shift_labels.reshape(-1)
-                )
-                total_loss += self.train_config.cot_loss_weight * cot_loss
-        
-        # --- Part 2: Thought recurrence loss ---
-        # For each sample, at each weight-target position, build context
-        # embeddings up to that point, run thought recurrence, supervise weights.
-        thought_losses = []
-        device = input_ids.device
-        for i in range(batch_size):
-            sample_mask = target_mask[i]
-            if not sample_mask.any():
-                continue
-            sample_ids = input_ids[i]
-            sample_wt = weight_targets[i]
-            target_positions = sample_mask.nonzero(as_tuple=True)[0]
-            
-            # Subsample positions to limit compute (at most 4 per sample)
-            if len(target_positions) > 4:
-                indices = torch.randperm(len(target_positions), device=device)[:4]
-                target_positions = target_positions[indices]
-            
-            for pos in target_positions:
-                pos = pos.item()
-                gt_weights = sample_wt[pos]
-                if gt_weights.sum() <= 0:
-                    continue
-                
-                # Context = tokens up to (but not including) this position
-                ctx_ids = sample_ids[:pos].unsqueeze(0)  # [1, pos]
-                if ctx_ids.size(1) == 0:
-                    continue
-                ctx_embeds = self.model.token_embedding(ctx_ids)
-                
-                thought_weights, _ = self.model.think(ctx_embeds)
-                # KL loss: thought_weights vs ground truth
-                thought_log_probs = torch.log(thought_weights + 1e-10)
-                gt = gt_weights.unsqueeze(0).to(device)  # [1, n_experts]
-                t_loss = self.weight_loss_fn(thought_log_probs, gt)
-                thought_losses.append(t_loss)
-        
-        if thought_losses:
-            total_loss += torch.stack(thought_losses).mean()
-        
-        # Backward
         if isinstance(total_loss, (int, float)):
             return 0.0
         total_loss.backward()
@@ -1233,33 +1081,12 @@ class ContinuousCoTTrainer:
         
         with torch.no_grad():
             for batch in val_loader:
-                input_ids = batch['input_ids']
-                weight_targets = batch['weight_targets']
                 prediction_targets = batch['prediction_targets']
                 target_mask = batch['target_mask']
                 
-                outputs = self.model(input_ids)
+                outputs = self.model(batch['input_ids'])
                 batch_loss = 0.0
                 batch_size = target_mask.shape[0]
-                
-                weight_losses = []
-                for i in range(batch_size):
-                    sm = target_mask[i]
-                    if sm.any():
-                        wl = outputs['weight_logits'][i]
-                        wt = weight_targets[i]
-                        ml = min(len(sm), wl.shape[0], wt.shape[0])
-                        sm = sm[:ml]; wl = wl[:ml]; wt = wt[:ml]
-                        if sm.any():
-                            ml2 = wl[sm]; mt2 = wt[sm]
-                            if len(mt2) > 0:
-                                v = mt2.sum(dim=-1) > 0
-                                if v.any():
-                                    wlp = F.log_softmax(ml2[v], dim=-1)
-                                    weight_losses.append(
-                                        self.weight_loss_fn(wlp, mt2[v]))
-                if weight_losses:
-                    batch_loss += torch.stack(weight_losses).mean()
                 
                 pred_losses = []
                 for i in range(batch_size):
@@ -1272,23 +1099,9 @@ class ContinuousCoTTrainer:
                         if sm.any():
                             mpl = pl[sm]; mpt = pt[sm]
                             if len(mpl) > 0:
-                                pred_losses.append(
-                                    self.prediction_loss_fn(mpl, mpt))
+                                pred_losses.append(self.prediction_loss_fn(mpl, mpt))
                 if pred_losses:
-                    batch_loss += torch.stack(pred_losses).mean()
-                
-                if 'cot_mask' in batch:
-                    cot_mask = batch['cot_mask']
-                    shift_logits = outputs['lm_logits'][:, :-1, :]
-                    shift_labels = input_ids[:, 1:].clone()
-                    shift_cot = cot_mask[:, 1:]
-                    shift_labels[~shift_cot] = -100
-                    if (shift_labels != -100).any():
-                        cot_loss = self.cot_loss_fn(
-                            shift_logits.reshape(-1, shift_logits.size(-1)),
-                            shift_labels.reshape(-1)
-                        )
-                        batch_loss += self.train_config.cot_loss_weight * cot_loss
+                    batch_loss = torch.stack(pred_losses).mean()
                 
                 total_loss += batch_loss.item() if not isinstance(batch_loss, float) else batch_loss
                 n_batches += 1
