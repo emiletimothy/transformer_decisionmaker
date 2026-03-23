@@ -870,6 +870,7 @@ class MWTrainer:
         
         # Loss function: BCE on decisions at masked positions
         self.prediction_loss_fn = nn.BCEWithLogitsLoss()
+        self.device = next(model.parameters()).device
         
         self.step = 0
         self.training_history = []
@@ -907,9 +908,9 @@ class MWTrainer:
         """Train on a single batch."""
         self.optimizer.zero_grad()
         
-        input_ids = batch['input_ids']
-        prediction_targets = batch['prediction_targets']
-        target_mask = batch['target_mask']
+        input_ids = batch['input_ids'].to(self.device)
+        prediction_targets = batch['prediction_targets'].to(self.device)
+        target_mask = batch['target_mask'].to(self.device)
         
         outputs = self.model(input_ids)
         total_loss = 0.0
@@ -949,10 +950,10 @@ class MWTrainer:
         
         with torch.no_grad():
             for batch in val_loader:
-                prediction_targets = batch['prediction_targets']
-                target_mask = batch['target_mask']
+                prediction_targets = batch['prediction_targets'].to(self.device)
+                target_mask = batch['target_mask'].to(self.device)
                 
-                outputs = self.model(batch['input_ids'])
+                outputs = self.model(batch['input_ids'].to(self.device))
                 batch_loss = 0.0
                 batch_size = target_mask.shape[0]
                 
@@ -1004,6 +1005,7 @@ class ContinuousCoTTrainer:
         
         # Loss function: BCE on decisions at masked positions
         self.prediction_loss_fn = nn.BCEWithLogitsLoss()
+        self.device = next(model.parameters()).device
         
         self.step = 0
         self.training_history = []
@@ -1040,9 +1042,9 @@ class ContinuousCoTTrainer:
         """Train on a single batch."""
         self.optimizer.zero_grad()
         
-        input_ids = batch['input_ids']
-        prediction_targets = batch['prediction_targets']
-        target_mask = batch['target_mask']
+        input_ids = batch['input_ids'].to(self.device)
+        prediction_targets = batch['prediction_targets'].to(self.device)
+        target_mask = batch['target_mask'].to(self.device)
         
         outputs = self.model(input_ids)
         total_loss = 0.0
@@ -1081,10 +1083,10 @@ class ContinuousCoTTrainer:
         
         with torch.no_grad():
             for batch in val_loader:
-                prediction_targets = batch['prediction_targets']
-                target_mask = batch['target_mask']
+                prediction_targets = batch['prediction_targets'].to(self.device)
+                target_mask = batch['target_mask'].to(self.device)
                 
-                outputs = self.model(batch['input_ids'])
+                outputs = self.model(batch['input_ids'].to(self.device))
                 batch_loss = 0.0
                 batch_size = target_mask.shape[0]
                 

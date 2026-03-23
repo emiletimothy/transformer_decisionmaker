@@ -184,8 +184,8 @@ def evaluate_learned_model(model: LearnedMWTransformer, tokenizer: MWTokenizer,
             pred_logits = outputs['prediction_logits'][0]
             
             # Extract predictions at decision points
-            target_mask = torch.tensor(tokens['target_mask'])
-            weight_targets = torch.tensor(tokens['weight_targets'])
+            target_mask = torch.tensor(tokens['target_mask'], device=device)
+            weight_targets = torch.tensor(tokens['weight_targets'], device=device)
             
             # Calculate metrics
             if target_mask.any():
@@ -210,7 +210,7 @@ def evaluate_learned_model(model: LearnedMWTransformer, tokenizer: MWTokenizer,
                 
                 # Prediction accuracy
                 pred_logits = pred_logits[:min_len]  # Ensure same length
-                prediction_targets = torch.tensor(tokens['prediction_targets'])[:min_len]
+                prediction_targets = torch.tensor(tokens['prediction_targets'], device=device)[:min_len]
                 
                 pred_decisions = torch.sigmoid(pred_logits[target_mask]) > 0.5
                 gt_decisions = prediction_targets[target_mask] > 0.5
@@ -441,7 +441,7 @@ def get_regret_trajectory(model, tokenizer, seq, device):
     with torch.no_grad():
         outputs = model(input_ids)
         pred_logits = outputs['prediction_logits'][0]
-        target_mask = torch.tensor(tokens['target_mask'])
+        target_mask = torch.tensor(tokens['target_mask'], device=device)
         
         # Handle shape mismatches
         min_len = min(len(target_mask), len(pred_logits))
@@ -598,7 +598,12 @@ def main():
     
     # Set device
     if args.device == 'auto':
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        if torch.cuda.is_available():
+            device = torch.device('cuda')
+        elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+            device = torch.device('mps')
+        else:
+            device = torch.device('cpu')
     else:
         device = torch.device(args.device)
     
