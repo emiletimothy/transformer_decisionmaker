@@ -1,0 +1,1296 @@
+"""
+Learned Multiplicative Weights Transformer
+
+GPT-2 style transformer that learns to reproduce the multiplicative weights
+algorithm through gradient-based training on MW execution traces.
+
+Includes:
+  - LearnedMWTransformer: base model with discrete CoT support
+  - ContinuousCoTTransformer: Coconut-style continuous hidden-state reasoning
+  - MWTokenizer: tokenizes MW traces into token sequences
+  - MWSequenceDataset / collate_fn: PyTorch dataset utilities
+  - MWTrainer / ContinuousCoTTrainer: training loops
+  - generate_mw_training_data: synthetic data generation
+  - generate_sequence_with_cot / generate_sequence_with_continuous_cot: inference
+"""
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import numpy as np
+from dataclasses import dataclass
+from typing import Dict, List, Tuple, Optional
+from torch.utils.data import Dataset, DataLoader
+import logging
+
+logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Configs
+# ---------------------------------------------------------------------------
+
+@dataclass
+class ModelConfig:
+    """Configuration for the learned MW transformer."""
+    d_model: int = 768
+    n_heads: int = 8
+    n_layers: int = 2
+    n_experts: int = 4
+    max_sequence_length: int = 512
+    vocab_size: int = 1000  # Will be set based on tokenization
+    dropout: float = 0.1
+    n_thought_steps: int = 4  # Number of continuous thought recurrence steps (0 = disabled)
+
+@dataclass
+class TrainingConfig:
+    """Configuration for training the learned MW transformer."""
+    learning_rate: float = 1e-4
+    weight_decay: float = 1e-2
+    batch_size: int = 32
+    max_epochs_per_stage: int = 25
+    max_stages: int = 12  # Up to 12-step reasoning
+    stage_mixing_prob: float = 0.1
+    eval_interval: int = 50
+    cot_loss_weight: float = 1.0
+
+# ---------------------------------------------------------------------------
+# Transformer building blocks
+# ---------------------------------------------------------------------------
+
+class MultiHeadAttention(nn.Module):
+    """Multi-head self-attention with causal masking."""
+    
+    def __init__(self, config: ModelConfig):
+        super().__init__()
+        self.n_heads = config.n_heads
+        self.d_model = config.d_model
+        self.head_dim = config.d_model // config.n_heads
+        
+        self.q_proj = nn.Linear(config.d_model, config.d_model)
+        self.k_proj = nn.Linear(config.d_model, config.d_model)
+        self.v_proj = nn.Linear(config.d_model, config.d_model)
+        self.out_proj = nn.Linear(config.d_model, config.d_model)
+        self.dropout = nn.Dropout(config.dropout)
+        
+    def forward(self, x, mask=None):
+        batch_size, seq_len, _ = x.shape
+        
+        q = self.q_proj(x).view(batch_size, seq_len, self.n_heads, self.head_dim).transpose(1, 2)
+        k = self.k_proj(x).view(batch_size, seq_len, self.n_heads, self.head_dim).transpose(1, 2)
+        v = self.v_proj(x).view(batch_size, seq_len, self.n_heads, self.head_dim).transpose(1, 2)
+        
+        scores = torch.matmul(q, k.transpose(-2, -1)) / (self.head_dim ** 0.5)
+        
+        if mask is not None:
+            scores = scores.masked_fill(mask == 0, float('-inf'))
+        
+        attn_weights = F.softmax(scores, dim=-1)
+        attn_weights = self.dropout(attn_weights)
+        
+        attn_output = torch.matmul(attn_weights, v)
+        attn_output = attn_output.transpose(1, 2).contiguous().view(batch_size, seq_len, self.d_model)
+        
+        return self.out_proj(attn_output), attn_weights
+
+
+class TransformerBlock(nn.Module):
+    """Transformer block with pre-norm architecture."""
+    
+    def __init__(self, config: ModelConfig):
+        super().__init__()
+        self.ln1 = nn.LayerNorm(config.d_model)
+        self.attn = MultiHeadAttention(config)
+        self.ln2 = nn.LayerNorm(config.d_model)
+        self.mlp = nn.Sequential(
+            nn.Linear(config.d_model, 4 * config.d_model),
+            nn.GELU(),
+            nn.Linear(4 * config.d_model, config.d_model),
+            nn.Dropout(config.dropout),
+        )
+        
+    def forward(self, x, mask=None):
+        attn_out, attn_weights = self.attn(self.ln1(x), mask)
+        x = x + attn_out
+        x = x + self.mlp(self.ln2(x))
+        return x, attn_weights
+
+# ---------------------------------------------------------------------------
+# LearnedMWTransformer (base model + discrete CoT)
+# ---------------------------------------------------------------------------
+
+class LearnedMWTransformer(nn.Module):
+    """GPT-2 style transformer that learns multiplicative weights updates."""
+    
+    def __init__(self, config: ModelConfig):
+        super().__init__()
+        self.config = config
+        
+        # Token embeddings
+        self.token_embedding = nn.Embedding(config.vocab_size, config.d_model)
+        self.position_embedding = nn.Embedding(config.max_sequence_length, config.d_model)
+        
+        # Transformer blocks
+        self.blocks = nn.ModuleList([
+            TransformerBlock(config) for _ in range(config.n_layers)
+        ])
+        
+        self.ln_final = nn.LayerNorm(config.d_model)
+        
+        # Output heads for different prediction tasks
+        self.weight_head = nn.Linear(config.d_model, config.n_experts)  # Predict next weights
+        self.prediction_head = nn.Linear(config.d_model, 1)  # Predict binary decision
+        self.lm_head = nn.Linear(config.d_model, config.vocab_size)  # CoT next-token prediction
+        
+        self.dropout = nn.Dropout(config.dropout)
+        
+        # Initialize weights
+        self.apply(self._init_weights)
+        
+    def _init_weights(self, module):
+        """Initialize weights following GPT-2 style."""
+        if isinstance(module, nn.Linear):
+            torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
+            if module.bias is not None:
+                torch.nn.init.zeros_(module.bias)
+        elif isinstance(module, nn.Embedding):
+            torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
+        elif isinstance(module, nn.LayerNorm):
+            torch.nn.init.zeros_(module.bias)
+            torch.nn.init.ones_(module.weight)
+    
+    def forward(self, input_ids, position_ids=None, return_attention=False):
+        batch_size, seq_len = input_ids.shape
+        
+        if position_ids is None:
+            position_ids = torch.arange(seq_len, device=input_ids.device).unsqueeze(0)
+        
+        # Embeddings
+        token_emb = self.token_embedding(input_ids)
+        pos_emb = self.position_embedding(position_ids)
+        x = self.dropout(token_emb + pos_emb)
+        
+        # Causal mask for autoregressive generation
+        mask = torch.tril(torch.ones(seq_len, seq_len, device=input_ids.device)).unsqueeze(0).unsqueeze(0)
+        
+        # Transformer blocks
+        attention_weights = []
+        for block in self.blocks:
+            x, attn = block(x, mask)
+            if return_attention:
+                attention_weights.append(attn)
+        
+        x = self.ln_final(x)
+        
+        # Output predictions
+        weight_logits = self.weight_head(x)  # [batch, seq_len, n_experts]
+        prediction_logits = self.prediction_head(x)  # [batch, seq_len, 1]
+        lm_logits = self.lm_head(x)  # [batch, seq_len, vocab_size]
+        
+        outputs = {
+            'weight_logits': weight_logits,
+            'prediction_logits': prediction_logits,
+            'lm_logits': lm_logits,
+        }
+        
+        if return_attention:
+            outputs['attention_weights'] = attention_weights
+            
+        return outputs
+
+    @torch.no_grad()
+    def generate_cot_weights(self, context_ids, tokenizer):
+        """
+        Autoregressively generate weight tokens as chain-of-thought reasoning.
+        
+        Given context (expert predictions + losses for a step), generates
+        EXPERT_k, WEIGHT_val token pairs for each expert.
+        
+        Args:
+            context_ids: [batch, seq_len] tensor of context tokens
+            tokenizer: MWTokenizer instance
+            
+        Returns:
+            Extended sequence with generated weight tokens appended
+        """
+        device = context_ids.device
+        generated = context_ids.clone()
+        n_experts = self.config.n_experts
+        
+        weight_start = tokenizer.WEIGHT_TOKENS[0]
+        weight_end = tokenizer.WEIGHT_TOKENS[-1] + 1
+        
+        for expert_idx in range(n_experts):
+            # Append the expert token (structural/deterministic)
+            expert_token = torch.full(
+                (generated.size(0), 1),
+                tokenizer.EXPERT_TOKENS[expert_idx],
+                dtype=torch.long, device=device
+            )
+            generated = torch.cat([generated, expert_token], dim=1)
+            
+            # Forward pass to predict the weight value token
+            outputs = self.forward(generated)
+            next_logits = outputs['lm_logits'][:, -1, :]  # [batch, vocab_size]
+            
+            # Restrict to weight tokens only
+            mask = torch.full_like(next_logits, float('-inf'))
+            mask[:, weight_start:weight_end] = 0.0
+            next_logits = next_logits + mask
+            
+            # Greedy selection
+            next_token = next_logits.argmax(dim=-1, keepdim=True)  # [batch, 1]
+            generated = torch.cat([generated, next_token], dim=1)
+        
+        return generated
+
+
+def generate_sequence_with_cot(model, sequence, tokenizer, device):
+    """
+    Autoregressively generate a full MW sequence using discrete CoT.
+
+    At each step the model sees expert predictions + losses as context,
+    then generates EXPERT_k WEIGHT_val token pairs for each expert.
+    The generated weights are decoded and used for decision making.
+
+    Args:
+        model: LearnedMWTransformer instance
+        sequence: Dict with expert_predictions, losses, true_labels
+        tokenizer: MWTokenizer instance
+        device: torch device
+
+    Returns:
+        Dict with decisions, cot_weights, generated_ids
+    """
+    model.eval()
+    n_experts = model.config.n_experts
+
+    generated = torch.tensor([[tokenizer.START_TOKEN]], dtype=torch.long, device=device)
+    cot_weights = []
+    decisions = []
+
+    for step in range(len(sequence['expert_predictions'])):
+        # --- Step token ---
+        step_token = torch.tensor(
+            [[tokenizer.STEP_TOKENS[step % 100]]], dtype=torch.long, device=device
+        )
+        generated = torch.cat([generated, step_token], dim=1)
+
+        # --- Expert predictions ---
+        for expert_idx, pred in enumerate(sequence['expert_predictions'][step]):
+            expert_token = torch.tensor(
+                [[tokenizer.EXPERT_TOKENS[expert_idx]]], dtype=torch.long, device=device
+            )
+            pred_token = torch.tensor(
+                [[tokenizer.PRED_1_TOKEN if pred == 1 else tokenizer.PRED_0_TOKEN]],
+                dtype=torch.long, device=device
+            )
+            generated = torch.cat([generated, expert_token, pred_token], dim=1)
+
+        # --- Losses ---
+        for expert_idx, loss_val in enumerate(sequence['losses'][step]):
+            expert_token = torch.tensor(
+                [[tokenizer.EXPERT_TOKENS[expert_idx]]], dtype=torch.long, device=device
+            )
+            loss_token = torch.tensor(
+                [[tokenizer.discretize_loss(loss_val)]], dtype=torch.long, device=device
+            )
+            generated = torch.cat([generated, expert_token, loss_token], dim=1)
+
+        # --- Generate CoT weight tokens ---
+        generated = model.generate_cot_weights(generated, tokenizer)
+
+        # --- Decode weights from the last 2*n_experts tokens ---
+        step_weights = np.zeros(n_experts)
+        tail = generated[0, -2 * n_experts:].cpu().tolist()
+        for i in range(n_experts):
+            weight_token = tail[2 * i + 1]
+            if tokenizer.WEIGHT_TOKENS[0] <= weight_token <= tokenizer.WEIGHT_TOKENS[-1]:
+                step_weights[i] = (weight_token - tokenizer.WEIGHT_TOKENS[0]) / 99.0
+        w_sum = step_weights.sum()
+        if w_sum > 0:
+            step_weights /= w_sum
+        else:
+            step_weights = np.ones(n_experts) / n_experts
+        cot_weights.append(step_weights)
+
+        # --- Decision ---
+        with torch.no_grad():
+            outputs = model(generated)
+            pred_logit = outputs['prediction_logits'][0, -1, 0]
+            decision = 1 if torch.sigmoid(pred_logit) > 0.5 else 0
+        decisions.append(decision)
+
+        # --- True label token (context for next step) ---
+        true_label = sequence['true_labels'][step]
+        label_token = tokenizer.PRED_1_TOKEN if true_label == 1 else tokenizer.PRED_0_TOKEN
+        generated = torch.cat([
+            generated,
+            torch.tensor([[label_token]], dtype=torch.long, device=device)
+        ], dim=1)
+
+    return {
+        'decisions': np.array(decisions),
+        'cot_weights': cot_weights,
+        'generated_ids': generated
+    }
+
+# ---------------------------------------------------------------------------
+# ContinuousCoTTransformer (Coconut-style hidden-state recurrence)
+# ---------------------------------------------------------------------------
+
+class ContinuousCoTTransformer(nn.Module):
+    """
+    Transformer with Coconut-style continuous chain-of-thought reasoning.
+    
+    Instead of generating discrete weight tokens autoregressively, this model
+    performs K recurrence steps in continuous hidden-state space:
+      1. Embed the context tokens and run through the transformer.
+      2. Take the hidden state at the last position.
+      3. Project it back to embedding space via thought_proj.
+      4. Append it to the embedding sequence as a new "thought" position.
+      5. Repeat steps 1-4 for K thought steps.
+      6. Read off weight predictions from weight_head on the final hidden state.
+    
+    This avoids the information bottleneck of discretizing continuous MW weights
+    into a finite token vocabulary.
+    """
+    
+    def __init__(self, config: ModelConfig):
+        super().__init__()
+        self.config = config
+        self.n_thought_steps = config.n_thought_steps
+        
+        # Token embeddings (extra positions for thought steps)
+        self.token_embedding = nn.Embedding(config.vocab_size, config.d_model)
+        self.position_embedding = nn.Embedding(
+            config.max_sequence_length + config.n_thought_steps + 1,
+            config.d_model
+        )
+        
+        # Transformer blocks (shared across all passes including thought recurrence)
+        self.blocks = nn.ModuleList([
+            TransformerBlock(config) for _ in range(config.n_layers)
+        ])
+        self.ln_final = nn.LayerNorm(config.d_model)
+        
+        # Output heads
+        self.weight_head = nn.Linear(config.d_model, config.n_experts)
+        self.prediction_head = nn.Linear(config.d_model, 1)
+        self.lm_head = nn.Linear(config.d_model, config.vocab_size)
+        
+        # Continuous thought projection: hidden state -> embedding space
+        self.thought_proj = nn.Sequential(
+            nn.Linear(config.d_model, config.d_model),
+            nn.GELU(),
+            nn.Linear(config.d_model, config.d_model),
+        )
+        
+        self.dropout = nn.Dropout(config.dropout)
+        self.apply(self._init_weights)
+    
+    def _init_weights(self, module):
+        """Initialize weights following GPT-2 style."""
+        if isinstance(module, nn.Linear):
+            torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
+            if module.bias is not None:
+                torch.nn.init.zeros_(module.bias)
+        elif isinstance(module, nn.Embedding):
+            torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
+        elif isinstance(module, nn.LayerNorm):
+            torch.nn.init.zeros_(module.bias)
+            torch.nn.init.ones_(module.weight)
+    
+    def _run_blocks(self, x, return_attention=False):
+        """Run transformer blocks on positioned embeddings."""
+        seq_len = x.size(1)
+        mask = torch.tril(torch.ones(seq_len, seq_len, device=x.device))
+        mask = mask.unsqueeze(0).unsqueeze(0)
+        
+        attention_weights = []
+        for block in self.blocks:
+            x, attn = block(x, mask)
+            if return_attention:
+                attention_weights.append(attn)
+        x = self.ln_final(x)
+        return x, attention_weights
+    
+    def forward(self, input_ids, position_ids=None, return_attention=False):
+        """Standard forward pass (compatible with existing training code)."""
+        batch_size, seq_len = input_ids.shape
+        
+        if position_ids is None:
+            position_ids = torch.arange(seq_len, device=input_ids.device).unsqueeze(0)
+        
+        x = self.dropout(
+            self.token_embedding(input_ids) + self.position_embedding(position_ids)
+        )
+        h, attn = self._run_blocks(x, return_attention)
+        
+        outputs = {
+            'weight_logits': self.weight_head(h),
+            'prediction_logits': self.prediction_head(h),
+            'lm_logits': self.lm_head(h),
+        }
+        if return_attention:
+            outputs['attention_weights'] = attn
+        return outputs
+    
+    def think(self, context_embeddings):
+        """
+        Coconut-style continuous thought recurrence.
+        
+        Given raw context embeddings [batch, ctx_len, d_model] (without position
+        embeddings added yet), performs K recurrence steps:
+          - Run transformer on current sequence.
+          - Project last hidden state back to embedding space.
+          - Append as a new position and repeat.
+        
+        Returns:
+            thought_weights: [batch, n_experts] softmax weight predictions
+            thought_hiddens: [batch, K, d_model] hidden states at each thought step
+        """
+        K = self.n_thought_steps
+        device = context_embeddings.device
+        current = context_embeddings  # [batch, growing_len, d_model]
+        
+        thought_hiddens = []
+        
+        for k in range(K):
+            total_len = current.size(1)
+            pos_ids = torch.arange(total_len, device=device).unsqueeze(0)
+            positioned = current + self.position_embedding(pos_ids)
+            
+            h, _ = self._run_blocks(self.dropout(positioned))
+            last_h = h[:, -1:, :]  # [batch, 1, d_model]
+            thought_hiddens.append(last_h.squeeze(1))
+            
+            # Project back to embedding space for next recurrence
+            thought_embed = self.thought_proj(last_h)  # [batch, 1, d_model]
+            current = torch.cat([current, thought_embed], dim=1)
+        
+        # Final forward with all thoughts appended
+        total_len = current.size(1)
+        pos_ids = torch.arange(total_len, device=device).unsqueeze(0)
+        positioned = current + self.position_embedding(pos_ids)
+        h, _ = self._run_blocks(self.dropout(positioned))
+        
+        final_h = h[:, -1, :]  # [batch, d_model]
+        weight_logits = self.weight_head(final_h)
+        thought_weights = F.softmax(weight_logits, dim=-1)
+        
+        return thought_weights, torch.stack(thought_hiddens, dim=1)
+    
+    def think_and_predict(self, context_ids):
+        """
+        Convenience method: embed context token ids, run thought recurrence,
+        return weight predictions and decision logit.
+        """
+        embeddings = self.token_embedding(context_ids)  # no position yet; think() adds them
+        
+        weights, thought_hiddens = self.think(embeddings)
+        pred_logit = self.prediction_head(thought_hiddens[:, -1, :])  # [batch, 1]
+        
+        return weights, pred_logit
+
+
+def generate_sequence_with_continuous_cot(model, sequence, tokenizer, device):
+    """
+    Generate a full MW sequence using continuous chain-of-thought reasoning.
+    
+    At each step the model receives expert predictions and losses as discrete
+    context tokens, then performs K continuous thought recurrences in hidden
+    space to produce weight predictions (no discretization).
+    
+    Args:
+        model: ContinuousCoTTransformer instance
+        sequence: Dict with expert_predictions, losses, true_labels
+        tokenizer: MWTokenizer instance
+        device: torch device
+    
+    Returns:
+        Dict with decisions, cot_weights (continuous)
+    """
+    model.eval()
+
+    token_ids = [tokenizer.START_TOKEN]
+    cot_weights = []
+    decisions = []
+
+    for step in range(len(sequence['expert_predictions'])):
+        # Step marker
+        token_ids.append(tokenizer.STEP_TOKENS[step % 100])
+
+        # Expert predictions (context)
+        for expert_idx, pred in enumerate(sequence['expert_predictions'][step]):
+            token_ids.append(tokenizer.EXPERT_TOKENS[expert_idx])
+            token_ids.append(
+                tokenizer.PRED_1_TOKEN if pred == 1 else tokenizer.PRED_0_TOKEN
+            )
+
+        # Losses (context)
+        for expert_idx, loss_val in enumerate(sequence['losses'][step]):
+            token_ids.append(tokenizer.EXPERT_TOKENS[expert_idx])
+            token_ids.append(tokenizer.discretize_loss(loss_val))
+
+        # Continuous thought: get weights and decision from hidden space
+        context_tensor = torch.tensor(
+            [token_ids], dtype=torch.long, device=device
+        )
+        with torch.no_grad():
+            weights, pred_logit = model.think_and_predict(context_tensor)
+
+        step_weights = weights[0].cpu().numpy()
+        cot_weights.append(step_weights)
+
+        decision = 1 if torch.sigmoid(pred_logit[0, 0]) > 0.5 else 0
+        decisions.append(decision)
+
+        # True label token (context for next step)
+        true_label = sequence['true_labels'][step]
+        token_ids.append(
+            tokenizer.PRED_1_TOKEN if true_label == 1 else tokenizer.PRED_0_TOKEN
+        )
+
+    return {
+        'decisions': np.array(decisions),
+        'cot_weights': cot_weights,
+    }
+
+# ---------------------------------------------------------------------------
+# Tokenizer
+# ---------------------------------------------------------------------------
+
+class MWTokenizer:
+    """Tokenizer for multiplicative weights sequences."""
+    
+    def __init__(self, n_experts: int = 4):
+        self.n_experts = n_experts
+        self.PAD_TOKEN = 0
+        self.START_TOKEN = 1
+        self.END_TOKEN = 2
+        self.SEP_TOKEN = 3
+        self.EXPERT_TOKENS = list(range(4, 4 + n_experts))
+        self.WEIGHT_TOKENS = list(range(4 + n_experts, 4 + n_experts + 100))
+        self.LOSS_TOKENS = list(range(104 + n_experts, 204 + n_experts))
+        self.PRED_0_TOKEN = 204 + n_experts
+        self.PRED_1_TOKEN = 205 + n_experts
+        self.STEP_TOKENS = list(range(206 + n_experts, 306 + n_experts))
+        self.vocab_size = 306 + n_experts
+    
+    def discretize_weight(self, weight: float) -> int:
+        """Convert a weight value [0, 1] to a weight token."""
+        bin_idx = int(np.clip(weight * 99, 0, 99))
+        return self.WEIGHT_TOKENS[bin_idx]
+    
+    def decode_weight_token(self, token: int) -> float:
+        """Convert a weight token back to a float in [0, 1]."""
+        if token < self.WEIGHT_TOKENS[0] or token > self.WEIGHT_TOKENS[-1]:
+            return 0.0
+        return (token - self.WEIGHT_TOKENS[0]) / 99.0
+    
+    def discretize_loss(self, loss: float) -> int:
+        """Convert a loss value [0, 1] to a loss token."""
+        bin_idx = int(np.clip(loss * 99, 0, 99))
+        return self.LOSS_TOKENS[bin_idx]
+    
+    def encode_sequence(self, sequence: Dict) -> Dict:
+        """
+        Encode a full MW execution trace into token ids with targets and masks.
+        
+        Returns dict with:
+            input_ids, weight_targets, prediction_targets, target_mask, is_cot_token
+        """
+        n_experts = self.n_experts
+        tokens = [self.START_TOKEN]
+        weight_targets = [np.zeros(n_experts)]
+        prediction_targets = [0.0]
+        target_mask = [False]
+        is_cot_token = [False]
+        
+        n_steps = sequence['n_steps']
+        
+        for step in range(n_steps):
+            # Step token
+            tokens.append(self.STEP_TOKENS[step % 100])
+            weight_targets.append(np.zeros(n_experts))
+            prediction_targets.append(0.0)
+            target_mask.append(False)
+            is_cot_token.append(False)
+            
+            # Expert predictions
+            for expert_idx in range(n_experts):
+                pred = sequence['expert_predictions'][step][expert_idx]
+                tokens.append(self.EXPERT_TOKENS[expert_idx])
+                weight_targets.append(np.zeros(n_experts))
+                prediction_targets.append(0.0)
+                target_mask.append(False)
+                is_cot_token.append(False)
+                
+                tokens.append(self.PRED_1_TOKEN if pred == 1 else self.PRED_0_TOKEN)
+                weight_targets.append(np.zeros(n_experts))
+                prediction_targets.append(0.0)
+                target_mask.append(False)
+                is_cot_token.append(False)
+            
+            # Losses
+            for expert_idx in range(n_experts):
+                loss_val = sequence['losses'][step][expert_idx]
+                tokens.append(self.EXPERT_TOKENS[expert_idx])
+                weight_targets.append(np.zeros(n_experts))
+                prediction_targets.append(0.0)
+                target_mask.append(False)
+                is_cot_token.append(False)
+                
+                tokens.append(self.discretize_loss(loss_val))
+                weight_targets.append(np.zeros(n_experts))
+                prediction_targets.append(0.0)
+                target_mask.append(False)
+                is_cot_token.append(False)
+            
+            # CoT weight tokens (EXPERT_k WEIGHT_val pairs)
+            next_weights = sequence['weights_sequence'][step + 1] if step + 1 < len(sequence['weights_sequence']) else sequence['weights_sequence'][-1]
+            for expert_idx in range(n_experts):
+                tokens.append(self.EXPERT_TOKENS[expert_idx])
+                weight_targets.append(np.zeros(n_experts))
+                prediction_targets.append(0.0)
+                target_mask.append(False)
+                is_cot_token.append(True)
+                
+                tokens.append(self.discretize_weight(next_weights[expert_idx]))
+                weight_targets.append(np.zeros(n_experts))
+                prediction_targets.append(0.0)
+                target_mask.append(False)
+                is_cot_token.append(True)
+            
+            # Separator — this is the weight/prediction target position
+            tokens.append(self.SEP_TOKEN)
+            weight_targets.append(np.array(next_weights))
+            true_label = sequence['true_labels'][step]
+            prediction_targets.append(float(true_label))
+            target_mask.append(True)
+            is_cot_token.append(False)
+            
+            # True label (context for next step)
+            tokens.append(self.PRED_1_TOKEN if true_label == 1 else self.PRED_0_TOKEN)
+            weight_targets.append(np.zeros(n_experts))
+            prediction_targets.append(0.0)
+            target_mask.append(False)
+            is_cot_token.append(False)
+        
+        tokens.append(self.END_TOKEN)
+        weight_targets.append(np.zeros(n_experts))
+        prediction_targets.append(0.0)
+        target_mask.append(False)
+        is_cot_token.append(False)
+        
+        return {
+            'input_ids': tokens,
+            'weight_targets': np.array(weight_targets),
+            'prediction_targets': np.array(prediction_targets, dtype=np.float32),
+            'target_mask': target_mask,
+            'is_cot_token': is_cot_token,
+        }
+
+# ---------------------------------------------------------------------------
+# Dataset
+# ---------------------------------------------------------------------------
+
+class MWSequenceDataset(Dataset):
+    """Dataset for multiplicative weights sequences."""
+    
+    def __init__(self, sequences: List[Dict], tokenizer):
+        self.sequences = sequences
+        self.tokenizer = tokenizer
+        
+    def __len__(self):
+        return len(self.sequences)
+    
+    def __getitem__(self, idx):
+        sequence = self.sequences[idx]
+        
+        # Tokenize the sequence
+        tokens = self.tokenizer.encode_sequence(sequence)
+        
+        return {
+            'input_ids': torch.tensor(tokens['input_ids'], dtype=torch.long),
+            'weight_targets': torch.tensor(tokens['weight_targets'], dtype=torch.float32),
+            'prediction_targets': torch.tensor(tokens['prediction_targets'], dtype=torch.float32),
+            'target_mask': torch.tensor(tokens['target_mask'], dtype=torch.bool),
+            'cot_mask': torch.tensor(tokens['is_cot_token'], dtype=torch.bool),
+            'sequence_length': len(tokens['input_ids'])
+        }
+
+
+def collate_fn(batch):
+    """Custom collate function for variable length sequences."""
+    max_len = max(item['sequence_length'] for item in batch)
+    
+    input_ids = []
+    weight_targets = []
+    prediction_targets = []
+    target_mask = []
+    cot_mask = []
+    
+    for item in batch:
+        seq_len = item['sequence_length']
+        pad_len = max_len - seq_len
+        
+        # Pad input_ids
+        padded_input = torch.cat([
+            item['input_ids'],
+            torch.zeros(pad_len, dtype=torch.long)
+        ])
+        input_ids.append(padded_input)
+        
+        # Ensure weight_targets has correct shape
+        weight_targets_tensor = item['weight_targets']
+        if len(weight_targets_tensor.shape) == 1:
+            n_experts = 4
+            weight_targets_tensor = weight_targets_tensor.unsqueeze(-1).expand(-1, n_experts)
+        
+        # Pad targets
+        if pad_len > 0:
+            pad_shape = (pad_len, weight_targets_tensor.shape[-1])
+            padded_weight_targets = torch.cat([
+                weight_targets_tensor,
+                torch.zeros(pad_shape)
+            ])
+        else:
+            padded_weight_targets = weight_targets_tensor
+        weight_targets.append(padded_weight_targets)
+        
+        padded_pred_targets = torch.cat([
+            item['prediction_targets'],
+            torch.zeros(pad_len)
+        ])
+        prediction_targets.append(padded_pred_targets)
+        
+        padded_mask = torch.cat([
+            item['target_mask'],
+            torch.zeros(pad_len, dtype=torch.bool)
+        ])
+        target_mask.append(padded_mask)
+        
+        padded_cot_mask = torch.cat([
+            item['cot_mask'],
+            torch.zeros(pad_len, dtype=torch.bool)
+        ])
+        cot_mask.append(padded_cot_mask)
+    
+    return {
+        'input_ids': torch.stack(input_ids),
+        'weight_targets': torch.stack(weight_targets),
+        'prediction_targets': torch.stack(prediction_targets),
+        'target_mask': torch.stack(target_mask),
+        'cot_mask': torch.stack(cot_mask)
+    }
+
+# ---------------------------------------------------------------------------
+# Training data generation
+# ---------------------------------------------------------------------------
+
+def generate_mw_training_data(n_sequences: int, max_steps: int = 10,
+                               n_experts: int = 4) -> List[Dict]:
+    """
+    Generate synthetic MW execution traces for training.
+    
+    Each trace runs the exact MW algorithm on a random binary expert scenario
+    and records the full execution: expert predictions, losses, weight
+    trajectories, and true labels.
+    """
+    from src.multiplicative_weights import MultiplicativeWeights
+    
+    sequences = []
+    
+    for _ in range(n_sequences):
+        n_steps = np.random.randint(2, max_steps + 1)
+        learning_rate = np.random.uniform(0.1, 0.5)
+        
+        mw = MultiplicativeWeights(n_experts, learning_rate)
+        
+        expert_predictions = []
+        losses = []
+        true_labels = []
+        weights_sequence = [mw.get_probabilities().tolist()]
+        
+        for step in range(n_steps):
+            true_label = np.random.randint(0, 2)
+            true_labels.append(true_label)
+            
+            step_preds = []
+            step_losses = []
+            for e in range(n_experts):
+                quality = np.random.uniform(0.3, 0.9)
+                correct = np.random.random() < quality
+                pred = true_label if correct else 1 - true_label
+                step_preds.append(pred)
+                step_losses.append(0.0 if pred == true_label else 1.0)
+            
+            expert_predictions.append(step_preds)
+            losses.append(step_losses)
+            
+            # Update MW weights
+            mw.update_weights(np.array(step_losses))
+            weights_sequence.append(mw.get_probabilities().tolist())
+        
+        sequences.append({
+            'expert_predictions': expert_predictions,
+            'losses': losses,
+            'weights_sequence': weights_sequence,
+            'true_labels': true_labels,
+            'n_steps': n_steps,
+            'learning_rate': learning_rate
+        })
+    
+    return sequences
+
+# ---------------------------------------------------------------------------
+# Trainers
+# ---------------------------------------------------------------------------
+
+class MWTrainer:
+    """Trainer for the learned multiplicative weights transformer."""
+    
+    def __init__(self, model: LearnedMWTransformer, 
+                 train_config: TrainingConfig,
+                 model_config: ModelConfig):
+        self.model = model
+        self.train_config = train_config
+        self.model_config = model_config
+        
+        # Optimizer
+        self.optimizer = torch.optim.AdamW(
+            model.parameters(),
+            lr=train_config.learning_rate,
+            weight_decay=train_config.weight_decay,
+            betas=(0.9, 0.95)
+        )
+        
+        # Loss functions
+        self.weight_loss_fn = nn.KLDivLoss(reduction='batchmean')
+        self.prediction_loss_fn = nn.BCEWithLogitsLoss()
+        self.cot_loss_fn = nn.CrossEntropyLoss(ignore_index=-100)
+        
+        self.step = 0
+        self.training_history = []
+        
+    def train_stage(self, stage: int, train_loader: DataLoader, 
+                   val_loader: DataLoader = None) -> Dict:
+        """Train for one stage of the multi-stage curriculum."""
+        logger.info(f"Training stage {stage}")
+        
+        stage_losses = []
+        
+        for epoch in range(self.train_config.max_epochs_per_stage):
+            epoch_loss = 0.0
+            n_batches = 0
+            
+            self.model.train()
+            for batch in train_loader:
+                loss = self._train_batch(batch, stage)
+                epoch_loss += loss
+                n_batches += 1
+                
+                if self.step % self.train_config.eval_interval == 0 and val_loader:
+                    val_metrics = self._evaluate(val_loader)
+                    logger.info(f"Step {self.step}: Val loss = {val_metrics['loss']:.4f}")
+                
+                self.step += 1
+            
+            avg_loss = epoch_loss / max(n_batches, 1)
+            stage_losses.append(avg_loss)
+            logger.info(f"Stage {stage}, Epoch {epoch}: Loss = {avg_loss:.4f}")
+        
+        return {'losses': stage_losses}
+    
+    def _train_batch(self, batch: Dict, stage: int) -> float:
+        """Train on a single batch."""
+        self.optimizer.zero_grad()
+        
+        input_ids = batch['input_ids']
+        weight_targets = batch['weight_targets']
+        prediction_targets = batch['prediction_targets']
+        target_mask = batch['target_mask']
+        
+        outputs = self.model(input_ids)
+        total_loss = 0.0
+        batch_size = target_mask.shape[0]
+        
+        # Weight prediction loss (KL divergence)
+        weight_losses = []
+        for i in range(batch_size):
+            sample_mask = target_mask[i]
+            if sample_mask.any():
+                wl = outputs['weight_logits'][i]
+                wt = weight_targets[i]
+                ml = min(len(sample_mask), wl.shape[0], wt.shape[0])
+                sample_mask = sample_mask[:ml]
+                wl = wl[:ml]
+                wt = wt[:ml]
+                if sample_mask.any():
+                    masked_logits = wl[sample_mask]
+                    masked_targets = wt[sample_mask]
+                    if len(masked_targets) > 0:
+                        valid = masked_targets.sum(dim=-1) > 0
+                        if valid.any():
+                            weight_log_probs = F.log_softmax(masked_logits[valid], dim=-1)
+                            w_loss = self.weight_loss_fn(weight_log_probs, masked_targets[valid])
+                            weight_losses.append(w_loss)
+        if weight_losses:
+            total_loss += torch.stack(weight_losses).mean()
+        
+        # Prediction loss (BCE)
+        pred_losses = []
+        for i in range(batch_size):
+            sample_mask = target_mask[i]
+            if sample_mask.any():
+                pl = outputs['prediction_logits'][i].squeeze(-1)
+                pt = prediction_targets[i]
+                ml = min(len(sample_mask), len(pl), len(pt))
+                sample_mask = sample_mask[:ml]
+                pl = pl[:ml]
+                pt = pt[:ml]
+                if sample_mask.any():
+                    masked_pl = pl[sample_mask]
+                    masked_pt = pt[sample_mask]
+                    if len(masked_pl) > 0:
+                        pred_losses.append(self.prediction_loss_fn(masked_pl, masked_pt))
+        if pred_losses:
+            total_loss += torch.stack(pred_losses).mean()
+        
+        # Discrete CoT loss (cross-entropy on weight tokens)
+        if 'cot_mask' in batch:
+            cot_mask = batch['cot_mask']
+            shift_logits = outputs['lm_logits'][:, :-1, :]
+            shift_labels = input_ids[:, 1:].clone()
+            shift_cot = cot_mask[:, 1:]
+            shift_labels[~shift_cot] = -100
+            if (shift_labels != -100).any():
+                cot_loss = self.cot_loss_fn(
+                    shift_logits.reshape(-1, shift_logits.size(-1)),
+                    shift_labels.reshape(-1)
+                )
+                total_loss += self.train_config.cot_loss_weight * cot_loss
+        
+        if isinstance(total_loss, (int, float)):
+            return 0.0
+        total_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
+        self.optimizer.step()
+        return total_loss.item()
+    
+    def _evaluate(self, val_loader: DataLoader) -> Dict:
+        """Evaluate on validation data."""
+        self.model.eval()
+        total_loss = 0.0
+        n_batches = 0
+        
+        with torch.no_grad():
+            for batch in val_loader:
+                input_ids = batch['input_ids']
+                weight_targets = batch['weight_targets']
+                prediction_targets = batch['prediction_targets']
+                target_mask = batch['target_mask']
+                
+                outputs = self.model(input_ids)
+                batch_loss = 0.0
+                batch_size = target_mask.shape[0]
+                
+                weight_losses = []
+                for i in range(batch_size):
+                    sm = target_mask[i]
+                    if sm.any():
+                        wl = outputs['weight_logits'][i]
+                        wt = weight_targets[i]
+                        ml = min(len(sm), wl.shape[0], wt.shape[0])
+                        sm = sm[:ml]; wl = wl[:ml]; wt = wt[:ml]
+                        if sm.any():
+                            ml2 = wl[sm]; mt2 = wt[sm]
+                            if len(mt2) > 0:
+                                v = mt2.sum(dim=-1) > 0
+                                if v.any():
+                                    wlp = F.log_softmax(ml2[v], dim=-1)
+                                    weight_losses.append(self.weight_loss_fn(wlp, mt2[v]))
+                if weight_losses:
+                    batch_loss += torch.stack(weight_losses).mean()
+                
+                pred_losses = []
+                for i in range(batch_size):
+                    sm = target_mask[i]
+                    if sm.any():
+                        pl = outputs['prediction_logits'][i].squeeze(-1)
+                        pt = prediction_targets[i]
+                        ml = min(len(sm), len(pl), len(pt))
+                        sm = sm[:ml]; pl = pl[:ml]; pt = pt[:ml]
+                        if sm.any():
+                            mpl = pl[sm]; mpt = pt[sm]
+                            if len(mpl) > 0:
+                                pred_losses.append(self.prediction_loss_fn(mpl, mpt))
+                if pred_losses:
+                    batch_loss += torch.stack(pred_losses).mean()
+                
+                if 'cot_mask' in batch:
+                    cot_mask = batch['cot_mask']
+                    shift_logits = outputs['lm_logits'][:, :-1, :]
+                    shift_labels = input_ids[:, 1:].clone()
+                    shift_cot = cot_mask[:, 1:]
+                    shift_labels[~shift_cot] = -100
+                    if (shift_labels != -100).any():
+                        cot_loss = self.cot_loss_fn(
+                            shift_logits.reshape(-1, shift_logits.size(-1)),
+                            shift_labels.reshape(-1)
+                        )
+                        batch_loss += self.train_config.cot_loss_weight * cot_loss
+                
+                total_loss += batch_loss.item() if not isinstance(batch_loss, float) else batch_loss
+                n_batches += 1
+        
+        return {'loss': total_loss / n_batches if n_batches > 0 else 0.0}
+
+
+class ContinuousCoTTrainer:
+    """
+    Trainer for ContinuousCoTTransformer.
+    
+    Two-part training:
+      1. Standard teacher-forced loss (weight KL + prediction BCE) via normal forward.
+      2. Thought recurrence loss: at each MW step, build context, run K thought
+         recurrences, and supervise the resulting weight prediction against
+         ground-truth MW weights.  This trains thought_proj end-to-end.
+    """
+    
+    def __init__(self, model: ContinuousCoTTransformer,
+                 train_config: TrainingConfig,
+                 model_config: ModelConfig):
+        self.model = model
+        self.train_config = train_config
+        self.model_config = model_config
+        
+        self.optimizer = torch.optim.AdamW(
+            model.parameters(),
+            lr=train_config.learning_rate,
+            weight_decay=train_config.weight_decay,
+            betas=(0.9, 0.95)
+        )
+        
+        # Loss functions
+        self.weight_loss_fn = nn.KLDivLoss(reduction='batchmean')
+        self.prediction_loss_fn = nn.BCEWithLogitsLoss()
+        self.cot_loss_fn = nn.CrossEntropyLoss(ignore_index=-100)
+        
+        self.step = 0
+        self.training_history = []
+    
+    def train_stage(self, stage: int, train_loader: DataLoader,
+                    val_loader: DataLoader = None) -> Dict:
+        """Train for one stage of the multi-stage curriculum."""
+        logger.info(f"Training stage {stage}")
+        stage_losses = []
+        
+        for epoch in range(self.train_config.max_epochs_per_stage):
+            epoch_loss = 0.0
+            n_batches = 0
+            
+            self.model.train()
+            for batch in train_loader:
+                loss = self._train_batch(batch, stage)
+                epoch_loss += loss
+                n_batches += 1
+                
+                if self.step % self.train_config.eval_interval == 0 and val_loader:
+                    val_metrics = self._evaluate(val_loader)
+                    logger.info(f"Step {self.step}: Val loss = {val_metrics['loss']:.4f}")
+                
+                self.step += 1
+            
+            avg_loss = epoch_loss / max(n_batches, 1)
+            stage_losses.append(avg_loss)
+            logger.info(f"Stage {stage}, Epoch {epoch}: Loss = {avg_loss:.4f}")
+        
+        return {'losses': stage_losses}
+    
+    def _train_batch(self, batch: Dict, stage: int) -> float:
+        """Train on a single batch with both standard and thought losses."""
+        self.optimizer.zero_grad()
+        
+        input_ids = batch['input_ids']
+        weight_targets = batch['weight_targets']
+        prediction_targets = batch['prediction_targets']
+        target_mask = batch['target_mask']
+        
+        # --- Part 1: Standard forward pass losses (same as MWTrainer) ---
+        outputs = self.model(input_ids)
+        total_loss = 0.0
+        batch_size = target_mask.shape[0]
+        
+        # Weight prediction loss
+        weight_losses = []
+        for i in range(batch_size):
+            sample_mask = target_mask[i]
+            if sample_mask.any():
+                wl = outputs['weight_logits'][i]
+                wt = weight_targets[i]
+                ml = min(len(sample_mask), wl.shape[0], wt.shape[0])
+                sample_mask = sample_mask[:ml]
+                wl = wl[:ml]; wt = wt[:ml]
+                if sample_mask.any():
+                    masked_logits = wl[sample_mask]
+                    masked_targets = wt[sample_mask]
+                    if len(masked_targets) > 0:
+                        valid = masked_targets.sum(dim=-1) > 0
+                        if valid.any():
+                            weight_log_probs = F.log_softmax(masked_logits[valid], dim=-1)
+                            w_loss = self.weight_loss_fn(weight_log_probs, masked_targets[valid])
+                            weight_losses.append(w_loss)
+        if weight_losses:
+            total_loss += torch.stack(weight_losses).mean()
+        
+        # Prediction loss
+        pred_losses = []
+        for i in range(batch_size):
+            sample_mask = target_mask[i]
+            if sample_mask.any():
+                pl = outputs['prediction_logits'][i].squeeze(-1)
+                pt = prediction_targets[i]
+                ml = min(len(sample_mask), len(pl), len(pt))
+                sample_mask = sample_mask[:ml]
+                pl = pl[:ml]; pt = pt[:ml]
+                if sample_mask.any():
+                    masked_pl = pl[sample_mask]
+                    masked_pt = pt[sample_mask]
+                    if len(masked_pl) > 0:
+                        pred_losses.append(self.prediction_loss_fn(masked_pl, masked_pt))
+        if pred_losses:
+            total_loss += torch.stack(pred_losses).mean()
+        
+        # Discrete CoT loss (keeps lm_head trained)
+        if 'cot_mask' in batch:
+            cot_mask = batch['cot_mask']
+            shift_logits = outputs['lm_logits'][:, :-1, :]
+            shift_labels = input_ids[:, 1:].clone()
+            shift_cot = cot_mask[:, 1:]
+            shift_labels[~shift_cot] = -100
+            if (shift_labels != -100).any():
+                cot_loss = self.cot_loss_fn(
+                    shift_logits.reshape(-1, shift_logits.size(-1)),
+                    shift_labels.reshape(-1)
+                )
+                total_loss += self.train_config.cot_loss_weight * cot_loss
+        
+        # --- Part 2: Thought recurrence loss ---
+        # For each sample, at each weight-target position, build context
+        # embeddings up to that point, run thought recurrence, supervise weights.
+        thought_losses = []
+        device = input_ids.device
+        for i in range(batch_size):
+            sample_mask = target_mask[i]
+            if not sample_mask.any():
+                continue
+            sample_ids = input_ids[i]
+            sample_wt = weight_targets[i]
+            target_positions = sample_mask.nonzero(as_tuple=True)[0]
+            
+            # Subsample positions to limit compute (at most 4 per sample)
+            if len(target_positions) > 4:
+                indices = torch.randperm(len(target_positions), device=device)[:4]
+                target_positions = target_positions[indices]
+            
+            for pos in target_positions:
+                pos = pos.item()
+                gt_weights = sample_wt[pos]
+                if gt_weights.sum() <= 0:
+                    continue
+                
+                # Context = tokens up to (but not including) this position
+                ctx_ids = sample_ids[:pos].unsqueeze(0)  # [1, pos]
+                if ctx_ids.size(1) == 0:
+                    continue
+                ctx_embeds = self.model.token_embedding(ctx_ids)
+                
+                thought_weights, _ = self.model.think(ctx_embeds)
+                # KL loss: thought_weights vs ground truth
+                thought_log_probs = torch.log(thought_weights + 1e-10)
+                gt = gt_weights.unsqueeze(0).to(device)  # [1, n_experts]
+                t_loss = self.weight_loss_fn(thought_log_probs, gt)
+                thought_losses.append(t_loss)
+        
+        if thought_losses:
+            total_loss += torch.stack(thought_losses).mean()
+        
+        # Backward
+        if isinstance(total_loss, (int, float)):
+            return 0.0
+        total_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
+        self.optimizer.step()
+        return total_loss.item()
+    
+    def _evaluate(self, val_loader: DataLoader) -> Dict:
+        """Evaluate on validation data."""
+        self.model.eval()
+        total_loss = 0.0
+        n_batches = 0
+        
+        with torch.no_grad():
+            for batch in val_loader:
+                input_ids = batch['input_ids']
+                weight_targets = batch['weight_targets']
+                prediction_targets = batch['prediction_targets']
+                target_mask = batch['target_mask']
+                
+                outputs = self.model(input_ids)
+                batch_loss = 0.0
+                batch_size = target_mask.shape[0]
+                
+                weight_losses = []
+                for i in range(batch_size):
+                    sm = target_mask[i]
+                    if sm.any():
+                        wl = outputs['weight_logits'][i]
+                        wt = weight_targets[i]
+                        ml = min(len(sm), wl.shape[0], wt.shape[0])
+                        sm = sm[:ml]; wl = wl[:ml]; wt = wt[:ml]
+                        if sm.any():
+                            ml2 = wl[sm]; mt2 = wt[sm]
+                            if len(mt2) > 0:
+                                v = mt2.sum(dim=-1) > 0
+                                if v.any():
+                                    wlp = F.log_softmax(ml2[v], dim=-1)
+                                    weight_losses.append(
+                                        self.weight_loss_fn(wlp, mt2[v]))
+                if weight_losses:
+                    batch_loss += torch.stack(weight_losses).mean()
+                
+                pred_losses = []
+                for i in range(batch_size):
+                    sm = target_mask[i]
+                    if sm.any():
+                        pl = outputs['prediction_logits'][i].squeeze(-1)
+                        pt = prediction_targets[i]
+                        ml = min(len(sm), len(pl), len(pt))
+                        sm = sm[:ml]; pl = pl[:ml]; pt = pt[:ml]
+                        if sm.any():
+                            mpl = pl[sm]; mpt = pt[sm]
+                            if len(mpl) > 0:
+                                pred_losses.append(
+                                    self.prediction_loss_fn(mpl, mpt))
+                if pred_losses:
+                    batch_loss += torch.stack(pred_losses).mean()
+                
+                if 'cot_mask' in batch:
+                    cot_mask = batch['cot_mask']
+                    shift_logits = outputs['lm_logits'][:, :-1, :]
+                    shift_labels = input_ids[:, 1:].clone()
+                    shift_cot = cot_mask[:, 1:]
+                    shift_labels[~shift_cot] = -100
+                    if (shift_labels != -100).any():
+                        cot_loss = self.cot_loss_fn(
+                            shift_logits.reshape(-1, shift_logits.size(-1)),
+                            shift_labels.reshape(-1)
+                        )
+                        batch_loss += self.train_config.cot_loss_weight * cot_loss
+                
+                total_loss += batch_loss.item() if not isinstance(batch_loss, float) else batch_loss
+                n_batches += 1
+        
+        return {'loss': total_loss / n_batches if n_batches > 0 else 0.0}
