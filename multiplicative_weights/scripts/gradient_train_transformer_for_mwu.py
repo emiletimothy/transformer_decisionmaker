@@ -20,14 +20,14 @@ import json
 from typing import Dict, List, Tuple
 import argparse
 
-from src.learned_mw_transformer import (
+from learned_mw_transformer import (
     LearnedMWTransformer, ModelConfig, TrainingConfig, MWTrainer,
     MWSequenceDataset, MWTokenizer, generate_mw_training_data, collate_fn,
     generate_sequence_with_cot,
     ContinuousCoTTransformer, ContinuousCoTTrainer,
     generate_sequence_with_continuous_cot
 )
-from src.multiplicative_weights import MultiplicativeWeights
+from multiplicative_weights import MultiplicativeWeights
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -63,7 +63,6 @@ def create_stage_datasets(all_sequences: List[Dict], stage: int,
             truncated_seq = {
                 'expert_predictions': seq['expert_predictions'][:stage],
                 'losses': seq['losses'][:stage],
-                'weights_sequence': seq['weights_sequence'][:stage+1],
                 'true_labels': seq['true_labels'][:stage],
                 'n_steps': stage,
                 'learning_rate': seq['learning_rate']
@@ -77,7 +76,6 @@ def create_stage_datasets(all_sequences: List[Dict], stage: int,
                         prev_seq = {
                             'expert_predictions': seq['expert_predictions'][:prev_stage],
                             'losses': seq['losses'][:prev_stage],
-                            'weights_sequence': seq['weights_sequence'][:prev_stage+1],
                             'true_labels': seq['true_labels'][:prev_stage],
                             'n_steps': prev_stage,
                             'learning_rate': seq['learning_rate']
@@ -156,11 +154,10 @@ def calculate_sequence_regret(seq: Dict, learned_decisions: np.ndarray,
 
 def evaluate_learned_model(model: LearnedMWTransformer, tokenizer: MWTokenizer,
                           test_sequences: List[Dict], device: torch.device) -> Dict:
-    """Evaluate the learned model against ground truth MW algorithm."""
+    """Evaluate the learned model against ground truth MW algorithm (teacher-forced)."""
     model.eval()
     
     results = {
-        'weight_mse': [],
         'prediction_accuracy': [],
         'sequence_accuracy': [],
         'learned_regret': [],
@@ -169,79 +166,48 @@ def evaluate_learned_model(model: LearnedMWTransformer, tokenizer: MWTokenizer,
     }
     
     with torch.no_grad():
-        for seq in test_sequences[:100]:  # Test on subset
-            # Get ground truth
-            gt_weights = seq['weights_sequence']
-            gt_labels = seq['true_labels']
-            
-            # Encode sequence for model
+        for seq in test_sequences[:100]:
             tokens = tokenizer.encode_sequence(seq)
             input_ids = torch.tensor([tokens['input_ids']], device=device)
             
-            # Get model predictions
             outputs = model(input_ids)
-            weight_logits = outputs['weight_logits'][0]  # Remove batch dim
             pred_logits = outputs['prediction_logits'][0]
             
-            # Extract predictions at decision points
             target_mask = torch.tensor(tokens['target_mask'], device=device)
-            weight_targets = torch.tensor(tokens['weight_targets'], device=device)
             
-            # Calculate metrics
-            if target_mask.any():
-                # Handle shape mismatches
-                min_len = min(len(target_mask), weight_logits.shape[0], weight_targets.shape[0])
-                target_mask = target_mask[:min_len]
-                weight_logits = weight_logits[:min_len]
-                weight_targets = weight_targets[:min_len]
+            if not target_mask.any():
+                continue
+            
+            min_len = min(len(target_mask), pred_logits.shape[0])
+            target_mask = target_mask[:min_len]
+            pred_logits = pred_logits[:min_len]
+            prediction_targets = torch.tensor(tokens['prediction_targets'], device=device)[:min_len]
+            
+            pred_decisions = torch.sigmoid(pred_logits[target_mask]) > 0.5
+            gt_decisions = prediction_targets[target_mask] > 0.5
+            
+            if len(pred_decisions) > 0:
+                accuracy = (pred_decisions == gt_decisions).float().mean()
+                results['prediction_accuracy'].append(accuracy.item())
                 
-                if target_mask.any():
-                    # Weight prediction accuracy
-                    pred_weights = torch.softmax(weight_logits[target_mask], dim=-1)
-                    gt_weights_tensor = weight_targets[target_mask]
+                seq_correct = (pred_decisions == gt_decisions).all()
+                results['sequence_accuracy'].append(seq_correct.item())
+                
+                optimal_mw_decisions = get_optimal_mw_decisions(seq)
+                learned_regret, optimal_regret = calculate_sequence_regret(
+                    seq, pred_decisions.cpu().numpy(), optimal_mw_decisions
+                )
+                results['learned_regret'].append(learned_regret)
+                results['optimal_regret'].append(optimal_regret)
+                
+                if optimal_regret > 1e-6:
+                    regret_ratio = learned_regret / optimal_regret
+                elif learned_regret < 1e-6:
+                    regret_ratio = 1.0
                 else:
-                    continue
-                
-                # Only compare where we have valid targets
-                valid_targets = (gt_weights_tensor.sum(dim=-1) > 0)
-                if valid_targets.any():
-                    mse = torch.mean((pred_weights[valid_targets] - gt_weights_tensor[valid_targets]) ** 2)
-                    results['weight_mse'].append(mse.item())
-                
-                # Prediction accuracy
-                pred_logits = pred_logits[:min_len]  # Ensure same length
-                prediction_targets = torch.tensor(tokens['prediction_targets'], device=device)[:min_len]
-                
-                pred_decisions = torch.sigmoid(pred_logits[target_mask]) > 0.5
-                gt_decisions = prediction_targets[target_mask] > 0.5
-                
-                if len(pred_decisions) > 0:
-                    accuracy = (pred_decisions == gt_decisions).float().mean()
-                    results['prediction_accuracy'].append(accuracy.item())
-                    
-                    # Sequence-level accuracy
-                    seq_correct = (pred_decisions == gt_decisions).all()
-                    results['sequence_accuracy'].append(seq_correct.item())
-                    
-                    # Calculate regret for this sequence
-                    # First, get optimal MW decisions by running the algorithm
-                    optimal_mw_decisions = get_optimal_mw_decisions(seq)
-                    learned_regret, optimal_regret = calculate_sequence_regret(
-                        seq, pred_decisions.cpu().numpy(), optimal_mw_decisions
-                    )
-                    results['learned_regret'].append(learned_regret)
-                    results['optimal_regret'].append(optimal_regret)
-                    
-                    # Regret ratio (learned / optimal)
-                    if optimal_regret > 1e-6:  # Avoid division by very small numbers
-                        regret_ratio = learned_regret / optimal_regret
-                    elif learned_regret < 1e-6 and optimal_regret < 1e-6:
-                        regret_ratio = 1.0  # Both are essentially zero
-                    else:
-                        regret_ratio = 10.0  # Cap at 10x instead of infinity
-                    results['regret_ratio'].append(regret_ratio)
+                    regret_ratio = 10.0
+                results['regret_ratio'].append(regret_ratio)
     
-    # Aggregate results
     final_results = {}
     for key, values in results.items():
         if values:
@@ -257,15 +223,15 @@ def evaluate_learned_model(model: LearnedMWTransformer, tokenizer: MWTokenizer,
 
 def evaluate_with_cot(model: LearnedMWTransformer, tokenizer: MWTokenizer,
                       test_sequences: List[Dict], device: torch.device) -> Dict:
-    """Evaluate the learned model using chain-of-thought generation.
+    """Evaluate the learned model using autoregressive generation.
     
-    Instead of teacher-forced single-pass prediction, the model autoregressively
-    generates weight tokens (its reasoning steps) at each MW step before deciding.
+    The model autoregressively processes each step: sees expert predictions,
+    makes a decision, then observes the true label and losses before
+    proceeding to the next step.
     """
     model.eval()
     
     results = {
-        'cot_weight_mse': [],
         'cot_prediction_accuracy': [],
         'cot_sequence_accuracy': [],
         'cot_learned_regret': [],
@@ -273,27 +239,14 @@ def evaluate_with_cot(model: LearnedMWTransformer, tokenizer: MWTokenizer,
         'cot_regret_ratio': []
     }
     
-    for seq in test_sequences[:50]:  # Smaller subset since CoT generation is slower
+    for seq in test_sequences[:50]:
         try:
             cot_result = generate_sequence_with_cot(model, seq, tokenizer, device)
         except Exception as e:
-            logger.warning(f"CoT generation failed: {e}")
+            logger.warning(f"Autoregressive generation failed: {e}")
             continue
         
         learned_decisions = cot_result['decisions']
-        cot_weights = cot_result['cot_weights']
-        
-        # Compare generated weights to ground truth MW weights
-        gt_weights = seq['weights_sequence'][1:]  # Skip initial uniform weights
-        for i in range(min(len(cot_weights), len(gt_weights))):
-            gt_w = np.array(gt_weights[i])
-            cot_w = np.array(cot_weights[i])
-            # Normalize CoT weights to sum to 1
-            cot_w_sum = cot_w.sum()
-            if cot_w_sum > 0:
-                cot_w = cot_w / cot_w_sum
-            mse = np.mean((cot_w - gt_w) ** 2)
-            results['cot_weight_mse'].append(mse)
         
         # Compare decisions to ground truth labels
         gt_labels = np.array(seq['true_labels'])
@@ -432,26 +385,103 @@ def plot_regret_trajectories(model, tokenizer, test_sequences, device, save_path
     
     return save_path
 
-def get_regret_trajectory(model, tokenizer, seq, device):
-    """Get regret trajectory for a single sequence."""
-    # Get model decisions
-    tokens = tokenizer.encode_sequence(seq)
-    input_ids = torch.tensor([tokens['input_ids']], device=device)
+def evaluate_with_continuous_cot(model, tokenizer, test_sequences, device):
+    """Evaluate a ContinuousCoTTransformer using think_and_predict at each step.
     
-    with torch.no_grad():
-        outputs = model(input_ids)
-        pred_logits = outputs['prediction_logits'][0]
-        target_mask = torch.tensor(tokens['target_mask'], device=device)
+    This is the primary evaluation for continuous-CoT models: at each MW step,
+    the model sees expert predictions and prior history, runs K thought
+    recurrences in hidden space, and makes a decision.
+    """
+    model.eval()
+    
+    results = {
+        'prediction_accuracy': [],
+        'sequence_accuracy': [],
+        'learned_regret': [],
+        'optimal_regret': [],
+        'regret_ratio': []
+    }
+    
+    for seq in test_sequences[:100]:
+        try:
+            cot_result = generate_sequence_with_continuous_cot(
+                model, seq, tokenizer, device
+            )
+        except Exception as e:
+            logger.warning(f"Continuous CoT generation failed: {e}")
+            continue
         
-        # Handle shape mismatches
-        min_len = min(len(target_mask), len(pred_logits))
-        target_mask = target_mask[:min_len]
-        pred_logits = pred_logits[:min_len]
+        learned_decisions = cot_result['decisions']
+        gt_labels = np.array(seq['true_labels'])
+        n_steps = min(len(learned_decisions), len(gt_labels))
         
-        if target_mask.any():
-            learned_decisions = (torch.sigmoid(pred_logits[target_mask]) > 0.5).cpu().numpy()
+        if n_steps > 0:
+            accuracy = np.mean(learned_decisions[:n_steps] == gt_labels[:n_steps])
+            results['prediction_accuracy'].append(accuracy)
+            
+            seq_correct = np.all(learned_decisions[:n_steps] == gt_labels[:n_steps])
+            results['sequence_accuracy'].append(float(seq_correct))
+            
+            optimal_decisions = get_optimal_mw_decisions(seq)
+            learned_regret, optimal_regret = calculate_sequence_regret(
+                seq, learned_decisions, optimal_decisions
+            )
+            results['learned_regret'].append(learned_regret)
+            results['optimal_regret'].append(optimal_regret)
+            
+            if optimal_regret > 1e-6:
+                regret_ratio = learned_regret / optimal_regret
+            elif learned_regret < 1e-6:
+                regret_ratio = 1.0
+            else:
+                regret_ratio = 10.0
+            results['regret_ratio'].append(regret_ratio)
+    
+    final_results = {}
+    for key, values in results.items():
+        if values:
+            final_results[key] = {
+                'mean': np.mean(values),
+                'std': np.std(values),
+                'count': len(values)
+            }
         else:
-            learned_decisions = np.array([])
+            final_results[key] = {'mean': 0.0, 'std': 0.0, 'count': 0}
+    
+    return final_results
+
+
+def get_regret_trajectory(model, tokenizer, seq, device):
+    """Get regret trajectory for a single sequence.
+    
+    Dispatches to continuous-CoT generation for ContinuousCoTTransformer,
+    or teacher-forced forward pass for LearnedMWTransformer.
+    """
+    if isinstance(model, ContinuousCoTTransformer):
+        # Use continuous thought recurrence at each decision point
+        with torch.no_grad():
+            cot_result = generate_sequence_with_continuous_cot(
+                model, seq, tokenizer, device
+            )
+            learned_decisions = cot_result['decisions']
+    else:
+        # Teacher-forced forward pass
+        tokens = tokenizer.encode_sequence(seq)
+        input_ids = torch.tensor([tokens['input_ids']], device=device)
+        
+        with torch.no_grad():
+            outputs = model(input_ids)
+            pred_logits = outputs['prediction_logits'][0]
+            target_mask = torch.tensor(tokens['target_mask'], device=device)
+            
+            min_len = min(len(target_mask), len(pred_logits))
+            target_mask = target_mask[:min_len]
+            pred_logits = pred_logits[:min_len]
+            
+            if target_mask.any():
+                learned_decisions = (torch.sigmoid(pred_logits[target_mask]) > 0.5).cpu().numpy()
+            else:
+                learned_decisions = np.array([])
     
     # Get optimal MW decisions
     optimal_decisions = get_optimal_mw_decisions(seq)
@@ -582,12 +612,12 @@ def analyze_attention_patterns(model: LearnedMWTransformer, tokenizer: MWTokeniz
 def main():
     parser = argparse.ArgumentParser(description='Train Learned MW Transformer')
     parser.add_argument('--n_experts', type=int, default=4, help='Number of experts')
-    parser.add_argument('--max_steps', type=int, default=10, help='Maximum sequence length')
+    parser.add_argument('--max_steps', type=int, default=50, help='Maximum sequence length')
     parser.add_argument('--n_train', type=int, default=3000, help='Number of training sequences')
     parser.add_argument('--n_val', type=int, default=500, help='Number of validation sequences')
-    parser.add_argument('--max_stages', type=int, default=6, help='Maximum training stages')
+    parser.add_argument('--max_stages', type=int, default=10, help='Maximum training stages')
     parser.add_argument('--device', type=str, default='auto', help='Device to use (auto/cpu/cuda)')
-    parser.add_argument('--cot_mode', type=str, default='discrete',
+    parser.add_argument('--cot_mode', type=str, default='continuous',
                         choices=['discrete', 'continuous'],
                         help='Chain-of-thought mode: discrete (token-level) or continuous (hidden-state)')
     parser.add_argument('--n_thought_steps', type=int, default=4,
@@ -621,15 +651,16 @@ def main():
         n_layers=2,
         n_experts=args.n_experts,
         vocab_size=tokenizer.vocab_size,
-        max_sequence_length=512,
+        max_sequence_length=1024,
         n_thought_steps=args.n_thought_steps if args.cot_mode == 'continuous' else 0
     )
     
     # Training configuration
+    batch_size = 8 if args.cot_mode == 'continuous' else 16
     train_config = TrainingConfig(
         learning_rate=1e-4,
         weight_decay=1e-2,
-        batch_size=16,  # Smaller batch size for memory
+        batch_size=batch_size,
         max_epochs_per_stage=25,
         max_stages=args.max_stages,
         stage_mixing_prob=0.1
@@ -693,18 +724,27 @@ def main():
             'results': stage_results
         })
         
-        # Evaluate after each stage
+        # Evaluate after each stage — truncate to current stage length
         logger.info(f"Evaluating after stage {stage}...")
-        eval_results = evaluate_learned_model(model, tokenizer, all_val_sequences[:100], device)
+        stage_eval_seqs = [
+            {k: (v[:stage] if isinstance(v, list) and k in ('expert_predictions', 'losses', 'true_labels') else (stage if k == 'n_steps' else v))
+             for k, v in seq.items()}
+            for seq in all_val_sequences[:100] if seq['n_steps'] >= stage
+        ]
+        if args.cot_mode == 'continuous':
+            eval_results = evaluate_with_continuous_cot(
+                model, tokenizer, stage_eval_seqs[:50], device
+            )
+        else:
+            eval_results = evaluate_learned_model(
+                model, tokenizer, stage_eval_seqs[:100], device
+            )
         stage_evaluations[f'stage_{stage}'] = eval_results
         
         # Log key metrics
         logger.info(f"Stage {stage} Results:")
-        logger.info(f"  Weight MSE: {eval_results['weight_mse']['mean']:.4f}")
-        logger.info(f"  Prediction Accuracy: {eval_results['prediction_accuracy']['mean']:.4f}")
-        logger.info(f"  Learned Regret: {eval_results['learned_regret']['mean']:.4f}")
-        logger.info(f"  Optimal Regret: {eval_results['optimal_regret']['mean']:.4f}")
-        logger.info(f"  Regret Ratio: {eval_results['regret_ratio']['mean']:.4f}")
+        for metric, values in eval_results.items():
+            logger.info(f"  {metric}: {values['mean']:.4f} ± {values['std']:.4f}")
     
     # Final evaluation
     logger.info("\n" + "="*50)
@@ -713,31 +753,39 @@ def main():
     
     # Generate test sequences
     test_sequences = generate_mw_training_data(200, args.max_steps, args.n_experts)
-    final_results = evaluate_learned_model(model, tokenizer, test_sequences, device)
     
-    logger.info("Final Results (Teacher-Forced):")
-    for metric, values in final_results.items():
-        logger.info(f"  {metric}: {values['mean']:.4f} ± {values['std']:.4f} (n={values['count']})")
-    
-    # Chain-of-thought evaluation (autoregressive weight generation)
-    logger.info("\nEvaluating with chain-of-thought generation...")
-    cot_results = evaluate_with_cot(model, tokenizer, test_sequences, device)
-    
-    logger.info("Final Results (Chain-of-Thought):")
-    for metric, values in cot_results.items():
-        logger.info(f"  {metric}: {values['mean']:.4f} ± {values['std']:.4f} (n={values['count']})")
-    
-    # Merge CoT results into final_results for saving
-    final_results.update(cot_results)
+    if args.cot_mode == 'continuous':
+        # Primary eval: continuous thought recurrence at each decision
+        logger.info("Evaluating with continuous chain-of-thought...")
+        final_results = evaluate_with_continuous_cot(
+            model, tokenizer, test_sequences, device
+        )
+        logger.info("Final Results (Continuous CoT):")
+        for metric, values in final_results.items():
+            logger.info(f"  {metric}: {values['mean']:.4f} ± {values['std']:.4f} (n={values['count']})")
+    else:
+        final_results = evaluate_learned_model(model, tokenizer, test_sequences, device)
+        logger.info("Final Results (Teacher-Forced):")
+        for metric, values in final_results.items():
+            logger.info(f"  {metric}: {values['mean']:.4f} ± {values['std']:.4f} (n={values['count']})")
+        
+        # Autoregressive evaluation
+        logger.info("\nEvaluating with autoregressive generation...")
+        cot_results = evaluate_with_cot(model, tokenizer, test_sequences, device)
+        logger.info("Final Results (Autoregressive):")
+        for metric, values in cot_results.items():
+            logger.info(f"  {metric}: {values['mean']:.4f} ± {values['std']:.4f} (n={values['count']})")
+        final_results.update(cot_results)
     
     # Ensure save directory exists before writing any files
     save_dir = Path(args.save_dir)
     save_dir.mkdir(parents=True, exist_ok=True)
     
-    # Analyze attention patterns
-    logger.info("\nAnalyzing attention patterns...")
-    save_path = os.path.join(args.save_dir, 'learned_mw_attention_patterns.png')
-    attention_weights = analyze_attention_patterns(model, tokenizer, test_sequences, device, save_path)
+    # Analyze attention patterns (only for discrete models — standard forward)
+    if args.cot_mode != 'continuous':
+        logger.info("\nAnalyzing attention patterns...")
+        save_path = os.path.join(args.save_dir, 'learned_mw_attention_patterns.png')
+        attention_weights = analyze_attention_patterns(model, tokenizer, test_sequences, device, save_path)
     
     # Plot regret trajectories (showing growth over time)
     logger.info("Generating regret trajectory plots...")
@@ -779,7 +827,7 @@ def main():
     plt.grid(True, alpha=0.3)
     
     # Plot evaluation metrics
-    metrics = ['weight_mse', 'prediction_accuracy', 'sequence_accuracy']
+    metrics = ['prediction_accuracy', 'sequence_accuracy', 'regret_ratio']
     for i, metric in enumerate(metrics):
         plt.subplot(2, 2, i + 2)
         if metric in final_results:

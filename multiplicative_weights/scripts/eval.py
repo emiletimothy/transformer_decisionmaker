@@ -17,8 +17,8 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from typing import List, Dict, Tuple, Optional
 
-from src.multiplicative_weights import MultiplicativeWeights
-from src.learned_mw_transformer import (
+from multiplicative_weights import MultiplicativeWeights
+from learned_mw_transformer import (
     LearnedMWTransformer, ModelConfig, MWTokenizer,
     generate_sequence_with_cot,
     ContinuousCoTTransformer, generate_sequence_with_continuous_cot

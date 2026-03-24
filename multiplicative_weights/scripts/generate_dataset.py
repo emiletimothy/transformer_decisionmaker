@@ -13,19 +13,20 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import numpy as np
 import json
 import argparse
-from src.multiplicative_weights import MultiplicativeWeights
+from multiplicative_weights import MultiplicativeWeights
 
 
 def generate_single_sequence(n_experts: int, n_steps: int, learning_rate: float):
-    """Generate one MW training sequence."""
-    mw = MultiplicativeWeights(n_experts, learning_rate)
-
+    """Generate one MW training sequence.
+    
+    No MW weights are stored — the model must learn to track them implicitly.
+    Weights can be recomputed from losses for evaluation via compute_mw_weights().
+    """
     # Expert qualities are fixed for the entire sequence
     expert_qualities = [np.random.uniform(0.3, 0.9) for _ in range(n_experts)]
 
     expert_predictions = []
     losses = []
-    weights_sequence = [mw.get_probabilities().tolist()]
     true_labels = []
 
     for step in range(n_steps):
@@ -45,14 +46,9 @@ def generate_single_sequence(n_experts: int, n_steps: int, learning_rate: float)
         expert_predictions.append(step_preds)
         losses.append(step_losses)
 
-        # Update MW weights
-        mw.update_weights(np.array(step_losses))
-        weights_sequence.append(mw.get_probabilities().tolist())
-
     return {
         'expert_predictions': expert_predictions,
         'losses': losses,
-        'weights_sequence': weights_sequence,
         'true_labels': true_labels,
         'n_steps': n_steps,
         'learning_rate': learning_rate,
@@ -123,8 +119,6 @@ def main():
     print(f"  expert_predictions[0]: {sample['expert_predictions'][0]}")
     print(f"  losses[0]:             {sample['losses'][0]}")
     print(f"  true_labels:           {sample['true_labels']}")
-    print(f"  weights_sequence[0]:   {[f'{w:.4f}' for w in sample['weights_sequence'][0]]}")
-    print(f"  weights_sequence[-1]:  {[f'{w:.4f}' for w in sample['weights_sequence'][-1]]}")
 
 
 if __name__ == '__main__':
