@@ -47,7 +47,8 @@ class TrainingConfig:
     learning_rate: float = 1e-4
     weight_decay: float = 1e-2
     batch_size: int = 32
-    max_epochs_per_stage: int = 25
+    max_epochs_per_stage: int = 10
+    early_stopping_patience: int = 3
     max_stages: int = 12  # Up to 12-step reasoning
     stage_mixing_prob: float = 0.1
     eval_interval: int = 50
@@ -1001,12 +1002,16 @@ class ContinuousCoTTrainer:
         """Train for one stage of the Coconut-style curriculum.
         
         Sets thought depth = min(stage, K_max) for this stage.
+        Uses early stopping if val loss doesn't improve for `patience` epochs.
         """
         n_thoughts = min(stage, self.model.config.n_thought_steps)
         self.model.n_thought_steps = n_thoughts
         logger.info(f"Training stage {stage} with {n_thoughts} thought steps")
         
         stage_losses = []
+        best_val_loss = float('inf')
+        patience_counter = 0
+        patience = self.train_config.early_stopping_patience
         
         for epoch in range(self.train_config.max_epochs_per_stage):
             epoch_loss = 0.0
@@ -1027,6 +1032,19 @@ class ContinuousCoTTrainer:
             avg_loss = epoch_loss / max(n_batches, 1)
             stage_losses.append(avg_loss)
             logger.info(f"Stage {stage}, Epoch {epoch}: Loss = {avg_loss:.4f}")
+            
+            # Early stopping check on training loss
+            if val_loader:
+                val_metrics = self._evaluate(val_loader)
+                val_loss = val_metrics['loss']
+                if val_loss < best_val_loss - 1e-4:
+                    best_val_loss = val_loss
+                    patience_counter = 0
+                else:
+                    patience_counter += 1
+                if patience_counter >= patience:
+                    logger.info(f"Early stopping at epoch {epoch} (no improvement for {patience} epochs)")
+                    break
         
         return {'losses': stage_losses}
     

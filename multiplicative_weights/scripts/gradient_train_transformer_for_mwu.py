@@ -646,8 +646,8 @@ def main():
     
     # Model configuration
     model_config = ModelConfig(
-        d_model=768,
-        n_heads=8,
+        d_model=256,
+        n_heads=4,
         n_layers=2,
         n_experts=args.n_experts,
         vocab_size=tokenizer.vocab_size,
@@ -656,12 +656,13 @@ def main():
     )
     
     # Training configuration
-    batch_size = 8 if args.cot_mode == 'continuous' else 16
+    batch_size = 16 if args.cot_mode == 'continuous' else 32
     train_config = TrainingConfig(
-        learning_rate=1e-4,
+        learning_rate=3e-4,
         weight_decay=1e-2,
         batch_size=batch_size,
-        max_epochs_per_stage=25,
+        max_epochs_per_stage=10,
+        early_stopping_patience=3,
         max_stages=args.max_stages,
         stage_mixing_prob=0.1
     )
