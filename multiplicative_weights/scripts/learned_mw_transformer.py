@@ -418,7 +418,7 @@ class ContinuousCoTTransformer(nn.Module):
             outputs['attention_weights'] = attn
         return outputs
     
-    def think(self, context_embeddings):
+    def think(self, context_embeddings, return_attention=False):
         """
         Coconut-style continuous thought recurrence.
         
@@ -438,13 +438,16 @@ class ContinuousCoTTransformer(nn.Module):
         current = context_embeddings  # [batch, growing_len, d_model]
         
         thought_hiddens = []
+        all_attention = []  # attention from each recurrence + final pass
         
         for k in range(K):
             total_len = current.size(1)
             pos_ids = torch.arange(total_len, device=device).unsqueeze(0)
             positioned = current + self.position_embedding(pos_ids)
             
-            h, _ = self._run_blocks(self.dropout(positioned))
+            h, attn = self._run_blocks(self.dropout(positioned), return_attention)
+            if return_attention:
+                all_attention.append(attn)
             last_h = h[:, -1:, :]  # [batch, 1, d_model]
             thought_hiddens.append(last_h.squeeze(1))
             
@@ -456,15 +459,20 @@ class ContinuousCoTTransformer(nn.Module):
         total_len = current.size(1)
         pos_ids = torch.arange(total_len, device=device).unsqueeze(0)
         positioned = current + self.position_embedding(pos_ids)
-        h, _ = self._run_blocks(self.dropout(positioned))
+        h, attn = self._run_blocks(self.dropout(positioned), return_attention)
+        if return_attention:
+            all_attention.append(attn)
         
         final_h = h[:, -1, :]  # [batch, d_model]
         weight_logits = self.weight_head(final_h)
         thought_weights = F.softmax(weight_logits, dim=-1)
         
-        return thought_weights, torch.stack(thought_hiddens, dim=1), final_h
+        result = (thought_weights, torch.stack(thought_hiddens, dim=1), final_h)
+        if return_attention:
+            return result + (all_attention,)
+        return result
     
-    def think_and_predict(self, context_ids):
+    def think_and_predict(self, context_ids, return_attention=False):
         """
         Convenience method: embed context token ids, run thought recurrence,
         return weight predictions and decision logit.
@@ -474,10 +482,14 @@ class ContinuousCoTTransformer(nn.Module):
         """
         embeddings = self.token_embedding(context_ids)  # no position yet; think() adds them
         
-        weights, thought_hiddens, final_h = self.think(embeddings)
-        pred_logit = self.prediction_head(final_h)  # [batch, 1]
-        
-        return weights, pred_logit
+        if return_attention:
+            weights, thought_hiddens, final_h, all_attention = self.think(embeddings, return_attention=True)
+            pred_logit = self.prediction_head(final_h)  # [batch, 1]
+            return weights, pred_logit, all_attention
+        else:
+            weights, thought_hiddens, final_h = self.think(embeddings)
+            pred_logit = self.prediction_head(final_h)  # [batch, 1]
+            return weights, pred_logit
 
 
 def generate_sequence_with_continuous_cot(model, sequence, tokenizer, device):
@@ -1023,15 +1035,35 @@ class ContinuousCoTTrainer:
                 epoch_loss += loss
                 n_batches += 1
                 
+                # Step-level wandb logging
+                try:
+                    import wandb
+                    if wandb.run is not None:
+                        wandb.log({'train/step_loss': loss, 'global_step': self.step})
+                except (ImportError, Exception):
+                    pass
+                
                 if self.step % self.train_config.eval_interval == 0 and val_loader:
                     val_metrics = self._evaluate(val_loader)
                     logger.info(f"Step {self.step}: Val loss = {val_metrics['loss']:.4f}")
+                    try:
+                        import wandb
+                        if wandb.run is not None:
+                            wandb.log({'val/step_loss': val_metrics['loss'], 'global_step': self.step})
+                    except (ImportError, Exception):
+                        pass
                 
                 self.step += 1
             
             avg_loss = epoch_loss / max(n_batches, 1)
             stage_losses.append(avg_loss)
             logger.info(f"Stage {stage}, Epoch {epoch}: Loss = {avg_loss:.4f}")
+            try:
+                import wandb
+                if wandb.run is not None:
+                    wandb.log({'train/epoch_loss': avg_loss, 'stage': stage, 'epoch': epoch, 'global_step': self.step})
+            except (ImportError, Exception):
+                pass
             
             # Early stopping check on training loss
             if val_loader:

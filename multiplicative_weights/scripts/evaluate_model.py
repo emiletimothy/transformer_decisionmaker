@@ -16,6 +16,8 @@ Usage:
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
+import matplotlib
+matplotlib.use('Agg')
 import argparse
 import torch
 import numpy as np
@@ -359,6 +361,99 @@ def plot_weight_heatmaps(all_scenario_data: Dict, save_path: str):
     print(f"  Saved weight heatmaps → {save_path}")
 
 
+def plot_attention_heatmaps(model, tokenizer, sequences, device, save_path: str):
+    """Fig 4: Attention heatmaps from the final thought pass.
+
+    For a representative sequence, shows attention weights for each layer and
+    head from the final forward pass of think_and_predict (after all K thought
+    embeddings are appended).  Token labels annotate the x/y axes so you can
+    see which context positions the model attends to when making a decision.
+    """
+    model.eval()
+    seq = sequences[0]  # pick first sequence
+
+    # Build context token ids for the last decision point (all steps)
+    token_ids = [tokenizer.START_TOKEN]
+    token_labels = ['START']
+
+    for step in range(len(seq['expert_predictions'])):
+        token_ids.append(tokenizer.STEP_TOKENS[step % 100])
+        token_labels.append(f'S{step}')
+
+        for expert_idx, pred in enumerate(seq['expert_predictions'][step]):
+            token_ids.append(tokenizer.EXPERT_TOKENS[expert_idx])
+            token_labels.append(f'E{expert_idx}')
+            tok = tokenizer.PRED_1_TOKEN if pred == 1 else tokenizer.PRED_0_TOKEN
+            token_ids.append(tok)
+            token_labels.append(f'P{pred}')
+
+        # For all steps except the last, append SEP + label + losses (history)
+        if step < len(seq['expert_predictions']) - 1:
+            token_ids.append(tokenizer.SEP_TOKEN)
+            token_labels.append('SEP')
+
+            true_label = seq['true_labels'][step]
+            tok = tokenizer.PRED_1_TOKEN if true_label == 1 else tokenizer.PRED_0_TOKEN
+            token_ids.append(tok)
+            token_labels.append(f'Y{true_label}')
+
+            for expert_idx, loss_val in enumerate(seq['losses'][step]):
+                token_ids.append(tokenizer.EXPERT_TOKENS[expert_idx])
+                token_labels.append(f'E{expert_idx}')
+                token_ids.append(tokenizer.discretize_loss(loss_val))
+                token_labels.append(f'L{loss_val:.0f}')
+
+    context_tensor = torch.tensor([token_ids], dtype=torch.long, device=device)
+
+    with torch.no_grad():
+        weights, pred_logit, all_attention = model.think_and_predict(
+            context_tensor, return_attention=True
+        )
+
+    # all_attention is a list of (K+1) passes, each is a list of n_layers tensors
+    # We plot the FINAL pass (index -1) which has the full context + thought tokens
+    final_pass_attn = all_attention[-1]  # list of [batch, n_heads, seq, seq]
+    n_layers = len(final_pass_attn)
+    n_heads = final_pass_attn[0].shape[1]
+
+    # Extend labels for thought tokens
+    n_context = len(token_ids)
+    n_total = final_pass_attn[0].shape[2]
+    for i in range(n_total - n_context):
+        token_labels.append(f'T{i}')
+
+    fig, axes = plt.subplots(n_layers, n_heads,
+                             figsize=(5 * n_heads, 4 * n_layers),
+                             squeeze=False)
+    fig.suptitle('Attention Heatmaps (Final Thought Pass)', fontsize=14, y=1.02)
+
+    for layer_idx in range(n_layers):
+        attn = final_pass_attn[layer_idx][0].cpu().numpy()  # [n_heads, seq, seq]
+        for head_idx in range(n_heads):
+            ax = axes[layer_idx][head_idx]
+            head_attn = attn[head_idx]  # [seq, seq]
+
+            im = ax.imshow(head_attn, aspect='auto', cmap='viridis', vmin=0)
+            ax.set_title(f'Layer {layer_idx}, Head {head_idx}', fontsize=10)
+
+            # Annotate axes for small sequences; skip labels for large ones
+            if n_total <= 40:
+                ax.set_xticks(range(n_total))
+                ax.set_xticklabels(token_labels[:n_total], rotation=90, fontsize=5)
+                ax.set_yticks(range(n_total))
+                ax.set_yticklabels(token_labels[:n_total], fontsize=5)
+            else:
+                ax.set_xlabel('Key position')
+                ax.set_ylabel('Query position')
+
+            fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=200, bbox_inches='tight')
+    plt.close()
+    print(f"  Saved attention heatmaps → {save_path}")
+
+
 def plot_ood_bar_chart(ood_metrics: Dict, save_path: str):
     """Fig 3: OOD generalization — regret ratio & accuracy vs sequence length."""
     labels = list(ood_metrics.keys())
@@ -573,6 +668,13 @@ def main():
     combined_metrics.update(ood_len_metrics)
     plot_ood_bar_chart(combined_metrics,
                        str(output_dir / 'ood_bar_chart.png'))
+
+    if isinstance(model, ContinuousCoTTransformer):
+        # Pick a few sequences of different lengths for attention visualization
+        attn_seqs = [s for s in all_scenario_data['in_distribution']['sequences'] if s['n_steps'] >= 3][:5]
+        if attn_seqs:
+            plot_attention_heatmaps(model, tokenizer, attn_seqs, device,
+                                   str(output_dir / 'attention_heatmaps.png'))
 
     print(f"\n✅ Evaluation complete. Results saved to {output_dir}/")
 

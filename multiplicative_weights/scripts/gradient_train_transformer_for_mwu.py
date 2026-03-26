@@ -10,6 +10,8 @@ import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
+import matplotlib
+matplotlib.use('Agg')  # headless backend — must be before pyplot import
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
@@ -19,6 +21,12 @@ from pathlib import Path
 import json
 from typing import Dict, List, Tuple
 import argparse
+
+try:
+    import wandb
+    HAS_WANDB = True
+except ImportError:
+    HAS_WANDB = False
 
 from learned_mw_transformer import (
     LearnedMWTransformer, ModelConfig, TrainingConfig, MWTrainer,
@@ -623,6 +631,9 @@ def main():
     parser.add_argument('--n_thought_steps', type=int, default=4,
                         help='Number of continuous thought recurrence steps (only for continuous mode)')
     parser.add_argument('--save_dir', type=str, default='../figures', help='Directory to save results')
+    parser.add_argument('--wandb_project', type=str, default=None, help='Weights & Biases project name')
+    parser.add_argument('--wandb_entity', type=str, default=None, help='Weights & Biases entity (user/team)')
+    parser.add_argument('--wandb_run_name', type=str, default=None, help='Weights & Biases run name')
     
     args = parser.parse_args()
     
@@ -638,6 +649,26 @@ def main():
         device = torch.device(args.device)
     
     logger.info(f"Using device: {device}")
+    
+    # Initialize wandb
+    use_wandb = HAS_WANDB and args.wandb_project is not None
+    if use_wandb:
+        wandb.init(
+            project=args.wandb_project,
+            entity=args.wandb_entity,
+            name=args.wandb_run_name,
+            config={
+                'n_experts': args.n_experts,
+                'max_steps': args.max_steps,
+                'n_train': args.n_train,
+                'n_val': args.n_val,
+                'max_stages': args.max_stages,
+                'cot_mode': args.cot_mode,
+                'n_thought_steps': args.n_thought_steps,
+                'device': str(device),
+            }
+        )
+        logger.info(f"wandb initialized: {wandb.run.url}")
     
     # Create datasets
     train_dataset, val_dataset, tokenizer = create_datasets(
@@ -675,11 +706,28 @@ def main():
     else:
         model = LearnedMWTransformer(model_config).to(device)
         trainer = MWTrainer(model, train_config, model_config)
-    logger.info(f"Model has {sum(p.numel() for p in model.parameters())} parameters")
+    n_params = sum(p.numel() for p in model.parameters())
+    logger.info(f"Model has {n_params} parameters")
+    
+    if use_wandb:
+        wandb.config.update({
+            'd_model': model_config.d_model,
+            'n_heads': model_config.n_heads,
+            'n_layers': model_config.n_layers,
+            'learning_rate': train_config.learning_rate,
+            'batch_size': train_config.batch_size,
+            'max_epochs_per_stage': train_config.max_epochs_per_stage,
+            'early_stopping_patience': train_config.early_stopping_patience,
+            'n_params': n_params,
+        })
     
     # Get all training sequences for stage-wise training
     all_train_sequences = train_dataset.sequences
     all_val_sequences = val_dataset.sequences
+    
+    # Ensure save directory exists early (needed for checkpoints)
+    save_dir = Path(args.save_dir)
+    save_dir.mkdir(parents=True, exist_ok=True)
     
     # Multi-stage training
     training_history = []
@@ -725,6 +773,25 @@ def main():
             'results': stage_results
         })
         
+        # Checkpoint model after each stage
+        checkpoint_dir = save_dir / 'checkpoints'
+        checkpoint_dir.mkdir(parents=True, exist_ok=True)
+        ckpt_path = checkpoint_dir / f'model_stage_{stage}.pt'
+        torch.save({
+            'stage': stage,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': trainer.optimizer.state_dict(),
+            'model_config': model_config,
+            'cot_mode': args.cot_mode,
+            'tokenizer_config': {
+                'n_experts': tokenizer.n_experts,
+                'vocab_size': tokenizer.vocab_size
+            },
+            'training_history': training_history,
+            'step': trainer.step,
+        }, ckpt_path)
+        logger.info(f"Checkpoint saved: {ckpt_path}")
+        
         # Evaluate after each stage — truncate to current stage length
         logger.info(f"Evaluating after stage {stage}...")
         stage_eval_seqs = [
@@ -746,6 +813,20 @@ def main():
         logger.info(f"Stage {stage} Results:")
         for metric, values in eval_results.items():
             logger.info(f"  {metric}: {values['mean']:.4f} ± {values['std']:.4f}")
+        
+        if use_wandb:
+            wandb_log = {'stage': stage}
+            # Stage training losses
+            stage_losses = stage_results['losses']
+            if stage_losses:
+                wandb_log['train/epoch_loss_final'] = stage_losses[-1]
+                wandb_log['train/epoch_loss_best'] = min(stage_losses)
+                wandb_log['train/n_epochs'] = len(stage_losses)
+            # Stage eval metrics
+            for metric, values in eval_results.items():
+                wandb_log[f'eval/{metric}'] = values['mean']
+                wandb_log[f'eval/{metric}_std'] = values['std']
+            wandb.log(wandb_log)
     
     # Final evaluation
     logger.info("\n" + "="*50)
@@ -777,10 +858,6 @@ def main():
         for metric, values in cot_results.items():
             logger.info(f"  {metric}: {values['mean']:.4f} ± {values['std']:.4f} (n={values['count']})")
         final_results.update(cot_results)
-    
-    # Ensure save directory exists before writing any files
-    save_dir = Path(args.save_dir)
-    save_dir.mkdir(parents=True, exist_ok=True)
     
     # Analyze attention patterns (only for discrete models — standard forward)
     if args.cot_mode != 'continuous':
@@ -843,6 +920,15 @@ def main():
     plt.close()
     
     logger.info(f"\n🎉 Training completed! Results saved to {save_dir}")
+    
+    # Log final results to wandb
+    if use_wandb:
+        final_wandb = {}
+        for metric, values in final_results.items():
+            final_wandb[f'final/{metric}'] = values['mean']
+            final_wandb[f'final/{metric}_std'] = values['std']
+        wandb.log(final_wandb)
+        wandb.finish()
     
     # Summary
     print("\n" + "="*60)
