@@ -5,7 +5,6 @@ Generate eval datasets for all test scenarios and save to data/eval/.
 Scenarios:
   - Structural: in_distribution, one_dominant, all_mediocre, two_good_two_bad, adversarial
   - OOD sequence lengths: 5, 10, 15, 20, 30, 50
-  - OOD learning rates: 0.01, 0.1, 0.25, 0.5, 0.9
 """
 
 import sys, os
@@ -16,7 +15,7 @@ import json
 import argparse
 
 
-def generate_scenario(name, n_steps, n_experts, learning_rate, n_sequences, seed=None):
+def generate_scenario(name, n_steps, n_experts, n_sequences, seed=None):
     """Generate test sequences for a named scenario."""
     if seed is not None:
         np.random.seed(seed)
@@ -70,7 +69,6 @@ def generate_scenario(name, n_steps, n_experts, learning_rate, n_sequences, seed
             'losses': losses,
             'true_labels': true_labels,
             'n_steps': n_steps,
-            'learning_rate': learning_rate,
             'expert_qualities': expert_qualities,
         })
 
@@ -93,11 +91,11 @@ def main():
 
     # ── Structural scenarios ──
     structural = {
-        'in_distribution':  dict(n_steps=20, learning_rate=0.25),
-        'one_dominant':     dict(n_steps=20, learning_rate=0.25),
-        'all_mediocre':     dict(n_steps=20, learning_rate=0.25),
-        'two_good_two_bad': dict(n_steps=20, learning_rate=0.25),
-        'adversarial':      dict(n_steps=20, learning_rate=0.25),
+        'in_distribution':  dict(n_steps=20),
+        'one_dominant':     dict(n_steps=20),
+        'all_mediocre':     dict(n_steps=20),
+        'two_good_two_bad': dict(n_steps=20),
+        'adversarial':      dict(n_steps=20),
     }
 
     structural_data = {}
@@ -119,25 +117,9 @@ def main():
     ood_len_data = {}
     for label, n_steps in ood_lengths.items():
         seqs = generate_scenario('in_distribution', n_steps=n_steps, n_experts=ne,
-                                 learning_rate=0.25, n_sequences=N, seed=args.seed)
+                                 n_sequences=N, seed=args.seed)
         ood_len_data[label] = seqs
         print(f"  ood_lengths/{label}: {len(seqs)} sequences")
-
-    # ── OOD: learning rates ──
-    ood_lrs = {
-        'lr_0.01': 0.01,
-        'lr_0.1':  0.10,
-        'lr_0.25': 0.25,
-        'lr_0.5':  0.50,
-        'lr_0.9':  0.90,
-    }
-
-    ood_lr_data = {}
-    for label, lr in ood_lrs.items():
-        seqs = generate_scenario('in_distribution', n_steps=20, n_experts=ne,
-                                 learning_rate=lr, n_sequences=N, seed=args.seed)
-        ood_lr_data[label] = seqs
-        print(f"  ood_lr/{label}: {len(seqs)} sequences")
 
     # ── Save ──
     dataset = {
@@ -148,7 +130,6 @@ def main():
         },
         'structural': structural_data,
         'ood_lengths': ood_len_data,
-        'ood_lr': ood_lr_data,
     }
 
     out_path = os.path.join(out_dir, 'eval_dataset.json')

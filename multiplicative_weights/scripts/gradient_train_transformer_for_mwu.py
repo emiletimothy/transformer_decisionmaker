@@ -73,7 +73,6 @@ def create_stage_datasets(all_sequences: List[Dict], stage: int,
                 'losses': seq['losses'][:stage],
                 'true_labels': seq['true_labels'][:stage],
                 'n_steps': stage,
-                'learning_rate': seq['learning_rate']
             }
             stage_sequences.append(truncated_seq)
             
@@ -86,7 +85,6 @@ def create_stage_datasets(all_sequences: List[Dict], stage: int,
                             'losses': seq['losses'][:prev_stage],
                             'true_labels': seq['true_labels'][:prev_stage],
                             'n_steps': prev_stage,
-                            'learning_rate': seq['learning_rate']
                         }
                         stage_sequences.append(prev_seq)
     
@@ -95,7 +93,8 @@ def create_stage_datasets(all_sequences: List[Dict], stage: int,
 def get_optimal_mw_decisions(seq: Dict) -> np.ndarray:
     """Get decisions made by optimal MW algorithm on a sequence."""
     n_experts = len(seq['expert_predictions'][0])
-    learning_rate = seq['learning_rate']
+    n_steps = seq['n_steps']
+    learning_rate = np.sqrt(np.log(n_experts) / max(n_steps, 1))
     
     # Initialize MW algorithm
     mw = MultiplicativeWeights(n_experts, learning_rate)
@@ -687,13 +686,13 @@ def main():
     )
     
     # Training configuration
-    batch_size = 16 if args.cot_mode == 'continuous' else 32
+    batch_size = 32
     train_config = TrainingConfig(
         learning_rate=3e-4,
         weight_decay=1e-2,
         batch_size=batch_size,
-        max_epochs_per_stage=10,
-        early_stopping_patience=3,
+        max_epochs_per_stage=30,
+        early_stopping_patience=12,
         max_stages=args.max_stages,
         stage_mixing_prob=0.1
     )

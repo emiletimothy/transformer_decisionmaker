@@ -788,7 +788,6 @@ def generate_mw_training_data(n_sequences: int, max_steps: int = 10,
     
     for _ in range(n_sequences):
         n_steps = np.random.randint(3, max_steps + 1)
-        learning_rate = np.random.uniform(0.05, 0.5)
         
         # Expert qualities are fixed for the entire sequence
         expert_qualities = [np.random.uniform(0.3, 0.9) for _ in range(n_experts)]
@@ -817,7 +816,6 @@ def generate_mw_training_data(n_sequences: int, max_steps: int = 10,
             'losses': losses,
             'true_labels': true_labels,
             'n_steps': n_steps,
-            'learning_rate': learning_rate
         })
     
     return sequences
@@ -832,7 +830,8 @@ def compute_mw_weights(sequence: Dict, n_experts: int = 4) -> List[List[float]]:
     """
     from scripts.multiplicative_weights import MultiplicativeWeights
     
-    lr = sequence.get('learning_rate', 0.25)
+    n_steps = sequence['n_steps']
+    lr = np.sqrt(np.log(n_experts) / max(n_steps, 1))
     mw = MultiplicativeWeights(n_experts, lr)
     weights = [mw.get_probabilities().tolist()]
     
@@ -1005,6 +1004,7 @@ class ContinuousCoTTrainer:
         
         self.prediction_loss_fn = nn.BCEWithLogitsLoss()
         self.device = next(model.parameters()).device
+        self.scheduler = None
         
         self.step = 0
         self.training_history = []
@@ -1019,6 +1019,13 @@ class ContinuousCoTTrainer:
         n_thoughts = min(stage, self.model.config.n_thought_steps)
         self.model.n_thought_steps = n_thoughts
         logger.info(f"Training stage {stage} with {n_thoughts} thought steps")
+        
+        # Cosine LR schedule per stage: decays to lr/10 over max_epochs
+        T_max = self.train_config.max_epochs_per_stage * len(train_loader)
+        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            self.optimizer, T_max=max(T_max, 1),
+            eta_min=self.train_config.learning_rate / 10
+        )
         
         stage_losses = []
         best_val_loss = float('inf')
@@ -1042,6 +1049,9 @@ class ContinuousCoTTrainer:
                         wandb.log({'train/step_loss': loss, 'global_step': self.step})
                 except (ImportError, Exception):
                     pass
+                
+                if self.scheduler is not None:
+                    self.scheduler.step()
                 
                 if self.step % self.train_config.eval_interval == 0 and val_loader:
                     val_metrics = self._evaluate(val_loader)

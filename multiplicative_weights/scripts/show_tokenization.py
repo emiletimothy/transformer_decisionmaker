@@ -16,7 +16,6 @@ print("=" * 70)
 print("RAW SEQUENCE (first example from dataset)")
 print("=" * 70)
 print(f"n_steps:            {seq['n_steps']}")
-print(f"learning_rate:      {seq['learning_rate']:.4f}")
 print(f"true_labels:        {seq['true_labels']}")
 print()
 for step in range(min(2, seq['n_steps'])):

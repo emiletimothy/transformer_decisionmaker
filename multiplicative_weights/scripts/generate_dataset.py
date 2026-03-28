@@ -16,7 +16,7 @@ import argparse
 from multiplicative_weights import MultiplicativeWeights
 
 
-def generate_single_sequence(n_experts: int, n_steps: int, learning_rate: float):
+def generate_single_sequence(n_experts: int, n_steps: int):
     """Generate one MW training sequence.
     
     No MW weights are stored — the model must learn to track them implicitly.
@@ -51,7 +51,6 @@ def generate_single_sequence(n_experts: int, n_steps: int, learning_rate: float)
         'losses': losses,
         'true_labels': true_labels,
         'n_steps': n_steps,
-        'learning_rate': learning_rate,
     }
 
 
@@ -60,8 +59,7 @@ def generate_mw_training_data(n_sequences: int, max_steps: int, n_experts: int):
     sequences = []
     for _ in range(n_sequences):
         n_steps = np.random.randint(3, max_steps + 1)
-        learning_rate = float(np.random.uniform(0.05, 0.5))
-        seq = generate_single_sequence(n_experts, n_steps, learning_rate)
+        seq = generate_single_sequence(n_experts, n_steps)
         sequences.append(seq)
     return sequences
 
@@ -115,7 +113,7 @@ def main():
 
     # Print a sample sequence for sanity check
     sample = train[0]
-    print(f"\nSample sequence (n_steps={sample['n_steps']}, lr={sample['learning_rate']:.3f}):")
+    print(f"\nSample sequence (n_steps={sample['n_steps']}):")
     print(f"  expert_predictions[0]: {sample['expert_predictions'][0]}")
     print(f"  losses[0]:             {sample['losses'][0]}")
     print(f"  true_labels:           {sample['true_labels']}")

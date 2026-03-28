@@ -60,7 +60,6 @@ def make_fixed_best_scenario(n_experts: int = 4, n_steps: int = 10,
         'losses': losses,
         'true_labels': true_labels,
         'n_steps': n_steps,
-        'learning_rate': 0.3,
         'name': f'Fixed Best (expert {best_expert})',
     }
 
@@ -97,7 +96,6 @@ def make_alternating_best_scenario(n_experts: int = 4, n_steps: int = 12,
         'losses': losses,
         'true_labels': true_labels,
         'n_steps': n_steps,
-        'learning_rate': 0.3,
         'name': f'Alternating Best (period={period})',
     }
 
@@ -134,7 +132,6 @@ def make_shifting_best_scenario(n_experts: int = 4, n_steps: int = 12) -> Dict:
         'losses': losses,
         'true_labels': true_labels,
         'n_steps': n_steps,
-        'learning_rate': 0.3,
         'name': 'Shifting Best (gradual)',
     }
 
@@ -143,9 +140,10 @@ def make_shifting_best_scenario(n_experts: int = 4, n_steps: int = 12) -> Dict:
 # Run MW and Transformer on a scenario
 # ---------------------------------------------------------------------------
 
-def run_exact_mw(scenario: Dict, n_experts: int, learning_rate: float = 0.3
-                 ) -> List[np.ndarray]:
+def run_exact_mw(scenario: Dict, n_experts: int) -> List[np.ndarray]:
     """Run exact MW algorithm, return weight trajectory (including initial)."""
+    n_steps = scenario['n_steps']
+    learning_rate = np.sqrt(np.log(n_experts) / max(n_steps, 1))
     mw = MultiplicativeWeights(n_experts, learning_rate)
     weight_trajectory = [mw.get_probabilities()]
 
@@ -348,8 +346,7 @@ def main():
         print(f"\nScenario: {scenario['name']}")
 
         # Exact MW
-        mw_traj = run_exact_mw(scenario, n_experts,
-                               learning_rate=scenario['learning_rate'])
+        mw_traj = run_exact_mw(scenario, n_experts)
         mw_trajectories.append(mw_traj)
         print(f"  MW final weights:          {mw_traj[-1].round(4)}")
 

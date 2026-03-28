@@ -36,7 +36,7 @@ from learned_mw_transformer import (
 # ── Helpers ──────────────────────────────────────────────────────────────
 
 def generate_scenario(name: str, n_steps: int, n_experts: int,
-                      learning_rate: float, n_sequences: int = 50,
+                      n_sequences: int = 50,
                       seed: int = None) -> List[Dict]:
     """Generate test sequences for a named scenario."""
     if seed is not None:
@@ -93,7 +93,6 @@ def generate_scenario(name: str, n_steps: int, n_experts: int,
             'losses': losses,
             'true_labels': true_labels,
             'n_steps': n_steps,
-            'learning_rate': learning_rate,
             'expert_qualities': expert_qualities,
         })
 
@@ -222,7 +221,8 @@ def compute_regret(sequence, pred_decisions) -> Tuple[List[float], List[float]]:
     n_experts = len(losses_list[0])
 
     # Optimal MW decisions
-    mw = MultiplicativeWeights(n_experts, sequence['learning_rate'])
+    learning_rate = np.sqrt(np.log(n_experts) / max(n_steps, 1))
+    mw = MultiplicativeWeights(n_experts, learning_rate)
     optimal_decisions = []
     for step in range(n_steps):
         weights = mw.get_probabilities()
@@ -550,28 +550,26 @@ def main():
     # 1. Define test scenarios
     # ══════════════════════════════════════════════════════════════════════
     structural_scenarios = {
-        'in_distribution':  dict(n_steps=7, n_experts=n_experts, learning_rate=0.25),
-        'one_dominant':     dict(n_steps=7, n_experts=n_experts, learning_rate=0.25),
-        'all_mediocre':     dict(n_steps=7, n_experts=n_experts, learning_rate=0.25),
-        'two_good_two_bad': dict(n_steps=7, n_experts=n_experts, learning_rate=0.25),
-        'adversarial':      dict(n_steps=7, n_experts=n_experts, learning_rate=0.25),
+        'in_distribution':  dict(n_steps=7, n_experts=n_experts),
+        'one_dominant':     dict(n_steps=7, n_experts=n_experts),
+        'all_mediocre':     dict(n_steps=7, n_experts=n_experts),
+        'two_good_two_bad': dict(n_steps=7, n_experts=n_experts),
+        'adversarial':      dict(n_steps=7, n_experts=n_experts),
     }
 
     ood_seq_lengths = {
-        'steps=5':  dict(name='in_distribution', n_steps=5,  n_experts=n_experts, learning_rate=0.25),
-        'steps=8':  dict(name='in_distribution', n_steps=8,  n_experts=n_experts, learning_rate=0.25),
-        'steps=10': dict(name='in_distribution', n_steps=10, n_experts=n_experts, learning_rate=0.25),
-        'steps=15': dict(name='in_distribution', n_steps=15, n_experts=n_experts, learning_rate=0.25),
-        'steps=20': dict(name='in_distribution', n_steps=20, n_experts=n_experts, learning_rate=0.25),
-        'steps=30': dict(name='in_distribution', n_steps=30, n_experts=n_experts, learning_rate=0.25),
+        'steps=5':  dict(name='in_distribution', n_steps=5,  n_experts=n_experts),
+        'steps=8':  dict(name='in_distribution', n_steps=8,  n_experts=n_experts),
+        'steps=10': dict(name='in_distribution', n_steps=10, n_experts=n_experts),
+        'steps=15': dict(name='in_distribution', n_steps=15, n_experts=n_experts),
+        'steps=20': dict(name='in_distribution', n_steps=20, n_experts=n_experts),
+        'steps=30': dict(name='in_distribution', n_steps=30, n_experts=n_experts),
     }
 
+    # OOD learning rate comparison no longer applies — η is now fixed at sqrt(ln(N)/T)
+    # Keeping a single entry for backward compatibility of the evaluation flow.
     ood_lr = {
-        'lr=0.01':  dict(name='in_distribution', n_steps=7, n_experts=n_experts, learning_rate=0.01),
-        'lr=0.1':   dict(name='in_distribution', n_steps=7, n_experts=n_experts, learning_rate=0.10),
-        'lr=0.25':  dict(name='in_distribution', n_steps=7, n_experts=n_experts, learning_rate=0.25),
-        'lr=0.5':   dict(name='in_distribution', n_steps=7, n_experts=n_experts, learning_rate=0.50),
-        'lr=0.9':   dict(name='in_distribution', n_steps=7, n_experts=n_experts, learning_rate=0.90),
+        'eta=sqrt(ln(N)/T)': dict(name='in_distribution', n_steps=7, n_experts=n_experts),
     }
 
     # ══════════════════════════════════════════════════════════════════════
