@@ -131,6 +131,9 @@ class TabularSARSA:
         plt.close()
         return fig
 
+# ---------------------------------------------------------------------------
+# Quick self-test
+# ---------------------------------------------------------------------------
 
 def make_chain_mdp(n_states: int = 4, n_actions: int = 2,
                    seed: int = 42) -> np.ndarray:
