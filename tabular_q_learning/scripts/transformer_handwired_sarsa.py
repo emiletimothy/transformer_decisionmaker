@@ -1,61 +1,80 @@
 """
-PyTorch Handwired SARSA Transformer (Section 4.1 Construction).
+True PyTorch Handwired SARSA Transformer (Section 4.1 Construction).
 
-Implements the 3-layer causal transformer from Section 4 of the paper using
-PyTorch nn.Module — analogous to transformer_handwired_multiplicative_weights.py
-for Section 3.
+Implements the 3-layer causal transformer from Section 4 using strictly
+mathematical block-matrix operations (W_Q, W_K, W_V) that pass through
+standard PyTorch F.softmax(). No Python array-slicing shortcuts or
+if/else branching — all routing is done via additive gating
+(Complementary Superposition, Lemma 4.2(i)) and sinusoidal offset
+matching (RoPE-style).
 
-The transformer maintains a growing causal sequence (COCONUT) of event tokens
-v^(0), v^(1), ..., v^(t-1), which serve as content-addressable Q-value memory.
-One MDP transition is processed per step(); the emitted event token v^(t) is
-appended to the sequence after each round.
+Token layout (positions 0..N in the growing COCONUT sequence):
+    Position 0: <Null>  — zero identity, zero buffer; attention sink
+    Position 1: <Start> — superposition of all identities; Q=0 fallback
+    Position 2+: event tokens v^(t) emitted after each round
 
-Embedding layout  (d_model = 3 * D_TE + D_PE,  D_TE = 12):
-    id(x)   = x[0:12]      one-hot token identity + e_val scalar lane
-    buf1(x) = x[12:24]     first buffer  (rewards, stored Q-values)
-    buf2(x) = x[24:36]     second buffer (retrieved Q-values)
-    pos(x)  = x[36:]       positional encoding (recency signal)
+Embedding layout (d_model = 3 * D_TE + D_PE):
+    id(x)   = x[0 : D_TE]           one-hot token identity + e_val scalar
+    buf1(x) = x[D_TE : 2*D_TE]      first buffer  (rewards, stored Q-values)
+    buf2(x) = x[2*D_TE : 3*D_TE]    second buffer (retrieved Q-values)
+    pos(x)  = x[3*D_TE:]            positional encoding [f(i), sin/cos pairs, pad]
 
-Token vocabulary  (vocab_size = 11):
-    0 = Start
-    1–4 = S0–S3  (states)
-    5–6 = A0–A1  (actions)
-    7 = r         (reward token)
-    8 = Qcurr     (workspace)
-    9 = Qnext     (workspace)
-    10 = Update   (workspace / emitted event token)
+Token vocabulary (vocab_size = 12):
+    0 = <Null>    5 = A0         9  = Qcurr
+    1 = <Start>   6 = A1         10 = Qnext
+    2 = S0        7 = (unused)   11 = Update
+    3 = S1        8 = R (reward)
+    4 = S2
+    (S3 = index within TOK_S list, mapped to vocab index 2..5)
 """
 
+import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-from typing import Dict, List, Tuple
 from dataclasses import dataclass
+from typing import List
 import logging
 
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# Constants
+# Constants & Vocabulary
 # ---------------------------------------------------------------------------
+TOK_NULL   = 0
+TOK_START  = 1
+TOK_S      = [2, 3, 4, 5]   # TOK_S[s] = vocab index for state s
+TOK_A      = [6, 7]          # TOK_A[a] = vocab index for action a
+TOK_R      = 8
+TOK_QCURR  = 9
+TOK_QNEXT  = 10
+TOK_UPDATE = 11
 
-TOK_START  = 0
-TOK_S      = [1, 2, 3, 4]   # TOK_S[s] = token index for state s
-TOK_A      = [5, 6]          # TOK_A[a] = token index for action a
-TOK_R      = 7
-TOK_QCURR  = 8
-TOK_QNEXT  = 9
-TOK_UPDATE = 10
+VOCAB_SIZE = 12
 
-VOCAB_SIZE = 11
-D_TE       = 12          # token-embedding subspace dim  (|V| + 1 for e_val lane)
-E_VAL      = D_TE - 1   # = 11: scalar lane orthogonal to all token one-hots
-D_PE       = 12          # positional-encoding subspace dim
-D_MODEL    = 3 * D_TE + D_PE   # = 48
+D_TE    = 13             # Token embedding dim (indices 0..12; index 12 = e_val scalar lane)
+E_VAL   = D_TE - 1      # = 12: scalar lane orthogonal to all token one-hots
+D_SIN   = 10            # 5 pairs of sinusoidal encodings
+D_F     = 1             # Recency signal f(i)
+D_PE    = 12            # Positional encoding dim (1 f(i) + 10 sin/cos + 1 pad)
+D_MODEL = 3 * D_TE + D_PE   # = 39 + 12 = 51
 
-BETA    = 100.0
-EPS_REC = 0.01
+BETA    = 1000.0         # Content-match temperature
+EPS_REC = 0.2            # Recency scaling (BETA * EPS_REC = 200 < 1000 content gap)
+XI      = 1000.0         # Additive penalty scalar for complementary gating
+
+# Subspace boundary indices
+ID_START    = 0
+ID_END      = D_TE           # 13
+BUF1_START  = D_TE           # 13
+BUF1_END    = 2 * D_TE       # 26
+BUF2_START  = 2 * D_TE       # 26
+BUF2_END    = 3 * D_TE       # 39
+PE_START    = 3 * D_TE       # 39
+PE_F_IDX    = PE_START        # 39: f(i) recency signal
+PE_SIN_START = PE_START + 1   # 40: start of sinusoidal PE
+PE_SIN_END   = PE_SIN_START + D_SIN  # 50
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -70,43 +89,96 @@ class SARSATokenConfig:
     gamma:     float = 0.9
     beta:      float = BETA
     eps_rec:   float = EPS_REC
+    xi:        float = XI
     d_te:      int   = D_TE
     d_pe:      int   = D_PE
-    vocab_size:int   = VOCAB_SIZE
+    vocab_size: int  = VOCAB_SIZE
 
 
 # ---------------------------------------------------------------------------
-# Attention module  (identical to the MWU version)
+# Positional Encoding Math
 # ---------------------------------------------------------------------------
 
-class MultiHeadAttention(nn.Module):
-    """Standard scaled dot-product multi-head attention."""
+def get_sinusoidal_vec(pos: int, d_sin: int = D_SIN) -> torch.Tensor:
+    """Returns the sinusoidal vector [sin(w0*p), cos(w0*p), ...] for absolute position p."""
+    p = torch.zeros(d_sin, dtype=torch.float64)
+    for k in range(d_sin // 2):
+        w_k = 1.0 / (10000.0 ** (2 * k / d_sin))
+        p[2 * k]     = math.sin(pos * w_k)
+        p[2 * k + 1] = math.cos(pos * w_k)
+    return p
 
-    def __init__(self, d_model: int, n_heads: int):
+
+def get_rotation_matrix(ell: int, d_sin: int = D_SIN) -> torch.Tensor:
+    """
+    Block-diagonal rotation matrix R(ell) for RoPE-style offset matching.
+
+    For a [sin, cos] vector convention, each 2x2 block is:
+        [cos(ell*w_k)   sin(ell*w_k)]
+        [-sin(ell*w_k)  cos(ell*w_k)]
+
+    Property: sin_vec(i)^T @ R(ell) @ sin_vec(j) is maximized when j = i - ell.
+    """
+    R = torch.zeros(d_sin, d_sin, dtype=torch.float64)
+    for k in range(d_sin // 2):
+        w_k = 1.0 / (10000.0 ** (2 * k / d_sin))
+        cos_val = math.cos(ell * w_k)
+        sin_val = math.sin(ell * w_k)
+        R[2*k,   2*k]   =  cos_val
+        R[2*k,   2*k+1] =  sin_val
+        R[2*k+1, 2*k]   = -sin_val
+        R[2*k+1, 2*k+1] =  cos_val
+    return R
+
+
+def f_recency(pos: int) -> float:
+    """Monotonically increasing recency signal: f(i) = 1 - 1/(i+1)."""
+    return 1.0 - 1.0 / (pos + 1.0)
+
+
+# ---------------------------------------------------------------------------
+# Core Attention Head (exact handwired weights, standard softmax)
+# ---------------------------------------------------------------------------
+
+class ExactAttentionHead(nn.Module):
+    """
+    Single attention head with fixed W_Q, W_K, W_V matrices.
+    Uses standard causal masking and F.softmax — no Python shortcuts.
+    """
+
+    def __init__(self, W_Q: torch.Tensor, W_K: torch.Tensor, W_V: torch.Tensor,
+                 temperature: float = BETA):
         super().__init__()
-        self.d_model = d_model
-        self.n_heads = n_heads
-        self.d_k     = d_model // n_heads
-
-        self.query  = nn.Linear(d_model, d_model)
-        self.key    = nn.Linear(d_model, d_model)
-        self.value  = nn.Linear(d_model, d_model)
-        self.output = nn.Linear(d_model, d_model)
+        self.register_buffer("W_Q", W_Q)
+        self.register_buffer("W_K", W_K)
+        self.register_buffer("W_V", W_V)
+        self.temperature = temperature
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        B, T, _ = x.shape
-        Q = self.query(x).view(B, T, self.n_heads, self.d_k).transpose(1, 2)
-        K = self.key(x).view(B, T, self.n_heads, self.d_k).transpose(1, 2)
-        V = self.value(x).view(B, T, self.n_heads, self.d_k).transpose(1, 2)
-        scores  = torch.matmul(Q, K.transpose(-2, -1)) / np.sqrt(self.d_k)
+        """
+        Args:
+            x: (1, seq_len, D_MODEL)
+        Returns:
+            attention output: (1, seq_len, D_MODEL)
+        """
+        Q = x @ self.W_Q.T   # (1, T, d_q)
+        K = x @ self.W_K.T   # (1, T, d_k)
+        V = x @ self.W_V.T   # (1, T, D_MODEL)
+
+        # Scaled dot-product with temperature
+        scores = self.temperature * (Q @ K.transpose(-2, -1))
+
+        # Standard causal mask
+        T = x.shape[1]
+        causal_mask = torch.tril(torch.ones(T, T, dtype=torch.bool, device=x.device))
+        scores = scores.masked_fill(~causal_mask, -1e9)
+
         weights = F.softmax(scores, dim=-1)
-        out     = torch.matmul(weights, V)
-        out     = out.transpose(1, 2).contiguous().view(B, T, self.d_model)
-        return self.output(out)
+        return weights @ V
 
 
 # ---------------------------------------------------------------------------
-# Main transformer class
+# Main Transformer
 # ---------------------------------------------------------------------------
 
 class SARSATransformer(nn.Module):
@@ -114,141 +186,287 @@ class SARSATransformer(nn.Module):
     3-layer PyTorch transformer implementing online tabular SARSA.
 
     Architecture (Section 4.1):
-    ┌─────────────────────────────────────────────────────────────────┐
-    │ Layer 1 – Within-round info gathering  (4 fixed-offset heads)   │
-    │   Heads 1-2 at Qcurr:  buf1(Qcurr) = id(s_t) + id(a_t)       │
-    │   Heads 3-4 at Qnext:  buf1(Qnext) = id(s_{t+1})+id(a_{t+1}) │
-    ├─────────────────────────────────────────────────────────────────┤
-    │ Layer 2 – Q-value retrieval from history  (2 content heads)     │
-    │   Head 1: buf2(Qcurr)[e_val] ← Qt(s_t, a_t)                   │
-    │   Head 2: buf2(Qnext)[e_val] ← Qt(s_{t+1}, a_{t+1})           │
-    ├─────────────────────────────────────────────────────────────────┤
-    │ Layer 3 – SARSA aggregation + event-token emission  (4 heads)   │
-    │   Heads 1-3: buf1(Update)[e_val] ← (1-α)Q+αγQ'+αr             │
-    │   Head 4:    id(Update) ← u˜_Update + u˜_s + u˜_a             │
-    └─────────────────────────────────────────────────────────────────┘
+    ┌────────────────────────────────────────────────────────────────────┐
+    │ Layer 1 – Within-round offset retrieval (4 fixed-offset heads)    │
+    │   Heads 1-2 at Qcurr:  buf1(Qcurr) += id(s_t) + id(a_t)        │
+    │   Heads 3-4 at Qnext:  buf1(Qnext) += id(s_{t+1}) + id(a_{t+1})│
+    │   Non-target tokens route to <Null> via additive gating (ξ)      │
+    ├────────────────────────────────────────────────────────────────────┤
+    │ Layer 2 – Q-value retrieval from COCONUT history (1 content head) │
+    │   query = buf1(workspace) → content + recency match → history    │
+    │   buf2(workspace)[e_val] ← buf1(winner)[e_val]                   │
+    ├────────────────────────────────────────────────────────────────────┤
+    │ Layer 3 – SARSA aggregation + event-token emission (4 heads)      │
+    │   Heads 1-3: buf1(Update)[e_val] ← (1-α)Q + αγQ' + αr          │
+    │   Head 4:    id(Update) ← buf1(Qcurr) (carries s+a identity)    │
+    │   Non-target tokens route to <Null> via additive gating (ξ)      │
+    └────────────────────────────────────────────────────────────────────┘
 
-    COCONUT: after each round the rewritten Update token is appended to
-    _event_tokens as v^(t), where it persists as retrievable Q-value memory.
+    COCONUT: after each round the fully-processed Update token is appended
+    to _event_tokens as v^(t), preserving its absolute PE burned in at
+    embedding time.
     """
 
     def __init__(self, config: SARSATokenConfig):
         super().__init__()
         self.config = config
-        d = 3 * config.d_te + config.d_pe   # d_model = 48
+        self._build_layers()
+        self.reset()
 
-        # Embeddings — present for structural symmetry with the MWU transformer;
-        # the exact handwired construction uses _build_embeddings instead.
-        self.token_embedding    = nn.Embedding(config.vocab_size, d)
-        self.position_embedding = nn.Embedding(1000, d)
-
-        # Layer 1: 4 fixed-offset copy heads
-        self.layer1_head1 = MultiHeadAttention(d, 1)   # Qcurr ← s_t
-        self.layer1_head2 = MultiHeadAttention(d, 1)   # Qcurr ← a_t
-        self.layer1_head3 = MultiHeadAttention(d, 1)   # Qnext ← s_{t+1}
-        self.layer1_head4 = MultiHeadAttention(d, 1)   # Qnext ← a_{t+1}
-
-        # Layer 2: 2 content-match retrieval heads
-        self.layer2_head1 = MultiHeadAttention(d, 1)   # retrieve Qt(s_t, a_t)
-        self.layer2_head2 = MultiHeadAttention(d, 1)   # retrieve Qt(s_{t+1}, a_{t+1})
-
-        # Layer 3: 4 aggregation + emission heads
-        self.layer3_head1 = MultiHeadAttention(d, 1)   # Qcurr buf2 → (1-α) term
-        self.layer3_head2 = MultiHeadAttention(d, 1)   # Qnext buf2 → αγ term
-        self.layer3_head3 = MultiHeadAttention(d, 1)   # r_token buf1 → α term
-        self.layer3_head4 = MultiHeadAttention(d, 1)   # identity copy → Update id
-
-        # Layer-normalisation modules (used during gradient-based training;
-        # skipped in the exact handwired forward pass to preserve scalar precision)
-        self.layer_norm1 = nn.LayerNorm(d)
-        self.layer_norm2 = nn.LayerNorm(d)
-        self.layer_norm3 = nn.LayerNorm(d)
-
-        # Q-value readout
-        self.q_value_head = nn.Linear(d, 1)
-
-        # COCONUT growing sequence: Start token + emitted event tokens v^(t)
-        self._event_tokens: List[torch.Tensor] = []
-        self.q_history:     List[np.ndarray]   = []
-        self.step_count:    int                = 0
-
-        self._init_weights()
-        self._reset_sequence()
-
-    # ------------------------------------------------------------------
-    # Initialisation helpers
-    # ------------------------------------------------------------------
-
-    def _init_weights(self) -> None:
-        for m in self.modules():
-            if isinstance(m, nn.Linear):
-                nn.init.xavier_uniform_(m.weight)
-                if m.bias is not None:
-                    nn.init.zeros_(m.bias)
-            elif isinstance(m, nn.Embedding):
-                nn.init.normal_(m.weight, std=0.02)
-
-    def _reset_sequence(self) -> None:
-        """Place the Start token at position 0 (returns Q=0 for unvisited pairs)."""
+    def reset(self) -> None:
+        """Initialize history with <Null> at pos 0 and <Start> at pos 1."""
         cfg = self.config
-        d   = 3 * cfg.d_te + cfg.d_pe
 
-        start = torch.zeros(d, dtype=torch.float64)
-        for tok in range(cfg.vocab_size):
-            start[tok] = 1.0   # id: superposition of all token one-hots (eq. 6)
-        # buf1, buf2 remain zero → retrieval from Start returns Q = 0
+        # <Null> token: zero identity, zero buffers — pure attention sink
+        null = torch.zeros(D_MODEL, dtype=torch.float64)
+        null[PE_F_IDX] = f_recency(0)
+        null[PE_SIN_START:PE_SIN_END] = get_sinusoidal_vec(0)
 
-        self._event_tokens = [start]
-        self.q_history     = [np.zeros((cfg.n_states, cfg.n_actions))]
-        self.step_count    = 0
+        # <Start> token: superposition of all identities, Q=0 fallback
+        start = torch.zeros(D_MODEL, dtype=torch.float64)
+        for tok in range(VOCAB_SIZE):
+            start[tok] = 1.0
+        start[PE_F_IDX] = f_recency(1)
+        start[PE_SIN_START:PE_SIN_END] = get_sinusoidal_vec(1)
+
+        self._event_tokens = [null, start]
+        self.q_history = [np.zeros((cfg.n_states, cfg.n_actions))]
+        self.step_count = 0
+
+    # ------------------------------------------------------------------
+    # Layer construction
+    # ------------------------------------------------------------------
+
+    def _build_layers(self) -> None:
+        """Construct all attention heads with exact handwired weights."""
+        cfg = self.config
+
+        # Layer 1: Within-round fixed-offset retrieval
+        # Round block: [s_t(0), a_t(1), r(2), s'(3), a'(4), Qcurr(5), Qnext(6), Update(7)]
+        # Qcurr at offset 5 from s_t, offset 4 from a_t
+        self.l1_h1 = self._build_fixed_offset_head(
+            target_tok=TOK_QCURR, ell=5, src_sub='id', dst_sub='buf1')
+        self.l1_h2 = self._build_fixed_offset_head(
+            target_tok=TOK_QCURR, ell=4, src_sub='id', dst_sub='buf1')
+        # Qnext at offset 3 from s', offset 2 from a'
+        self.l1_h3 = self._build_fixed_offset_head(
+            target_tok=TOK_QNEXT, ell=3, src_sub='id', dst_sub='buf1')
+        self.l1_h4 = self._build_fixed_offset_head(
+            target_tok=TOK_QNEXT, ell=2, src_sub='id', dst_sub='buf1')
+
+        # Layer 2: Content-based Q-value retrieval
+        self.layer2_content = self._build_content_retrieval_head()
+
+        # Layer 3: SARSA aggregation + event-token emission
+        # Head 1: (1-α) * Q(s,a) — from Qcurr buf2[e_val], offset 2 from Update
+        self.l3_h1 = self._build_fixed_offset_head(
+            target_tok=TOK_UPDATE, ell=2, src_sub='buf2_val', dst_sub='buf1_val',
+            weight=1.0 - cfg.alpha)
+        # Head 2: αγ * Q(s',a') — from Qnext buf2[e_val], offset 1 from Update
+        self.l3_h2 = self._build_fixed_offset_head(
+            target_tok=TOK_UPDATE, ell=1, src_sub='buf2_val', dst_sub='buf1_val',
+            weight=cfg.alpha * cfg.gamma)
+        # Head 3: α * r — from r-token buf1[e_val], offset 5 from Update
+        self.l3_h3 = self._build_fixed_offset_head(
+            target_tok=TOK_UPDATE, ell=5, src_sub='buf1_val', dst_sub='buf1_val',
+            weight=cfg.alpha)
+        # Head 4: copy buf1(Qcurr) → id(Update) for s+a identity
+        self.l3_h4 = self._build_fixed_offset_head(
+            target_tok=TOK_UPDATE, ell=2, src_sub='buf1', dst_sub='id')
+
+    def _build_fixed_offset_head(
+        self,
+        target_tok: int,
+        ell: int,
+        src_sub: str,
+        dst_sub: str,
+        weight: float = 1.0,
+    ) -> ExactAttentionHead:
+        """
+        Construct W_Q, W_K, W_V for exact offset matching with Complementary
+        Superposition gating (Lemma 4.2(i)).
+
+        The query space is partitioned into two subspaces:
+          Subspace A (dims 0..D_SIN): sinusoidal PE for offset matching
+          Subspace B (dims D_SIN..2*D_SIN): ξ-scaled penalty that additively
+            hijacks the softmax for non-target tokens → routes them to <Null>
+
+        Args:
+            target_tok: vocab index of the token that should attend backward
+            ell: how many positions backward to look
+            src_sub: source subspace to read from the attended token
+            dst_sub: destination subspace to write into the attending token
+            weight: scalar multiplier on the value projection
+        """
+        d_q = 2 * D_SIN   # query/key dimensionality
+
+        W_Q = torch.zeros(d_q, D_MODEL, dtype=torch.float64)
+        W_K = torch.zeros(d_q, D_MODEL, dtype=torch.float64)
+        W_V = torch.zeros(D_MODEL, D_MODEL, dtype=torch.float64)
+
+        # --- Subspace A: sinusoidal offset matching ---
+        # Q extracts the sinusoidal PE of the query token
+        W_Q[0:D_SIN, PE_SIN_START:PE_SIN_END] = torch.eye(D_SIN, dtype=torch.float64)
+        # K rotates the sinusoidal PE backward by ell positions
+        # sin_vec(i)^T @ R(ell) @ sin_vec(j) is maximized when j = i - ell
+        W_K[0:D_SIN, PE_SIN_START:PE_SIN_END] = get_rotation_matrix(ell)
+
+        # --- Subspace B: Complementary Superposition (additive gating) ---
+        # For non-target tokens, the dot product in subspace B produces a large
+        # score toward <Null> (pos 0), drowning out the offset match.
+        # For the target token, the complement is zero → no penalty.
+        #
+        # u_comp = 1-vector with target_tok zeroed out
+        u_comp = torch.ones(D_TE, dtype=torch.float64)
+        u_comp[target_tok] = 0.0
+
+        # p_null = sinusoidal PE of <Null> at position 0
+        p_null = get_sinusoidal_vec(0)
+
+        # W_Q subspace B: maps id subspace through ξ * outer(p_null, u_comp)
+        # For target token: id[target_tok]=1, u_comp[target_tok]=0 → contrib = 0
+        # For non-target: id[tok]=1, u_comp[tok]=1 → contrib = ξ * p_null
+        W_Q[D_SIN:2*D_SIN, ID_START:ID_END] = XI * torch.outer(p_null, u_comp)
+
+        # W_K subspace B: extracts sinusoidal PE (identity projection)
+        # So <Null>'s key in subspace B = p_null, giving dot product ξ * ||p_null||^2
+        W_K[D_SIN:2*D_SIN, PE_SIN_START:PE_SIN_END] = torch.eye(D_SIN, dtype=torch.float64)
+
+        # --- Value projection: data routing ---
+        if src_sub == 'id' and dst_sub == 'buf1':
+            # Copy id → buf1
+            W_V[BUF1_START:BUF1_END, ID_START:ID_END] = weight * torch.eye(D_TE, dtype=torch.float64)
+        elif src_sub == 'buf1' and dst_sub == 'id':
+            # Copy buf1 → id
+            W_V[ID_START:ID_END, BUF1_START:BUF1_END] = weight * torch.eye(D_TE, dtype=torch.float64)
+        elif src_sub == 'buf2_val' and dst_sub == 'buf1_val':
+            # Copy buf2[e_val] → buf1[e_val]
+            W_V[BUF1_START + E_VAL, BUF2_START + E_VAL] = weight
+        elif src_sub == 'buf1_val' and dst_sub == 'buf1_val':
+            # Copy buf1[e_val] → buf1[e_val] (self-read)
+            W_V[BUF1_START + E_VAL, BUF1_START + E_VAL] = weight
+
+        return ExactAttentionHead(W_Q, W_K, W_V)
+
+    def _build_content_retrieval_head(self) -> ExactAttentionHead:
+        """
+        Build Layer 2's content + recency retrieval head.
+
+        A single Q@K^T multiplication simultaneously computes:
+          - Content match score in the identity subspace:
+              layer2_beta * <buf1(query), id(key)>
+          - Temporal recency score in the positional subspace:
+              layer2_beta * eps_rec * f(i) * f(j)
+
+        Uses a massive local temperature (layer2_beta = 100,000) to
+        approximate the theoretical argmax while keeping bounded recency:
+          - Content gap for wrong token:  100,000 * 1.0 = 100,000
+          - Max recency bonus:            100,000 * 0.2 * 1.0 = 20,000
+          → Recency can never override content (20k < 100k).
+          - At j=100, Δf ≈ 0.0001 → logit diff ≈ 2.0 → 88%/12% softmax split,
+            decisively selecting the most recent matching token.
+        """
+        layer2_beta = 100_000.0
+
+        d_q = D_TE + 1  # identity match dims + 1 recency dim
+
+        W_Q = torch.zeros(d_q, D_MODEL, dtype=torch.float64)
+        W_K = torch.zeros(d_q, D_MODEL, dtype=torch.float64)
+        W_V = torch.zeros(D_MODEL, D_MODEL, dtype=torch.float64)
+
+        # Content match: Q reads from buf1, K reads from id
+        W_Q[0:D_TE, BUF1_START:BUF1_END] = torch.eye(D_TE, dtype=torch.float64)
+        W_K[0:D_TE, ID_START:ID_END] = torch.eye(D_TE, dtype=torch.float64)
+
+        # Recency: Q reads f(i), K reads f(j)
+        # Raw dot product = EPS_REC * f(i)*f(j).
+        # After layer2_beta scaling: logit += layer2_beta * EPS_REC * f(i)*f(j).
+        alpha_scale = math.sqrt(EPS_REC)
+        W_Q[D_TE, PE_F_IDX] = alpha_scale
+        W_K[D_TE, PE_F_IDX] = alpha_scale
+
+        # Value: route buf1[e_val] of winner → buf2[e_val] of query token
+        W_V[BUF2_START + E_VAL, BUF1_START + E_VAL] = 1.0
+
+        return ExactAttentionHead(W_Q, W_K, W_V, temperature=layer2_beta)
+
+    # ------------------------------------------------------------------
+    # Embedding construction
+    # ------------------------------------------------------------------
+
+    def _embed_token(self, tok_id: int, abs_pos: int) -> torch.Tensor:
+        """
+        Construct the full embedding vector for a single token.
+
+        Burns in the absolute positional encoding (both sinusoidal and f(i))
+        permanently — this is critical for event tokens that get appended to
+        the COCONUT history and must retain their temporal placement.
+        """
+        x = torch.zeros(D_MODEL, dtype=torch.float64)
+
+        # One-hot identity in id subspace
+        x[tok_id] = 1.0
+
+        # Positional encoding (permanently burned in)
+        x[PE_F_IDX] = f_recency(abs_pos)
+        x[PE_SIN_START:PE_SIN_END] = get_sinusoidal_vec(abs_pos)
+
+        return x
 
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
 
-    def create_input_stream(
-        self,
-        s: int, a: int, r: float, s_next: int, a_next: int,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """
-        Build the 8-token stream for one MDP transition.
-
-        Round block layout:
-            pos 0: s_t      pos 1: a_t      pos 2: r_t
-            pos 3: s_{t+1}  pos 4: a_{t+1}
-            pos 5: Qcurr    pos 6: Qnext    pos 7: Update
-
-        Returns:
-            input_ids:    (8,) token IDs
-            position_ids: (8,) absolute positions in the full growing sequence
-        """
-        base = len(self._event_tokens)   # absolute offset of the first new token
-        input_ids = torch.tensor([
-            TOK_S[s],      TOK_A[a],      TOK_R,
-            TOK_S[s_next], TOK_A[a_next],
-            TOK_QCURR,     TOK_QNEXT,     TOK_UPDATE,
-        ], dtype=torch.long)
-        position_ids = torch.arange(base, base + 8, dtype=torch.long)
-        return input_ids, position_ids
-
-    def step(
-        self, s: int, a: int, r: float, s_next: int, a_next: int
-    ) -> float:
+    def step(self, s: int, a: int, r: float, s_next: int, a_next: int) -> float:
         """
         Process one MDP transition and return Q_{t+1}(s, a).
 
-        Args:
-            s, a:           Current state and action.
-            r:              Observed reward.
-            s_next, a_next: Next state and on-policy next action.
-
-        Returns:
-            Updated Q-value Q_{t+1}(s, a).
+        Builds an 8-token round block, concatenates with COCONUT history,
+        runs the 3-layer forward pass, and emits the Update token as v^(t).
         """
-        input_ids, position_ids = self.create_input_stream(s, a, r, s_next, a_next)
-        result = self.forward(input_ids, position_ids, r)
-        q_new  = result['q_value']
+        # Build 8-token round block
+        base_pos = len(self._event_tokens)
+        tokens = [TOK_S[s], TOK_A[a], TOK_R, TOK_S[s_next], TOK_A[a_next],
+                  TOK_QCURR, TOK_QNEXT, TOK_UPDATE]
 
+        x_block = torch.zeros(len(tokens), D_MODEL, dtype=torch.float64)
+        for i, tok in enumerate(tokens):
+            x_block[i] = self._embed_token(tok, base_pos + i)
+            # Seed reward into buf1[e_val] of the r-token
+            if tok == TOK_R:
+                x_block[i, BUF1_START + E_VAL] = r
+
+        # Concatenate history + round block → full sequence
+        history = torch.stack(self._event_tokens)  # (N_hist, D_MODEL)
+        full = torch.cat([history, x_block], dim=0).unsqueeze(0)  # (1, T, D_MODEL)
+
+        # === Layer 1: within-round offset retrieval (residual stream) ===
+        full = full + self.l1_h1(full) + self.l1_h2(full) + self.l1_h3(full) + self.l1_h4(full)
+
+        # === Layer 2: content-based Q-value retrieval (residual stream) ===
+        full = full + self.layer2_content(full)
+
+        # === Layer 3: SARSA aggregation + emission (residual stream) ===
+        full = full + self.l3_h1(full) + self.l3_h2(full) + self.l3_h3(full) + self.l3_h4(full)
+
+        # Emit the fully-processed Update token as event token v^(t)
+        update_seq_idx = base_pos + 7  # Update is the 8th token in the round block
+        event_token = full[0, update_seq_idx].detach().clone()
+
+        # Consolidate COCONUT memory: Re-stamp absolute PE before storing.
+        # Without this, the event token retains the PE from its round-block
+        # position, creating PE collisions that let Layer 3 offset heads
+        # accidentally attend to history tokens instead of within-round targets.
+        history_pos = len(self._event_tokens)
+        event_token[PE_F_IDX] = f_recency(history_pos)
+        event_token[PE_SIN_START:PE_SIN_END] = get_sinusoidal_vec(history_pos)
+
+        self._event_tokens.append(event_token)
+
+        # Extract the scalar Q-value from buf1[e_val]
+        q_new = float(event_token[BUF1_START + E_VAL])
+
+        # Maintain classical Q-table history for comparison
         Q_new = self.q_history[-1].copy()
         Q_new[s, a] = q_new
         self.q_history.append(Q_new)
@@ -260,250 +478,6 @@ class SARSATransformer(nn.Module):
     def get_q_history(self) -> List[np.ndarray]:
         """Return Q-table snapshots; index 0 is the all-zeros initialisation."""
         return self.q_history
-
-    def reset(self) -> None:
-        """Reset to initial state (empty sequence except Start token)."""
-        self._reset_sequence()
-
-    # ------------------------------------------------------------------
-    # Forward pass
-    # ------------------------------------------------------------------
-
-    def forward(
-        self,
-        input_ids:    torch.Tensor,
-        position_ids: torch.Tensor,
-        r:            float,
-    ) -> Dict:
-        """
-        3-layer forward pass for one round's 8-token block.
-
-        Args:
-            input_ids:    (8,) token IDs for the current round.
-            position_ids: (8,) absolute positions in the growing sequence.
-            r:            Reward scalar (seeded into buf1[E_VAL] of r-token).
-
-        Returns:
-            dict with 'q_value' (float) and 'hidden_state' (1, 8, d_model).
-        """
-        # Build exact paper embeddings for the 8-token block
-        x = self._build_embeddings(input_ids, r)   # (1, 8, d_model)
-
-        # Layer 1: copy s/a identities into buf1 of workspace tokens
-        x = self._layer1_within_round(x, input_ids)
-
-        # Layer 2: retrieve Q-values from the COCONUT history
-        x = self._layer2_qvalue_retrieval(x, input_ids)
-
-        # Layer 3: compute SARSA update; produce event token v^(t)
-        x, q_new = self._layer3_aggregation(x, input_ids)
-
-        # COCONUT: append emitted event token to the growing sequence
-        upd_pos     = (input_ids == TOK_UPDATE).nonzero(as_tuple=True)[0][0].item()
-        event_token = x[0, upd_pos].detach().clone()
-        self._event_tokens.append(event_token)
-
-        return {'q_value': q_new, 'hidden_state': x}
-
-    # ------------------------------------------------------------------
-    # Embedding construction
-    # ------------------------------------------------------------------
-
-    def _build_embeddings(
-        self, input_ids: torch.Tensor, r: float
-    ) -> torch.Tensor:
-        """
-        Construct exact paper embeddings for the 8-token round block.
-
-        Each token i receives a one-hot in id[token_id] (index within [0:d_te]).
-        The reward token additionally receives buf1[E_VAL] = r.
-
-        Returns:
-            x: (1, 8, d_model)
-        """
-        cfg  = self.config
-        d_te = cfg.d_te
-        d    = 3 * d_te + cfg.d_pe
-
-        x = torch.zeros(1, input_ids.shape[0], d, dtype=torch.float64)
-        for i, tok in enumerate(input_ids.tolist()):
-            x[0, i, tok] = 1.0   # one-hot identity in id subspace [0:d_te]
-
-        # Seed reward into buf1[E_VAL] of the r-token  (buf1 starts at d_te)
-        r_idx = (input_ids == TOK_R).nonzero(as_tuple=True)[0][0].item()
-        x[0, r_idx, d_te + E_VAL] = r
-        return x
-
-    # ------------------------------------------------------------------
-    # Layer 1: within-round information gathering
-    # ------------------------------------------------------------------
-
-    def _layer1_within_round(
-        self, x: torch.Tensor, input_ids: torch.Tensor
-    ) -> torch.Tensor:
-        """
-        Copy state/action identities into buf1 of Qcurr and Qnext.
-
-        Heads 1-2 at Qcurr (offsets ℓ=5,4):
-            buf1(Qcurr) = id(s_t) + id(a_t)              [eq. 10]
-        Heads 3-4 at Qnext (offsets ℓ=3,2):
-            buf1(Qnext) = id(s_{t+1}) + id(a_{t+1})      [eq. 11]
-
-        Block layout: [s_t(0), a_t(1), r_t(2), s'(3), a'(4), Qcurr(5), Qnext(6), Update(7)]
-        """
-        cfg  = self.config
-        d_te = cfg.d_te
-        attn = torch.zeros_like(x)
-
-        qcurr_idx = (input_ids == TOK_QCURR).nonzero(as_tuple=True)[0][0].item()
-        qnext_idx = (input_ids == TOK_QNEXT).nonzero(as_tuple=True)[0][0].item()
-
-        # Fixed offsets: Qcurr is at block index 5
-        s_t_idx    = qcurr_idx - 5   # → 0
-        a_t_idx    = qcurr_idx - 4   # → 1
-        # Qnext is at block index 6
-        s_next_idx = qnext_idx - 3   # → 3
-        a_next_idx = qnext_idx - 2   # → 4
-
-        # Heads 1-2: buf1(Qcurr) = id(s_t) + id(a_t)
-        attn[0, qcurr_idx, d_te:2*d_te] = (
-            x[0, s_t_idx, :d_te] + x[0, a_t_idx, :d_te]
-        )
-
-        # Heads 3-4: buf1(Qnext) = id(s_{t+1}) + id(a_{t+1})
-        attn[0, qnext_idx, d_te:2*d_te] = (
-            x[0, s_next_idx, :d_te] + x[0, a_next_idx, :d_te]
-        )
-
-        return x + attn
-
-    # ------------------------------------------------------------------
-    # Layer 2: Q-value retrieval from history
-    # ------------------------------------------------------------------
-
-    def _layer2_qvalue_retrieval(
-        self, x: torch.Tensor, input_ids: torch.Tensor
-    ) -> torch.Tensor:
-        """
-        Retrieve most-recent Qt(s,a) values via content-match over history.
-
-        For each workspace token (Qcurr, Qnext):
-          query  = buf1(workspace)    [= u˜_s + u˜_a after Layer 1]
-          winner = argmax_j  β·<query, id(j)>  +  eps_rec·f(j)
-          write:  buf2(workspace)[E_VAL] ← buf1(winner)[E_VAL]
-
-        Scoring:
-          matching event token or Start → 2·β  (highest; fallback Q=0 from Start)
-          all other tokens              → ≤ β
-        Ref: Section 4.1, Layer 2 (eqs. 12-13).
-        """
-        cfg  = self.config
-        d_te = cfg.d_te
-        attn = torch.zeros_like(x)
-
-        for tok_id in (TOK_QCURR, TOK_QNEXT):
-            idx_t = (input_ids == tok_id).nonzero(as_tuple=True)[0]
-            if len(idx_t) == 0:
-                continue
-            idx   = idx_t[0].item()
-            query = x[0, idx, d_te:2*d_te]               # buf1 of workspace token
-            q_val = self._retrieve_q_from_history(query)
-            attn[0, idx, 2*d_te + E_VAL] = q_val          # → buf2[E_VAL]
-
-        return x + attn
-
-    def _retrieve_q_from_history(self, query: torch.Tensor) -> float:
-        """
-        Scan COCONUT history; return buf1[E_VAL] of the best-scoring token.
-
-        score(j) = β · <query, id(j)>  +  eps_rec · (1 – 1/(j+1))
-
-        Args:
-            query: (d_te,) vector — buf1 of a workspace token (= u˜_s + u˜_a).
-
-        Returns:
-            Q-scalar from buf1[E_VAL] of the winning event token.
-        """
-        cfg        = self.config
-        d_te       = cfg.d_te
-        best_score = float('-inf')
-        best_j     = 0
-        q          = query.float()
-
-        for j, tok_vec in enumerate(self._event_tokens):
-            id_j    = tok_vec[:d_te].float()
-            content = cfg.beta    * float(torch.dot(q, id_j))
-            recency = cfg.eps_rec * (1.0 - 1.0 / (j + 1))
-            score   = content + recency
-            if score > best_score:
-                best_score = score
-                best_j     = j
-
-        return float(self._event_tokens[best_j][d_te + E_VAL])
-
-    # ------------------------------------------------------------------
-    # Layer 3: SARSA aggregation and event-token emission
-    # ------------------------------------------------------------------
-
-    def _layer3_aggregation(
-        self, x: torch.Tensor, input_ids: torch.Tensor
-    ) -> Tuple[torch.Tensor, float]:
-        """
-        Compute SARSA update at Update position; build event token v^(t).
-
-        Head 1 (offset ℓ=2 → Qcurr):   reads buf2[E_VAL], weight (1-α)
-        Head 2 (offset ℓ=1 → Qnext):   reads buf2[E_VAL], weight αγ
-        Head 3 (offset ℓ=5 → r_token): reads buf1[E_VAL], weight α
-        Head 4 (offset ℓ=2 → Qcurr):   copies buf1(Qcurr) → id(Update),
-                                         then adds u˜_Update
-
-        After this layer the Update token satisfies the invariant (eq. 8):
-            id(v^(t))          = u˜_Update + u˜_s + u˜_a
-            buf1(v^(t))[E_VAL] = Q_{t+1}(s, a)
-        Ref: Section 4.1, Layer 3 (eqs. 14-15).
-
-        Returns:
-            x_out: tensor with Update rewritten as v^(t).
-            q_new: Q_{t+1}(s, a) scalar.
-        """
-        cfg  = self.config
-        d_te = cfg.d_te
-
-        upd_idx   = (input_ids == TOK_UPDATE).nonzero(as_tuple=True)[0][0].item()
-        qcurr_idx = upd_idx - 2    # Qcurr is 2 before Update
-        qnext_idx = upd_idx - 1    # Qnext is 1 before Update
-        r_idx     = upd_idx - 5    # r_t is 5 before Update
-
-        # Read scalars from the relevant buffers
-        q_curr = float(x[0, qcurr_idx, 2*d_te + E_VAL])   # buf2[E_VAL] of Qcurr
-        q_next = float(x[0, qnext_idx, 2*d_te + E_VAL])   # buf2[E_VAL] of Qnext
-        r_val  = float(x[0, r_idx,     d_te   + E_VAL])   # buf1[E_VAL] of r-token
-
-        # SARSA TD update  (eq. 9)
-        q_new = (
-            (1.0 - cfg.alpha) * q_curr
-            + cfg.alpha * cfg.gamma * q_next
-            + cfg.alpha * r_val
-        )
-
-        # Write event token into the Update position (clone to preserve grad flow)
-        x_out = x.clone()
-
-        # buf1[E_VAL](Update) ← Q_{t+1}(s, a)       (eq. 14)
-        x_out[0, upd_idx, d_te + E_VAL] = q_new
-
-        # id(Update) ← u˜_Update + u˜_s + u˜_a      (eq. 15)
-        sa_id  = x[0, qcurr_idx, d_te:2*d_te].clone()   # u˜_s + u˜_a from buf1(Qcurr)
-        new_id = torch.zeros(d_te)
-        new_id[TOK_UPDATE] = 1.0                          # u˜_Update one-hot
-        new_id = new_id + sa_id                           # + u˜_s + u˜_a
-        x_out[0, upd_idx, :d_te] = new_id
-
-        logger.debug(
-            "Layer3: q_curr=%.4f q_next=%.4f r=%.4f → q_new=%.6f",
-            q_curr, q_next, r_val, q_new,
-        )
-        return x_out, q_new
 
 
 # ---------------------------------------------------------------------------
