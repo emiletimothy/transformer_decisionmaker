@@ -250,7 +250,7 @@ def main() -> None:
 
     plt.tight_layout()
 
-    save_path = os.path.join(args.save_dir, "q_learning_transformer_comparison.png")
+    save_path = os.path.join(args.save_dir, f"q_learning_transformer_comparison_{args.n_states}s_{args.n_actions}a.png")
     Path(save_path).parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(save_path, dpi=300, bbox_inches="tight")
     print(f"Figure saved -> {save_path}")

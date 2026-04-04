@@ -128,7 +128,7 @@ def f_recency(pos: int) -> float:
     Monotonically increasing bounded recency signal.
     f(i) = 1 - 1/ln(i+e), lower-order than 1/(i+1).
     """
-    return 1.0 - 1.0 / math.log(pos + math.e)
+    return 1.0 - 1.0 / math.log((pos/n_actions) + math.e)
 
 
 # ---------------------------------------------------------------------------
