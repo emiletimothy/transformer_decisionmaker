@@ -18,12 +18,16 @@ export WANDB_API_KEY=wandb_v1_I3I8IPHLFZ77VAmGl7J58ZVRQKl_OKlRNU9j38Hncxd9XzPG3V
 N_SEQUENCES=50000
 EPOCHS=20
 BATCH_SIZE=64
+MSE_WEIGHT=10.0
+RUN_NAME="coconut-v2-$(date +%Y%m%d-%H%M)"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --n_sequences) N_SEQUENCES="$2"; shift 2 ;;
     --epochs)      EPOCHS="$2";      shift 2 ;;
     --batch_size)  BATCH_SIZE="$2";  shift 2 ;;
+    --mse_weight)  MSE_WEIGHT="$2";  shift 2 ;;
+    --run_name)    RUN_NAME="$2";    shift 2 ;;
     *) echo "Unknown argument: $1"; exit 1 ;;
   esac
 done
@@ -49,6 +53,8 @@ print(f' PyTorch:     {torch.__version__}')
 echo " n_sequences : $N_SEQUENCES"
 echo " epochs      : $EPOCHS"
 echo " batch_size  : $BATCH_SIZE"
+echo " mse_weight  : $MSE_WEIGHT"
+echo " run_name    : $RUN_NAME"
 echo "============================================================"
 echo ""
 
@@ -94,6 +100,8 @@ python3 scripts/3_train.py \
   --weight_decay 1e-2 \
   --warmup_steps 500 \
   --eval_every 500 \
+  --mse_weight "$MSE_WEIGHT" \
+  --run_name "$RUN_NAME" \
   --use_wandb
 echo "Done: $(date)"
 echo ""
@@ -108,7 +116,8 @@ python3 scripts/4_evaluate.py \
   --alpha 0.1 \
   --gamma 0.9 \
   --epsilon 0.2 \
-  --eval_seed 9999
+  --eval_seed 9999 \
+  --n_eval_mdps 10
 echo "Done: $(date)"
 echo ""
 
@@ -117,4 +126,8 @@ echo " Pipeline complete."
 echo " Checkpoint : checkpoints/coconut_transformer.pt"
 echo " Figures    : figures/frobenius_norm.png"
 echo "              figures/qtable_comparison.png"
+echo "              figures/per_state_error.png"
+echo "              figures/relative_error.png"
+echo "              figures/q_scatter.png"
+echo "              figures/action_agreement.png"
 echo "============================================================"

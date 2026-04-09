@@ -53,7 +53,7 @@ class COCONUTConfig:
 
     @property
     def vocab_size(self) -> int:
-        return 2 + self.n_states + self.n_actions + 6
+        return 2 + self.n_states + self.n_actions + 7
 
     def to_dict(self) -> Dict:
         d = asdict(self)
@@ -84,7 +84,8 @@ def build_vocab(n_states: int, n_actions: int) -> Dict[str, object]:
         'TOK_QCURR':  TOK_R + 3,
         'TOK_QNEXT':  TOK_R + 4,
         'TOK_UPDATE': TOK_R + 5,
-        'vocab_size': 2 + n_states + n_actions + 6,
+        'TOK_COT':    TOK_R + 6,
+        'vocab_size': 2 + n_states + n_actions + 7,
     }
 
 
@@ -348,6 +349,79 @@ class COCONUTTransformer(nn.Module):
         action_logits = self.action_head(sel_hidden)                     # [B, n_sel, n_actions]
 
         # --- Q-value predictions at <Update> positions ---
+        upd_hidden    = self._gather_at_positions(h, update_positions)  # [B, n_upd, d]
+        q_value_preds = self.q_value_head(upd_hidden)                   # [B, n_upd, n_actions]
+
+        return action_logits, q_value_preds
+
+    # ------------------------------------------------------------------
+    # COCONUT forward (with continuous thought feedback)
+    # ------------------------------------------------------------------
+
+    def forward_coconut(
+        self,
+        input_ids:        torch.Tensor,            # [B, T]
+        reward_values:    Optional[torch.Tensor],  # [B, n_r]
+        reward_positions: Optional[torch.Tensor],  # [B, n_r]
+        select_positions: torch.Tensor,            # [B, n_sel]
+        update_positions: torch.Tensor,            # [B, n_upd]
+        cot_positions:    torch.Tensor,            # [B, n_cot]  (-1 = pad)
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """COCONUT forward pass with continuous thought feedback.
+
+        After each round's TOK_UPDATE, the transformer hidden state at that
+        position is injected (detached) as the embedding for the following
+        TOK_COT token before the next round is processed.
+
+        The sequential loop ensures causality: round r's CoT embedding is
+        derived from the hidden state of round r's Update token, which the
+        model for round r+1 can then attend to via the standard causal mask.
+
+        Returns
+        -------
+        action_logits : [B, n_sel, n_actions]
+        q_value_preds : [B, n_upd, n_actions]
+        """
+        B, T = input_ids.shape
+        S = cot_positions.shape[1]
+
+        # Step 1: Compute all token + position + reward embeddings.
+        # CoT positions initially hold the learned TOK_COT token embedding.
+        # We will overwrite them with transformer hidden states in the loop.
+        x = self._embed(input_ids, reward_values, reward_positions).clone()  # [B, T, d]
+
+        # Step 2: Sequential round loop — fill CoT embeddings causally.
+        for r in range(S):
+            upd_pos = update_positions[:, r]   # [B]
+            cot_pos = cot_positions[:, r]       # [B]
+            valid   = (cot_pos >= 0)            # [B] bool — False for padding rounds
+
+            if not valid.any():
+                break  # all remaining rounds are padding
+
+            # Run transformer on prefix up to (including) the furthest update pos.
+            # Causal mask is generated dynamically in CausalMultiHeadAttention
+            # from seq_len, so variable-length prefixes work correctly.
+            max_prefix = int(upd_pos[valid].max().item()) + 1
+            h_prefix = self._run_transformer(x[:, :max_prefix, :])  # [B, max_prefix, d]
+
+            # Inject hidden state at each sample's update_pos into its cot_pos.
+            # detach() stops gradients from flowing through the recurrence, which
+            # would otherwise create an O(R)-deep computational graph.
+            for b in range(B):
+                if not valid[b]:
+                    continue
+                u = int(upd_pos[b].item())
+                c = int(cot_pos[b].item())
+                x[b, c, :] = h_prefix[b, u, :].detach()
+
+        # Step 3: Final transformer pass on full sequence with CoT embeddings injected.
+        h = self._run_transformer(x)  # [B, T, d]
+
+        # Step 4: Extract outputs at select/update positions (same as forward()).
+        sel_hidden    = self._gather_at_positions(h, select_positions)  # [B, n_sel, d]
+        action_logits = self.action_head(sel_hidden)                     # [B, n_sel, n_actions]
+
         upd_hidden    = self._gather_at_positions(h, update_positions)  # [B, n_upd, d]
         q_value_preds = self.q_value_head(upd_hidden)                   # [B, n_upd, n_actions]
 

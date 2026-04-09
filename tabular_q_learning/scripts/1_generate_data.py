@@ -5,7 +5,7 @@
 Generates 50,000 Q-learning trajectories formatted as strict COCONUT sequences
 and saves them to data/coconut_dataset.pt.
 
-Vocabulary layout (vocab_size = 2 + n_states + n_actions + 6):
+Vocabulary layout (vocab_size = 2 + n_states + n_actions + 7):
     TOK_NULL   = 0
     TOK_START  = 1
     TOK_S      = [2, ..., 2 + n_states - 1]
@@ -16,13 +16,14 @@ Vocabulary layout (vocab_size = 2 + n_states + n_actions + 6):
     TOK_QCURR  = TOK_R + 3
     TOK_QNEXT  = TOK_R + 4
     TOK_UPDATE = TOK_R + 5
+    TOK_COT    = TOK_R + 6  (continuous thought placeholder; embedding overwritten at runtime)
 
 Per-round COCONUT sequence (for n_actions=2, 15 tokens/round):
     s_t, a_t, TOK_R, s_{t+1},
     s_{t+1}, a_0, TOK_EVAL,
     s_{t+1}, a_1, TOK_EVAL,
     TOK_SELECT,
-    a_{t+1}, TOK_QCURR, TOK_QNEXT, TOK_UPDATE
+    a_{t+1}, TOK_QCURR, TOK_QNEXT, TOK_UPDATE, TOK_COT
 
 Full episode:
     [TOK_NULL, TOK_START, round_0, round_1, ..., round_{T-1}]
@@ -33,8 +34,10 @@ Output per sequence:
     reward_positions : List[int]          — positions of TOK_R in input_ids
     select_positions : List[int]          — positions of TOK_SELECT tokens
     select_targets   : List[int]          — true next action index for CE loss
+    select_masks     : List[int]          — 1 if Q-values at s_{t+1} are differentiated (>0.01 spread), else 0
     update_positions : List[int]          — positions of TOK_UPDATE tokens
     update_targets   : List[List[float]]  — Q[s_t, :] (all actions) after update for MSE loss
+    cot_positions    : List[int]          — positions of TOK_COT tokens (continuous thought placeholders)
     n_steps          : int
 """
 
@@ -63,7 +66,8 @@ def build_vocab(n_states: int, n_actions: int) -> Dict[str, object]:
     TOK_QCURR = TOK_R + 3
     TOK_QNEXT = TOK_R + 4
     TOK_UPDATE = TOK_R + 5
-    vocab_size = 2 + n_states + n_actions + 6
+    TOK_COT    = TOK_R + 6
+    vocab_size = 2 + n_states + n_actions + 7
     return {
         'TOK_NULL': TOK_NULL,
         'TOK_START': TOK_START,
@@ -75,6 +79,7 @@ def build_vocab(n_states: int, n_actions: int) -> Dict[str, object]:
         'TOK_QCURR': TOK_QCURR,
         'TOK_QNEXT': TOK_QNEXT,
         'TOK_UPDATE': TOK_UPDATE,
+        'TOK_COT': TOK_COT,
         'vocab_size': vocab_size,
     }
 
@@ -303,8 +308,10 @@ def build_coconut_sequence(
         reward_positions : List[int]
         select_positions : List[int]
         select_targets   : List[int]
+        select_masks     : List[int]   — 1 if Q-spread at s_{t+1} > 0.01, else 0
         update_positions : List[int]
         update_targets   : List[List[float]]
+        cot_positions    : List[int]
         n_steps          : int
     """
     TOK_S      = vocab['TOK_S']
@@ -315,14 +322,17 @@ def build_coconut_sequence(
     TOK_QCURR  = vocab['TOK_QCURR']
     TOK_QNEXT  = vocab['TOK_QNEXT']
     TOK_UPDATE = vocab['TOK_UPDATE']
+    TOK_COT    = vocab['TOK_COT']
 
     ids               = [vocab['TOK_NULL'], vocab['TOK_START']]
     reward_values     : List[float] = []
     reward_positions  : List[int]   = []
     select_positions  : List[int]   = []
     select_targets    : List[int]   = []
+    select_masks      : List[int]   = []
     update_positions  : List[int]   = []
     update_targets    : List[List[float]] = []
+    cot_positions     : List[int]   = []
 
     n_steps   = episode['n_steps'] if 'n_steps' in episode else len(episode['states'])
     states    = episode['states']
@@ -359,6 +369,10 @@ def build_coconut_sequence(
             ids.append(TOK_EVAL)
 
         # SELECT token — model predicts a_{t+1} here
+        # select_mask: 1 if Q-values at s_{t+1} have spread > 0.01 (greedy action is meaningful)
+        q_vals_sp = Q_t[s_p]
+        select_mask_val = 1 if (float(q_vals_sp.max()) - float(q_vals_sp.min())) > 0.01 else 0
+        select_masks.append(select_mask_val)
         select_positions.append(len(ids))
         select_targets.append(a_p)      # 0-based action index
         ids.append(TOK_SELECT)
@@ -375,14 +389,20 @@ def build_coconut_sequence(
         update_targets.append(Q_t[s].tolist())   # Q[s_t, :] after TD update
         ids.append(TOK_UPDATE)
 
+        # COT — continuous thought placeholder; embedding overwritten at train/eval time
+        cot_positions.append(len(ids))
+        ids.append(TOK_COT)
+
     return {
         'input_ids':        ids,
         'reward_values':    reward_values,
         'reward_positions': reward_positions,
         'select_positions': select_positions,
         'select_targets':   select_targets,
+        'select_masks':     select_masks,
         'update_positions': update_positions,
         'update_targets':   update_targets,
+        'cot_positions':    cot_positions,
         'n_steps':          n_steps,
     }
 
@@ -447,7 +467,8 @@ def print_sample(seq: Dict, vocab: Dict, n_actions: int) -> None:
     tnames = {vocab['TOK_NULL']: 'NULL', vocab['TOK_START']: 'START',
               vocab['TOK_R']: 'R', vocab['TOK_EVAL']: 'EVAL',
               vocab['TOK_SELECT']: 'SELECT', vocab['TOK_QCURR']: 'QCURR',
-              vocab['TOK_QNEXT']: 'QNEXT', vocab['TOK_UPDATE']: 'UPDATE'}
+              vocab['TOK_QNEXT']: 'QNEXT', vocab['TOK_UPDATE']: 'UPDATE',
+              vocab['TOK_COT']: 'COT'}
     for i, s in enumerate(vocab['TOK_S']):
         tnames[s] = f'S{i}'
     for i, a in enumerate(vocab['TOK_A']):
@@ -521,10 +542,10 @@ def main():
     print(f"  S={vocab['TOK_S']}")
     print(f"  A={vocab['TOK_A']}")
     print(f"  R={vocab['TOK_R']}  EVAL={vocab['TOK_EVAL']}  SELECT={vocab['TOK_SELECT']}")
-    print(f"  QCURR={vocab['TOK_QCURR']}  QNEXT={vocab['TOK_QNEXT']}  UPDATE={vocab['TOK_UPDATE']}")
+    print(f"  QCURR={vocab['TOK_QCURR']}  QNEXT={vocab['TOK_QNEXT']}  UPDATE={vocab['TOK_UPDATE']}  COT={vocab['TOK_COT']}")
 
-    round_len = 4 + 3 * args.n_actions + 4
-    print(f"\nRound length: {round_len} tokens")
+    round_len = 4 + 3 * args.n_actions + 4 + 1   # +1 for TOK_COT
+    print(f"\nRound length: {round_len} tokens (includes TOK_COT placeholder)")
     print(f"Max sequence length: 2 + {round_len}*{args.max_steps} = "
           f"{2 + round_len * args.max_steps} tokens")
 
