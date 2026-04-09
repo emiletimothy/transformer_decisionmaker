@@ -33,6 +33,7 @@ Checkpoint format (saved to checkpoints/coconut_transformer.pt):
 import argparse
 import math
 import os
+import random
 import sys
 import time
 from typing import Dict, List, Optional, Tuple
@@ -63,20 +64,73 @@ COCONUTTransformer = _mod.COCONUTTransformer
 
 
 # ---------------------------------------------------------------------------
+# Sequence truncation helper (for curriculum training)
+# ---------------------------------------------------------------------------
+
+# Curriculum stage definitions: (last_epoch_inclusive, max_steps)
+CURRICULUM_STAGES = [(5, 5), (10, 15), (15, 30), (20, 50)]
+STAGE_MAX_STEPS   = [ms for _, ms in CURRICULUM_STAGES]
+
+
+def truncate_sequence(seq: Dict, max_steps: int) -> Dict:
+    """Return a copy of seq truncated to at most max_steps rounds.
+
+    input_ids has a 2-token prefix [TOK_NULL, TOK_START] followed by
+    n_steps rounds of round_len tokens each.  round_len is derived from
+    the actual data so it works for any n_actions.
+    """
+    n = min(seq['n_steps'], max_steps)
+    if n == seq['n_steps']:
+        return seq   # nothing to truncate
+
+    # Derive round_len from actual data (avoids hardcoding)
+    full_n  = seq['n_steps']
+    full_len = len(seq['input_ids'])
+    round_len = (full_len - 2) // full_n   # 2-token prefix
+
+    trunc = dict(seq)
+    trunc['input_ids'] = seq['input_ids'][:2 + n * round_len]
+    for field in ('reward_values', 'reward_positions',
+                  'select_positions', 'select_targets', 'select_masks',
+                  'update_positions', 'cot_positions'):
+        if field in seq:
+            trunc[field] = seq[field][:n]
+    trunc['update_targets'] = seq['update_targets'][:n]
+    trunc['n_steps'] = n
+    return trunc
+
+
+# ---------------------------------------------------------------------------
 # Dataset
 # ---------------------------------------------------------------------------
 
 class COCONUTDataset(Dataset):
-    """Wraps the list of sequence dicts produced by 1_generate_data.py."""
+    """Wraps the list of sequence dicts produced by 1_generate_data.py.
+
+    Supports curriculum training via the max_steps attribute.  Set
+    train_ds.max_steps = k to limit sequences to k rounds per sample.
+    With probability 0.1 (when stage_idx > 0) a random earlier-stage
+    max_steps is sampled to prevent catastrophic forgetting.
+    """
 
     def __init__(self, sequences: List[Dict]):
-        self.sequences = sequences
+        self.sequences         = sequences
+        self.max_steps         = None   # None = no truncation (use full sequence)
+        self.stage_idx         = 0      # current curriculum stage index
+        self.all_stage_max_steps = STAGE_MAX_STEPS
 
     def __len__(self) -> int:
         return len(self.sequences)
 
     def __getitem__(self, idx: int) -> Dict:
-        return self.sequences[idx]
+        seq = self.sequences[idx]
+        effective = self.max_steps
+        if effective is not None and self.stage_idx > 0 and random.random() < 0.1:
+            # 10% chance: sample from a previous stage to prevent forgetting
+            effective = random.choice(self.all_stage_max_steps[:self.stage_idx])
+        if effective is not None:
+            seq = truncate_sequence(seq, effective)
+        return seq
 
 
 # ---------------------------------------------------------------------------
@@ -93,8 +147,12 @@ def collate_fn(batch: List[Dict]) -> Dict[str, torch.Tensor]:
     reward_values    : padded with 0.0
     select_positions : padded with -1
     select_targets   : padded with 0   (ignored where positions == -1)
+    select_masks     : padded with 0   (ignored where select_positions == -1)
     update_positions : padded with -1
     update_targets   : padded with 0.0 (ignored where positions == -1)
+    cot_positions    : padded with -1
+    step_indices     : 0..n_steps-1 for valid, padded with 0
+    n_steps_tensor   : per-sample n_steps, shape [B]
     """
     # ---- Sequence length ----
     max_seq = max(len(s['input_ids']) for s in batch)
@@ -123,8 +181,12 @@ def collate_fn(batch: List[Dict]) -> Dict[str, torch.Tensor]:
     reward_positions_list = []
     select_positions_list = []
     select_targets_list   = []
+    select_masks_list     = []
     update_positions_list = []
     update_targets_list   = []
+    cot_positions_list    = []
+    step_indices_list     = []
+    n_steps_list          = []
 
     for s in batch:
         n = s['n_steps']
@@ -133,8 +195,12 @@ def collate_fn(batch: List[Dict]) -> Dict[str, torch.Tensor]:
         reward_positions_list.append(pad_ints(s['reward_positions'], max_steps))
         select_positions_list.append(pad_ints(s['select_positions'], max_steps))
         select_targets_list.append(pad_ints(s['select_targets'], max_steps, pad=0))
+        select_masks_list.append(pad_ints(s.get('select_masks', [1] * n), max_steps, pad=0))
         update_positions_list.append(pad_ints(s['update_positions'], max_steps))
         update_targets_list.append(pad_float_rows(s['update_targets'], max_steps, n_actions))
+        cot_positions_list.append(pad_ints(s.get('cot_positions', []), max_steps))
+        step_indices_list.append(pad_ints(list(range(n)), max_steps, pad=0))
+        n_steps_list.append(n)
 
     return {
         'input_ids':        torch.tensor(input_ids_list,        dtype=torch.long),
@@ -142,8 +208,12 @@ def collate_fn(batch: List[Dict]) -> Dict[str, torch.Tensor]:
         'reward_positions': torch.tensor(reward_positions_list, dtype=torch.long),
         'select_positions': torch.tensor(select_positions_list, dtype=torch.long),
         'select_targets':   torch.tensor(select_targets_list,   dtype=torch.long),
+        'select_masks':     torch.tensor(select_masks_list,     dtype=torch.long),
         'update_positions': torch.tensor(update_positions_list, dtype=torch.long),
         'update_targets':   torch.tensor(update_targets_list,   dtype=torch.float32),
+        'cot_positions':    torch.tensor(cot_positions_list,    dtype=torch.long),
+        'step_indices':     torch.tensor(step_indices_list,     dtype=torch.long),
+        'n_steps_tensor':   torch.tensor(n_steps_list,          dtype=torch.long),
     }
 
 
@@ -170,41 +240,59 @@ def get_warmup_cosine_scheduler(
 # ---------------------------------------------------------------------------
 
 def compute_losses(
-    action_logits: torch.Tensor,   # [B, n_sel, n_actions]
-    q_value_preds: torch.Tensor,   # [B, n_upd, n_actions]
-    select_positions: torch.Tensor, # [B, n_sel]  (-1 = pad)
-    select_targets: torch.Tensor,   # [B, n_sel]
-    update_positions: torch.Tensor, # [B, n_upd]  (-1 = pad)
-    update_targets: torch.Tensor,   # [B, n_upd, n_actions]
+    action_logits:    torch.Tensor,   # [B, n_sel, n_actions]
+    q_value_preds:    torch.Tensor,   # [B, n_upd, n_actions]
+    select_positions: torch.Tensor,   # [B, n_sel]  (-1 = pad)
+    select_targets:   torch.Tensor,   # [B, n_sel]
+    update_positions: torch.Tensor,   # [B, n_upd]  (-1 = pad)
+    update_targets:   torch.Tensor,   # [B, n_upd, n_actions]
+    select_masks:     torch.Tensor,   # [B, n_sel]  (1 = include in CE, 0 = exclude)
+    step_indices:     torch.Tensor,   # [B, n_upd]  (0-based step index within trajectory)
+    n_steps_per_sample: torch.Tensor, # [B]         (total steps in each sequence)
+    mse_weight:       float = 10.0,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """Return (ce_loss, mse_loss, total_loss).
+    """Return (ce_loss, huber_loss, total_loss).
 
-    Padding mask: positions == -1 are excluded from both losses.
-    Returns scalar zero tensors on the correct device when no valid tokens exist.
+    CE loss: only at valid select positions where select_mask == 1
+             (i.e., Q-values at s_{t+1} are sufficiently differentiated).
+    Huber loss: Huber/smooth-L1 with beta=0.1, weighted by sqrt((t+1)/(T+1))
+                so later timesteps (with larger Q-values) get more weight.
+    Total: ce_loss + mse_weight * huber_loss
     """
     device = action_logits.device
 
-    # ---- CE loss at <Select> positions ----
-    sel_valid = select_positions >= 0                          # [B, n_sel]
+    # ---- CE loss at <Select> positions (with select_mask filtering) ----
+    sel_valid = (select_positions >= 0) & select_masks.bool()  # [B, n_sel]
     n_sel_valid = sel_valid.sum().item()
     if n_sel_valid > 0:
-        al_valid = action_logits[sel_valid]                    # [N, n_actions]
-        st_valid = select_targets[sel_valid]                   # [N]
+        al_valid = action_logits[sel_valid]    # [N, n_actions]
+        st_valid = select_targets[sel_valid]   # [N]
         ce_loss = F.cross_entropy(al_valid, st_valid)
     else:
         ce_loss = torch.tensor(0.0, device=device, requires_grad=True)
 
-    # ---- MSE loss at <Update> positions ----
+    # ---- Huber loss at <Update> positions with timestep weighting ----
     upd_valid = update_positions >= 0                          # [B, n_upd]
     n_upd_valid = upd_valid.sum().item()
     if n_upd_valid > 0:
-        qp_valid = q_value_preds[upd_valid]                    # [N, n_actions]
-        qt_valid = update_targets[upd_valid]                   # [N, n_actions]
-        mse_loss = F.mse_loss(qp_valid, qt_valid)
+        qp_valid = q_value_preds[upd_valid]    # [N, n_actions]
+        qt_valid = update_targets[upd_valid]   # [N, n_actions]
+
+        # Per-element Huber loss (beta=0.1 is robust to large Q-values at later steps)
+        huber_elem = F.smooth_l1_loss(qp_valid, qt_valid, reduction='none', beta=0.1)
+        huber_per_step = huber_elem.mean(dim=-1)  # [N]
+
+        # Timestep weights: sqrt((t+1) / (T+1)); avoids zero weight at t=0
+        t_vals = step_indices[upd_valid].float()                               # [N]
+        T_vals = n_steps_per_sample.unsqueeze(1).expand_as(
+            update_positions)[upd_valid].float()                               # [N]
+        weights = torch.sqrt((t_vals + 1.0) / (T_vals + 1.0))                 # [N]
+
+        mse_loss = (huber_per_step * weights).mean()
     else:
         mse_loss = torch.tensor(0.0, device=device, requires_grad=True)
 
-    total_loss = ce_loss + mse_loss
+    total_loss = ce_loss + mse_weight * mse_loss
     return ce_loss, mse_loss, total_loss
 
 
@@ -233,18 +321,21 @@ def evaluate(
             break
         batch = {k: v.to(device) for k, v in batch.items()}
 
-        action_logits, q_value_preds = model(
+        action_logits, q_value_preds = model.forward_coconut(
             input_ids        = batch['input_ids'],
             reward_values    = batch['reward_values'],
             reward_positions = batch['reward_positions'],
             select_positions = batch['select_positions'],
             update_positions = batch['update_positions'],
+            cot_positions    = batch['cot_positions'],
         )
 
         ce, mse, _ = compute_losses(
             action_logits, q_value_preds,
             batch['select_positions'], batch['select_targets'],
             batch['update_positions'], batch['update_targets'],
+            batch['select_masks'], batch['step_indices'],
+            batch['n_steps_tensor'],
         )
         ce_total  += ce.item()
         mse_total += mse.item()
@@ -339,15 +430,34 @@ def train(args) -> None:
         if not HAS_WANDB:
             raise ImportError("wandb is not installed. Run: pip install wandb")
         wandb.init(
-            project="coconut-qlearning",
-            config={
-                "architecture": "Continuous CoT Transformer",
-                "epochs": args.epochs,
-                "batch_size": args.batch_size,
-                "lr": args.lr,
-                "n_sequences": cfg_data['n_sequences'],
-                "n_layers": args.n_layers,
-                "d_model": args.d_model,
+            project  = "coconut-qlearning",
+            name     = args.run_name if args.run_name else None,
+            tags     = ["coconut-feedback", "curriculum", "huber-loss"],
+            config   = {
+                # Architecture
+                "architecture":  "COCONUT Continuous CoT Transformer",
+                "n_layers":      args.n_layers,
+                "n_heads":       args.n_heads,
+                "d_model":       args.d_model,
+                "d_ff":          args.d_ff,
+                "dropout":       args.dropout,
+                "vocab_size":    model_config.vocab_size,
+                "n_params":      n_params,
+                # Data
+                "n_sequences":   cfg_data['n_sequences'],
+                "n_states":      cfg_data['n_states'],
+                "n_actions":     cfg_data['n_actions'],
+                "min_steps":     cfg_data.get('min_steps', 10),
+                "max_steps":     cfg_data.get('max_steps', 50),
+                # Training
+                "epochs":        args.epochs,
+                "batch_size":    args.batch_size,
+                "lr":            args.lr,
+                "weight_decay":  args.weight_decay,
+                "warmup_steps":  args.warmup_steps,
+                "mse_weight":    args.mse_weight,
+                # Curriculum stages
+                "curriculum":    [{"last_epoch": e, "max_steps": s} for e, s in CURRICULUM_STAGES],
             }
         )
 
@@ -356,16 +466,41 @@ def train(args) -> None:
     os.makedirs(ckpt_dir, exist_ok=True)
     ckpt_path = os.path.join(ckpt_dir, 'coconut_transformer.pt')
 
-    best_val_loss  = float('inf')
-    global_step    = 0
-    log_ce_acc     = 0.0
-    log_mse_acc    = 0.0
-    log_n          = 0
-    t0             = time.time()
+    best_val_loss    = float('inf')
+    global_step      = 0
+    log_ce_acc       = 0.0
+    log_mse_acc      = 0.0
+    log_n            = 0
+    t0               = time.time()
+    current_stage    = -1   # will be set on epoch 1
 
     print()
 
     for epoch in range(1, args.epochs + 1):
+        # ---- Curriculum stage transition ----
+        new_stage = None
+        for i, (last_ep, ms) in enumerate(CURRICULUM_STAGES):
+            if epoch <= last_ep:
+                new_stage = i
+                break
+        if new_stage is None:
+            new_stage = len(CURRICULUM_STAGES) - 1
+
+        if new_stage != current_stage:
+            current_stage = new_stage
+            stage_max_steps = CURRICULUM_STAGES[current_stage][1]
+            train_ds.max_steps         = stage_max_steps
+            train_ds.stage_idx         = current_stage
+            train_ds.all_stage_max_steps = STAGE_MAX_STEPS
+            print(f"[curriculum] Stage {current_stage + 1}: max_steps={stage_max_steps}")
+
+            # Reset LR scheduler with short warmup over remaining stage
+            stage_last_ep   = CURRICULUM_STAGES[current_stage][0]
+            remaining_epochs = stage_last_ep - epoch + 1
+            stage_total_steps = len(train_loader) * remaining_epochs
+            stage_warmup      = min(100, stage_total_steps // 10)
+            scheduler = get_warmup_cosine_scheduler(optimizer, stage_warmup, stage_total_steps)
+
         model.train()
 
         for batch in train_loader:
@@ -374,17 +509,21 @@ def train(args) -> None:
             optimizer.zero_grad(set_to_none=True)
 
             with torch.cuda.amp.autocast(enabled=use_amp):
-                action_logits, q_value_preds = model(
+                action_logits, q_value_preds = model.forward_coconut(
                     input_ids        = batch['input_ids'],
                     reward_values    = batch['reward_values'],
                     reward_positions = batch['reward_positions'],
                     select_positions = batch['select_positions'],
                     update_positions = batch['update_positions'],
+                    cot_positions    = batch['cot_positions'],
                 )
                 ce_loss, mse_loss, total_loss = compute_losses(
                     action_logits, q_value_preds,
                     batch['select_positions'], batch['select_targets'],
                     batch['update_positions'], batch['update_targets'],
+                    batch['select_masks'], batch['step_indices'],
+                    batch['n_steps_tensor'],
+                    mse_weight=args.mse_weight,
                 )
 
             scaler.scale(total_loss).backward()
@@ -423,15 +562,19 @@ def train(args) -> None:
 
                 if args.use_wandb:
                     wandb.log({
-                        "train/ce_loss":    avg_ce,
-                        "train/mse_loss":   avg_mse,
-                        "train/total_loss": avg_tot,
-                        "val/ce_loss":      val_ce,
-                        "val/mse_loss":     val_mse,
-                        "val/total_loss":   val_tot,
-                        "lr":               lr_now,
-                        "epoch":            epoch,
-                        "step":             global_step,
+                        "train/ce_loss":          avg_ce,
+                        "train/mse_loss":         avg_mse,
+                        "train/total_loss":       avg_tot,
+                        "train/weighted_total":   avg_ce + args.mse_weight * avg_mse,
+                        "val/ce_loss":            val_ce,
+                        "val/mse_loss":           val_mse,
+                        "val/total_loss":         val_tot,
+                        "val/weighted_total":     val_ce + args.mse_weight * val_mse,
+                        "lr":                     lr_now,
+                        "curriculum/stage":       current_stage + 1,
+                        "curriculum/max_steps":   CURRICULUM_STAGES[current_stage][1],
+                        "epoch":                  epoch,
+                        "step":                   global_step,
                     })
 
                 # Save best checkpoint
@@ -473,6 +616,18 @@ def train(args) -> None:
             }, ckpt_path)
             print(f"  -> Saved best checkpoint (val_loss={best_val_loss:.4f})")
 
+        if args.use_wandb:
+            wandb.log({
+                "epoch/val_ce_loss":       val_ce,
+                "epoch/val_mse_loss":      val_mse,
+                "epoch/val_total_loss":    val_tot,
+                "epoch/val_weighted_total": val_ce + args.mse_weight * val_mse,
+                "epoch/best_val_loss":     best_val_loss,
+                "epoch/curriculum_stage":  current_stage + 1,
+                "epoch":                   epoch,
+                "step":                    global_step,
+            })
+
     total_time = time.time() - t0
     print(f"\nTraining complete in {total_time/60:.1f} min")
     print(f"Best val loss: {best_val_loss:.4f}")
@@ -513,8 +668,12 @@ def main():
     parser.add_argument('--warmup_steps',  type=int,   default=500)
     parser.add_argument('--eval_every',    type=int,   default=500)
     parser.add_argument('--num_workers',   type=int,   default=4)
+    parser.add_argument('--mse_weight',    type=float, default=10.0,
+                        help='Weight applied to Huber/MSE loss (default 10.0)')
     parser.add_argument('--use_wandb',     action='store_true',
                         help='Enable Weights & Biases logging')
+    parser.add_argument('--run_name',      type=str, default=None,
+                        help='W&B run name (default: auto-generated)')
 
     args = parser.parse_args()
     train(args)

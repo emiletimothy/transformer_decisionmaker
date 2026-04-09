@@ -143,11 +143,11 @@ def run_transformer_inference(
 ) -> np.ndarray:
     """Feed the trajectory to the model one step at a time in COCONUT format.
 
-    After appending each TOK_UPDATE token, runs a forward pass and extracts
-    the q_value_preds at the latest Update position.
-
-    The model receives the full accumulated sequence (causal) at each step,
-    so it has access to all prior context — exactly as intended by COCONUT.
+    After appending each TOK_UPDATE + TOK_COT token pair, calls
+    model.forward_coconut() on the full accumulated sequence.  The COCONUT
+    forward pass injects the hidden state from each UPDATE position into the
+    corresponding COT position before the final transformer pass, giving the
+    model access to continuously-evolving Q-value representations.
 
     Returns
     -------
@@ -164,6 +164,7 @@ def run_transformer_inference(
     TOK_QCURR  = vocab['TOK_QCURR']
     TOK_QNEXT  = vocab['TOK_QNEXT']
     TOK_UPDATE = vocab['TOK_UPDATE']
+    TOK_COT    = vocab['TOK_COT']
 
     model.eval()
     q_preds = []
@@ -172,6 +173,8 @@ def run_transformer_inference(
     ids              = [TOK_NULL, TOK_START]
     reward_values    : List[float] = []
     reward_positions : List[int]   = []
+    update_positions : List[int]   = []
+    cot_positions    : List[int]   = []
 
     with torch.no_grad():
         for step, traj in enumerate(trajectory):
@@ -202,24 +205,32 @@ def run_transformer_inference(
             ids.append(TOK_QNEXT)
             upd_pos = len(ids)   # position of this UPDATE token
             ids.append(TOK_UPDATE)
+            update_positions.append(upd_pos)
 
-            # ---- Forward pass ----
-            T = len(ids)
-            input_ids_t = torch.tensor([ids], dtype=torch.long, device=device)    # [1, T]
-            rew_vals_t  = torch.tensor([reward_values], dtype=torch.float32, device=device)  # [1, n_r]
-            rew_pos_t   = torch.tensor([reward_positions], dtype=torch.long, device=device)  # [1, n_r]
-            sel_pos_t   = torch.tensor([[0]], dtype=torch.long, device=device)     # dummy
-            upd_pos_t   = torch.tensor([[upd_pos]], dtype=torch.long, device=device)
+            # ---- COT placeholder ----
+            cot_pos = len(ids)   # position of the COT token
+            ids.append(TOK_COT)
+            cot_positions.append(cot_pos)
 
-            action_logits, q_value_preds_t = model(
+            # ---- COCONUT forward pass on full accumulated sequence ----
+            input_ids_t = torch.tensor([ids],              dtype=torch.long,    device=device)
+            rew_vals_t  = torch.tensor([reward_values],    dtype=torch.float32, device=device)
+            rew_pos_t   = torch.tensor([reward_positions], dtype=torch.long,    device=device)
+            sel_pos_t   = torch.tensor([[0]],              dtype=torch.long,    device=device)
+            upd_pos_t   = torch.tensor([update_positions], dtype=torch.long,    device=device)
+            cot_pos_t   = torch.tensor([cot_positions],   dtype=torch.long,    device=device)
+
+            action_logits, q_value_preds_t = model.forward_coconut(
                 input_ids        = input_ids_t,
                 reward_values    = rew_vals_t,
                 reward_positions = rew_pos_t,
                 select_positions = sel_pos_t,
                 update_positions = upd_pos_t,
+                cot_positions    = cot_pos_t,
             )
-            # q_value_preds_t : [1, 1, n_actions]
-            q_row = q_value_preds_t[0, 0].cpu().numpy()   # [n_actions]
+            # q_value_preds_t : [1, n_upd_so_far, n_actions]
+            # The last entry corresponds to the current step's UPDATE position
+            q_row = q_value_preds_t[0, -1].cpu().numpy()   # [n_actions]
             q_preds.append(q_row)
 
     return np.stack(q_preds, axis=0)   # (n_steps, n_actions)
@@ -335,6 +346,154 @@ def plot_qtable_comparison(
 
 
 # ---------------------------------------------------------------------------
+# Additional metrics
+# ---------------------------------------------------------------------------
+
+def per_state_errors(
+    q_model: np.ndarray,    # (n_steps, n_states, n_actions)
+    q_tabular: np.ndarray,  # (n_steps, n_states, n_actions)
+) -> np.ndarray:
+    """Compute per-state L2 error ||Q_model(t,s,:) - Q_tabular(t,s,:)||_2 for each t,s.
+
+    Returns : (n_steps, n_states)
+    """
+    diff = q_model - q_tabular   # (n_steps, n_states, n_actions)
+    return np.linalg.norm(diff, axis=-1)  # (n_steps, n_states)
+
+
+def relative_frobenius_errors(
+    q_model: np.ndarray,    # (n_steps, n_states, n_actions)
+    q_tabular: np.ndarray,  # (n_steps, n_states, n_actions)
+) -> np.ndarray:
+    """Compute relative Frobenius error ||Q_model(t) - Q_tabular(t)||_F / (||Q_tabular(t)||_F + 1e-8).
+
+    Returns : (n_steps,)
+    """
+    T = q_model.shape[0]
+    rel = np.zeros(T, dtype=np.float32)
+    for t in range(T):
+        num = np.linalg.norm(q_model[t] - q_tabular[t], 'fro')
+        den = np.linalg.norm(q_tabular[t], 'fro') + 1e-8
+        rel[t] = num / den
+    return rel
+
+
+def per_step_action_agreement(
+    q_row_preds: np.ndarray,    # (n_steps, n_actions)
+    q_tabular: np.ndarray,      # (n_steps, n_states, n_actions)
+    trajectory: List[Dict],
+) -> np.ndarray:
+    """Compute per-step greedy action agreement between model and tabular Q-table.
+
+    Returns : (n_steps,) float array with values 0.0 or 1.0
+    """
+    n_steps = len(trajectory)
+    agree = np.zeros(n_steps, dtype=np.float32)
+    for t, traj in enumerate(trajectory):
+        model_a   = int(np.argmax(q_row_preds[t]))
+        tabular_a = int(np.argmax(q_tabular[t, traj['s']]))
+        agree[t]  = float(model_a == tabular_a)
+    return agree
+
+
+# ---------------------------------------------------------------------------
+# Additional plots
+# ---------------------------------------------------------------------------
+
+def plot_per_state_error(
+    per_state_err: np.ndarray,   # (n_steps, n_states)  or mean over MDPs
+    save_path: str,
+) -> None:
+    """Plot per-state L2 error over time."""
+    T, n_states = per_state_err.shape
+    steps = np.arange(1, T + 1)
+
+    fig, ax = plt.subplots(figsize=(9, 5))
+    for s in range(n_states):
+        ax.plot(steps, per_state_err[:, s], label=f'State {s}', linewidth=1.5)
+    ax.set_xlabel('Timestep')
+    ax.set_ylabel(r'$\|Q_{model}(t,s,:) - Q_{tabular}(t,s,:)\|_2$')
+    ax.set_title('Per-State Q-Value Error Over Time')
+    ax.legend(fontsize=8)
+    ax.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"  Saved: {save_path}")
+
+
+def plot_relative_error(
+    rel_err_mean: np.ndarray,   # (n_steps,)
+    rel_err_std:  np.ndarray,   # (n_steps,)
+    save_path: str,
+) -> None:
+    """Plot relative Frobenius error over time."""
+    steps = np.arange(1, len(rel_err_mean) + 1)
+
+    fig, ax = plt.subplots(figsize=(9, 5))
+    ax.plot(steps, rel_err_mean, color='darkorange', linewidth=2, label='Relative Frobenius error')
+    ax.fill_between(steps,
+                    rel_err_mean - rel_err_std,
+                    rel_err_mean + rel_err_std,
+                    alpha=0.25, color='darkorange')
+    ax.set_xlabel('Timestep')
+    ax.set_ylabel(r'$\|Q_{model}(t) - Q_{tabular}(t)\|_F \;/\; (\|Q_{tabular}(t)\|_F + \epsilon)$')
+    ax.set_title('Relative Frobenius Error Over Time (mean ± std, 10 MDPs)')
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"  Saved: {save_path}")
+
+
+def plot_q_scatter(
+    q_tabular_flat: np.ndarray,  # (N,)
+    q_model_flat:   np.ndarray,  # (N,)
+    save_path: str,
+) -> None:
+    """Scatter plot of model Q-values vs tabular Q-values with y=x reference line."""
+    fig, ax = plt.subplots(figsize=(7, 7))
+    ax.scatter(q_tabular_flat, q_model_flat, alpha=0.05, s=2, color='steelblue', rasterized=True)
+    lo = min(q_tabular_flat.min(), q_model_flat.min())
+    hi = max(q_tabular_flat.max(), q_model_flat.max())
+    ax.plot([lo, hi], [lo, hi], 'r--', linewidth=1.5, label='y = x')
+    ax.set_xlabel('Q tabular')
+    ax.set_ylabel('Q model')
+    ax.set_title('Q-Value Scatter: Model vs Tabular (all MDPs, states, actions, timesteps)')
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"  Saved: {save_path}")
+
+
+def plot_action_agreement(
+    aa_mean: np.ndarray,  # (n_steps,)
+    aa_std:  np.ndarray,  # (n_steps,)
+    save_path: str,
+) -> None:
+    """Plot per-step action agreement mean ± std over time."""
+    steps = np.arange(1, len(aa_mean) + 1)
+
+    fig, ax = plt.subplots(figsize=(9, 5))
+    ax.plot(steps, aa_mean, color='green', linewidth=2, label='Action agreement')
+    ax.fill_between(steps, aa_mean - aa_std, aa_mean + aa_std, alpha=0.25, color='green')
+    ax.axhline(y=1.0, color='gray', linestyle='--', alpha=0.5, label='Perfect agreement')
+    ax.set_xlabel('Timestep')
+    ax.set_ylabel('Greedy Action Agreement')
+    ax.set_ylim(-0.05, 1.1)
+    ax.set_title('Per-Step Action Agreement: Model vs Tabular (mean ± std, 10 MDPs)')
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"  Saved: {save_path}")
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -352,7 +511,9 @@ def main():
     parser.add_argument('--gamma',   type=float, default=0.9)
     parser.add_argument('--epsilon', type=float, default=0.2)
     parser.add_argument('--eval_seed', type=int, default=9999,
-                        help='Seed for the evaluation MDP (must differ from training seed)')
+                        help='Base seed; evaluation runs seeds eval_seed .. eval_seed+9')
+    parser.add_argument('--n_eval_mdps', type=int, default=10,
+                        help='Number of different random MDPs to evaluate on')
     args = parser.parse_args()
 
     os.makedirs(args.figures_dir, exist_ok=True)
@@ -377,58 +538,123 @@ def main():
     print(f"\nModel: {model.num_parameters():,} params  |  device: {device}")
     print(f"MDP:   n_states={n_states}, n_actions={n_actions}")
 
-    # ---- Generate unseen eval MDP ----
-    print(f"\nGenerating fresh eval MDP (seed={args.eval_seed}) ...")
-    P, R = generate_eval_mdp(n_states, n_actions, seed=args.eval_seed)
+    # ---- Multi-MDP evaluation loop ----
+    eval_seeds = list(range(args.eval_seed, args.eval_seed + args.n_eval_mdps))
+    print(f"\nEvaluating on {len(eval_seeds)} MDPs (seeds {eval_seeds[0]}–{eval_seeds[-1]}) ...")
 
-    # ---- Tabular Q-learning (ground truth) ----
-    print(f"Running tabular Q-learning for {args.n_steps} steps ...")
-    trajectory, q_tabular = run_tabular_q_learning(
-        P, R, n_states, n_actions,
-        n_steps  = args.n_steps,
-        alpha    = args.alpha,
-        gamma    = args.gamma,
-        epsilon  = args.epsilon,
-        seed     = args.eval_seed,
-    )
-    # q_tabular : (n_steps, n_states, n_actions)
+    all_frob_errors    = []   # list of (n_steps,) arrays
+    all_rel_errors     = []   # list of (n_steps,) arrays
+    all_per_state_errs = []   # list of (n_steps, n_states) arrays
+    all_action_agree   = []   # list of (n_steps,) arrays
+    all_q_tab_flat     = []   # all Q_tabular values (for scatter)
+    all_q_mod_flat     = []   # all Q_model values  (for scatter)
 
-    # ---- Transformer inference ----
-    print("Running transformer inference step-by-step ...")
-    q_row_preds = run_transformer_inference(model, trajectory, vocab, n_actions, device)
-    # q_row_preds : (n_steps, n_actions)
+    # Keep first MDP's data for detailed comparison plots
+    first_q_model   = None
+    first_q_tabular = None
+    first_traj      = None
 
-    # Reconstruct full Q-table history from row predictions
-    q_model = build_qtable_from_row_preds(q_row_preds, trajectory, n_states, n_actions)
-    # q_model : (n_steps, n_states, n_actions)
+    for seed_i, seed in enumerate(eval_seeds):
+        print(f"  MDP {seed_i+1}/{len(eval_seeds)} (seed={seed}) ...", end=' ', flush=True)
 
-    # ---- Frobenius errors ----
-    errors = frobenius_errors(q_model, q_tabular)   # (n_steps,)
+        P, R = generate_eval_mdp(n_states, n_actions, seed=seed)
+        trajectory, q_tabular = run_tabular_q_learning(
+            P, R, n_states, n_actions,
+            n_steps  = args.n_steps,
+            alpha    = args.alpha,
+            gamma    = args.gamma,
+            epsilon  = args.epsilon,
+            seed     = seed,
+        )
 
-    print("\n--- Frobenius Norm Error ||Q_model(t) - Q_tabular(t)||_F ---")
-    checkpoints = [4, 14, args.n_steps - 1]
-    for t in checkpoints:
-        tc = min(t, len(errors) - 1)
-        print(f"  Step {tc+1:3d}: {errors[tc]:.4f}")
-    print(f"  Mean over all steps: {errors.mean():.4f}")
-    print(f"  Final step {args.n_steps}: {errors[-1]:.4f}")
+        q_row_preds = run_transformer_inference(model, trajectory, vocab, n_actions, device)
+        q_model_hist = build_qtable_from_row_preds(q_row_preds, trajectory, n_states, n_actions)
+
+        frob_err  = frobenius_errors(q_model_hist, q_tabular)
+        rel_err   = relative_frobenius_errors(q_model_hist, q_tabular)
+        ps_err    = per_state_errors(q_model_hist, q_tabular)
+        aa        = per_step_action_agreement(q_row_preds, q_tabular, trajectory)
+
+        all_frob_errors.append(frob_err)
+        all_rel_errors.append(rel_err)
+        all_per_state_errs.append(ps_err)
+        all_action_agree.append(aa)
+        all_q_tab_flat.append(q_tabular.flatten())
+        all_q_mod_flat.append(q_model_hist.flatten())
+
+        if seed_i == 0:
+            first_q_model   = q_model_hist
+            first_q_tabular = q_tabular
+            first_traj      = trajectory
+
+        print(f"frob_final={frob_err[-1]:.4f}  agree={aa.mean():.2%}")
+
+    # ---- Aggregate statistics ----
+    frob_arr  = np.stack(all_frob_errors,    axis=0)  # (n_mdps, n_steps)
+    rel_arr   = np.stack(all_rel_errors,     axis=0)  # (n_mdps, n_steps)
+    ps_arr    = np.stack(all_per_state_errs, axis=0)  # (n_mdps, n_steps, n_states)
+    aa_arr    = np.stack(all_action_agree,   axis=0)  # (n_mdps, n_steps)
+
+    frob_mean = frob_arr.mean(axis=0);  frob_std = frob_arr.std(axis=0)
+    rel_mean  = rel_arr.mean(axis=0);   rel_std  = rel_arr.std(axis=0)
+    ps_mean   = ps_arr.mean(axis=0)                   # (n_steps, n_states)
+    aa_mean   = aa_arr.mean(axis=0);    aa_std   = aa_arr.std(axis=0)
+
+    q_tab_flat = np.concatenate(all_q_tab_flat)
+    q_mod_flat = np.concatenate(all_q_mod_flat)
+
+    print(f"\n--- Results across {len(eval_seeds)} MDPs ---")
+    for label, t in [('Step  5', 4), (f'Step 15', 14), (f'Step {args.n_steps}', args.n_steps - 1)]:
+        tc = min(t, frob_arr.shape[1] - 1)
+        print(f"  {label}: Frobenius = {frob_mean[tc]:.4f} ± {frob_std[tc]:.4f}")
+    print(f"  Mean Frobenius: {frob_mean.mean():.4f} ± {frob_arr.mean(axis=1).std():.4f}")
+    print(f"  Mean action agreement: {aa_mean.mean():.2%} ± {aa_arr.mean(axis=1).std():.4f}")
+    print(f"  Final relative error: {rel_mean[-1]:.4f} ± {rel_std[-1]:.4f}")
 
     # ---- Plots ----
     print("\nGenerating plots ...")
+
+    # Frobenius norm (mean ± std over MDPs)
     frob_path = os.path.join(args.figures_dir, 'frobenius_norm.png')
-    plot_frobenius_norm(errors, frob_path)
+    steps = np.arange(1, args.n_steps + 1)
+    fig, ax = plt.subplots(figsize=(9, 5))
+    ax.plot(steps, frob_mean, color='steelblue', linewidth=2, label='Mean Frobenius error')
+    ax.fill_between(steps, frob_mean - frob_std, frob_mean + frob_std, alpha=0.25, color='steelblue')
+    ax.set_xlabel('Timestep')
+    ax.set_ylabel(r'$\|Q_{model}(t) - Q_{tabular}(t)\|_F$')
+    ax.set_title(f'COCONUT Transformer vs Tabular Q-Learning\nFrobenius Norm Error (mean ± std, {len(eval_seeds)} MDPs)')
+    ax.legend(); ax.grid(True, alpha=0.3)
+    plt.tight_layout(); plt.savefig(frob_path, dpi=150, bbox_inches='tight'); plt.close()
+    print(f"  Saved: {frob_path}")
 
+    # Q-table comparison heatmaps (first MDP only)
+    checkpoints = [4, 14, args.n_steps - 1]
     cmp_path = os.path.join(args.figures_dir, 'qtable_comparison.png')
-    plot_qtable_comparison(q_model, q_tabular, checkpoints, cmp_path)
+    plot_qtable_comparison(first_q_model, first_q_tabular, checkpoints, cmp_path)
 
-    # ---- Action accuracy at SELECT positions ----
-    # Count how often the greedy action from the transformer prediction
-    # matches the greedy action from the tabular Q-table.
-    model_greedy   = [int(np.argmax(q_row_preds[t]))    for t in range(args.n_steps)]
-    tabular_greedy = [int(np.argmax(q_tabular[t, traj['s']])) for t, traj in enumerate(trajectory)]
-    action_match = sum(m == t for m, t in zip(model_greedy, tabular_greedy))
-    print(f"\nGreedy action agreement (model vs tabular): "
-          f"{action_match}/{args.n_steps} = {action_match/args.n_steps:.2%}")
+    # Per-state error (averaged over MDPs)
+    ps_path = os.path.join(args.figures_dir, 'per_state_error.png')
+    plot_per_state_error(ps_mean, ps_path)
+
+    # Relative error (mean ± std over MDPs)
+    rel_path = os.path.join(args.figures_dir, 'relative_error.png')
+    plot_relative_error(rel_mean, rel_std, rel_path)
+
+    # Q-value scatter (all MDPs combined)
+    scatter_path = os.path.join(args.figures_dir, 'q_scatter.png')
+    plot_q_scatter(q_tab_flat, q_mod_flat, scatter_path)
+
+    # Per-step action agreement (mean ± std over MDPs)
+    aa_path = os.path.join(args.figures_dir, 'action_agreement.png')
+    plot_action_agreement(aa_mean, aa_std, aa_path)
+
+    # Per-step agreement summary
+    print(f"\n--- Per-step action agreement (first MDP) ---")
+    for t in checkpoints:
+        tc = min(t, aa_arr.shape[1] - 1)
+        print(f"  Step {tc+1:3d}: {aa_mean[tc]:.2%} ± {aa_std[tc]:.4f}")
+    total_agree = int(aa_arr[0].sum())
+    print(f"  Overall (first MDP): {total_agree}/{args.n_steps} = {aa_arr[0].mean():.2%}")
 
 
 if __name__ == '__main__':
