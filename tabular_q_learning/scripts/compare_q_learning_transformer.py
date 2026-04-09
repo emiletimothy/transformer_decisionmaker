@@ -184,7 +184,7 @@ def main() -> None:
     args = parser.parse_args()
 
     print(f"MDP : {args.n_states} states, {args.n_actions} actions")
-    print(f"Reward : r_t = (s_next + 1) / {args.n_states}")
+    print(f"Reward : r_t = 0.5")# (s_next + 1) / {args.n_states}
     print(f"Q-Learning : alpha={args.alpha}, gamma={args.gamma}")
     print(f"Trajectory : T={args.T}, epsilon={args.epsilon}, seed={args.seed}")
 
@@ -229,7 +229,7 @@ def main() -> None:
     fig.suptitle(
         "Tabular Q-Learning vs PyTorch Handwired Transformer Q-Learning\n"
         f"{args.n_states}-state chain MDP  |  dense reward r=(s'+1)/{args.n_states}  |  "
-        f"alpha={args.alpha},  gamma={args.gamma},  T={args.T}",
+        f"alpha={args.alpha},  gamma={args.gamma},  T={args.T}, epsilon={args.epsilon}",
         fontsize=12,
     )
 

@@ -123,7 +123,7 @@ def get_rotation_matrix(ell: int, d_sin: int, M_base: float = 10000.0) -> torch.
     return R
 
 
-def f_recency(pos: int) -> float:
+def f_recency(pos: int, n_actions: int) -> float:
     """
     Monotonically increasing bounded recency signal.
     f(i) = 1 - 1/ln(i+e), lower-order than 1/(i+1).
@@ -214,19 +214,22 @@ class QLearningTransformer(nn.Module):
         self.PE_SIN_START = self.PE_START + 1
         self.PE_SIN_END = self.PE_SIN_START + self.d_sin
 
-        # Round block layout
+        # Round block layout (Section 4, two phases)
+        # Phase I:  s_t, a_t, r, s', [s', a_c, Eval]*|A|, Select
+        # Phase II: a_{t+1}, Qcurr, Qnext, Update
         nA = config.n_actions
-        # s_t, a_t, r, s', [s', a_c, Eval]*|A|, Select, Qcurr, Qnext, Update
-        self.ROUND_LEN = 4 + 3 * nA + 1 + 3
+        self.PHASE1_LEN = 4 + 3 * nA + 1          # up to and including Select
+        self.ROUND_LEN  = self.PHASE1_LEN + 4      # + a_{t+1}, Qcurr, Qnext, Update
         self.IDX_ST = 0
         self.IDX_AT = 1
         self.IDX_R = 2
         self.IDX_SNEXT = 3
         self.IDX_EVAL_BASE = 4      # Each eval block: [s', a_c, Eval] = 3 tokens
-        self.IDX_SELECT = 4 + 3 * nA
-        self.IDX_QCURR = 5 + 3 * nA
-        self.IDX_QNEXT = 6 + 3 * nA
-        self.IDX_UPDATE = 7 + 3 * nA
+        self.IDX_SELECT  = 4 + 3 * nA
+        self.IDX_ANEXT   = 5 + 3 * nA   # a_{t+1} decoded from Select
+        self.IDX_QCURR   = 6 + 3 * nA
+        self.IDX_QNEXT   = 7 + 3 * nA
+        self.IDX_UPDATE  = 8 + 3 * nA
 
         self._build_layers()
         self.reset()
@@ -236,7 +239,7 @@ class QLearningTransformer(nn.Module):
         v = self.vocab
 
         null = torch.zeros(self.d_model, dtype=torch.float64)
-        null[self.PE_F_IDX] = f_recency(0)
+        null[self.PE_F_IDX] = f_recency(0, cfg.n_actions)
         null[self.PE_SIN_START:self.PE_SIN_END] = get_sinusoidal_vec(0, self.d_sin, cfg.M_base)
 
         # <Start>: superposition of all state + action identities (Eq. 6)
@@ -245,7 +248,7 @@ class QLearningTransformer(nn.Module):
             start[tok] = 1.0
         for tok in v['TOK_A']:
             start[tok] = 1.0
-        start[self.PE_F_IDX] = f_recency(1)
+        start[self.PE_F_IDX] = f_recency(1, cfg.n_actions)
         start[self.PE_SIN_START:self.PE_SIN_END] = get_sinusoidal_vec(1, self.d_sin, cfg.M_base)
 
         self._event_tokens = [null, start]
@@ -260,15 +263,32 @@ class QLearningTransformer(nn.Module):
         cfg = self.config
         v = self.vocab
 
-        # === Layer 1: Within-round fixed-offset retrieval ===
-        # ONE pair of heads for ALL Eval tokens (they share offset structure):
-        #   [s', a_c, Eval] -> Eval at offset=2 gets s', at offset=1 gets a_c
+        # ------------------------------------------------------------------
+        # Decoding matrix W_O ∈ R^{|A| × d_model}  (Section 4, Phase I)
+        # Logit for action c = ⟨id(TF output at Select), ũ_{a_c}⟩
+        # i.e. W_O[c, v['TOK_A'][c]] = 1  in the id subspace.
+        # ------------------------------------------------------------------
+        W_O = torch.zeros(cfg.n_actions, self.d_model, dtype=torch.float64)
+        for c in range(cfg.n_actions):
+            W_O[c, self.ID_START + v['TOK_A'][c]] = 1.0
+        self.register_buffer("W_O", W_O)
+
+        # ------------------------------------------------------------------
+        # Layer 1: Within-round fixed-offset retrieval
+        # All heads fire simultaneously on the residual stream; their outputs
+        # are summed (multi-head attention residual update).
+        #
+        # Pass-1 heads (active when sequence ends at ⟨Select⟩):
+        #   l1_eval_s / l1_eval_a : Eval tokens gather s' and a_c identities
+        # Pass-2 heads (active when sequence includes Qcurr/Qnext/Update):
+        #   l1_qcurr_s / l1_qcurr_a : Qcurr gathers s_t and a_t identities
+        # Non-target tokens route to ⟨Null⟩ via Complementary Superposition.
+        # ------------------------------------------------------------------
         self.l1_eval_s = self._build_fixed_offset_head(
             target_tok=v['TOK_EVAL'], ell=2, src_sub='id', dst_sub='buf1')
         self.l1_eval_a = self._build_fixed_offset_head(
             target_tok=v['TOK_EVAL'], ell=1, src_sub='id', dst_sub='buf1')
 
-        # Qcurr gathers id(s_t) + id(a_t)
         offset_qcurr_to_st = self.IDX_QCURR - self.IDX_ST
         offset_qcurr_to_at = self.IDX_QCURR - self.IDX_AT
         self.l1_qcurr_s = self._build_fixed_offset_head(
@@ -278,33 +298,46 @@ class QLearningTransformer(nn.Module):
             target_tok=v['TOK_QCURR'], ell=offset_qcurr_to_at,
             src_sub='id', dst_sub='buf1')
 
-        # === Layer 2: Content-based Q-value retrieval from history ===
+        # ------------------------------------------------------------------
+        # Layer 2: Content-based Q-value retrieval from COCONUT history
+        # ------------------------------------------------------------------
         self.layer2_content = self._build_content_retrieval_head()
 
-        # === Layer 2.5: Qnext pools max Q from current round's Eval tokens ===
+        # ------------------------------------------------------------------
+        # Layer 2.5: Qnext pools max_a Q(s',a) from current Eval tokens
+        # ------------------------------------------------------------------
         self.layer2_qnext_pool = self._build_qnext_pool_head()
 
-        # === Layer 3: TD aggregation + event-token emission ===
+        # ------------------------------------------------------------------
+        # Layer 3, Pass-1 head: Select gathers best Eval Q-value
+        # Fired on both passes; Attention Sink ensures it adds nothing
+        # to Qcurr/Qnext/Update tokens (they route to ⟨Null⟩).
+        # ------------------------------------------------------------------
+        self.l3_select = self._build_select_head()
+
+        # ------------------------------------------------------------------
+        # Layer 3, Pass-2 heads: TD aggregation at ⟨Update⟩
+        # Offsets from Update (with a_{t+1} between Select and Qcurr):
+        #   Update → Qcurr : IDX_UPDATE - IDX_QCURR = 2
+        #   Update → Qnext : IDX_UPDATE - IDX_QNEXT = 1
+        #   Update → r     : IDX_UPDATE - IDX_R
+        # ------------------------------------------------------------------
         offset_update_to_qcurr = self.IDX_UPDATE - self.IDX_QCURR
         offset_update_to_qnext = self.IDX_UPDATE - self.IDX_QNEXT
-        offset_update_to_r = self.IDX_UPDATE - self.IDX_R
+        offset_update_to_r     = self.IDX_UPDATE - self.IDX_R
 
-        # Head 1: (1-alpha) * Q(s,a) from Qcurr buf2[e_val]
         self.l3_h1 = self._build_fixed_offset_head(
             target_tok=v['TOK_UPDATE'], ell=offset_update_to_qcurr,
             src_sub='buf2_val', dst_sub='buf1_val',
             weight=1.0 - cfg.alpha)
-        # Head 2: alpha*gamma * max_a Q(s',a) from Qnext buf1[e_val]
         self.l3_h2 = self._build_fixed_offset_head(
             target_tok=v['TOK_UPDATE'], ell=offset_update_to_qnext,
             src_sub='buf1_val', dst_sub='buf1_val',
             weight=cfg.alpha * cfg.gamma)
-        # Head 3: alpha * r from r-token buf1[e_val]
         self.l3_h3 = self._build_fixed_offset_head(
             target_tok=v['TOK_UPDATE'], ell=offset_update_to_r,
             src_sub='buf1_val', dst_sub='buf1_val',
             weight=cfg.alpha)
-        # Head 4: copy buf1(Qcurr) -> id(Update) for s+a identity
         self.l3_h4 = self._build_fixed_offset_head(
             target_tok=v['TOK_UPDATE'], ell=offset_update_to_qcurr,
             src_sub='buf1', dst_sub='id')
@@ -444,6 +477,55 @@ class QLearningTransformer(nn.Module):
 
         return ExactAttentionHead(W_Q, W_K, W_V, temperature=pool_beta)
 
+    def _build_select_head(self) -> ExactAttentionHead:
+        """
+        Layer 3 / Pass-1 action-selection head at ⟨Select⟩.
+
+        Select attends over the current round's |A| Eval tokens using:
+          Subspace A (dim 0): content match — TOK_SELECT identity dots TOK_EVAL
+          Subspace B (dim 1): Q-value tiebreaker — selects highest-Q Eval token
+            (Q-value lives in buf2[e_val] after Layer 2, but here we use it
+             as a secondary score via buf2 of Eval tokens post-retrieval)
+          Subspace C (dims 2..2+d_sin): Attention Sink gating (Complementary
+            Superposition) — non-Select tokens attend to ⟨Null⟩ at position 0.
+
+        Value projection copies the action identity (id subspace) of the winning
+        Eval token into buf1 of Select, so that the action identity u˜_{a*} is
+        available for ε-greedy decoding.
+        """
+        cfg = self.config
+        select_beta = 100_000.0
+
+        d_q = 2 + self.d_sin
+        W_Q = torch.zeros(d_q, self.d_model, dtype=torch.float64)
+        W_K = torch.zeros(d_q, self.d_model, dtype=torch.float64)
+        W_V = torch.zeros(self.d_model, self.d_model, dtype=torch.float64)
+
+        # --- Subspace A: Primary content match (Select -> Eval) ---
+        W_Q[0, self.ID_START + self.vocab['TOK_SELECT']] = 1.0
+        W_K[0, self.ID_START + self.vocab['TOK_EVAL']] = 1.0
+
+        # --- Subspace B: Q-value tiebreaker (higher buf2[e_val] wins) ---
+        W_Q[1, self.ID_START + self.vocab['TOK_SELECT']] = 1.0
+        W_K[1, self.BUF2_START + self.e_val] = 1.0
+
+        # --- Subspace C: Attention Sink for non-Select tokens ---
+        u_comp = torch.ones(self.d_te, dtype=torch.float64)
+        u_comp[self.vocab['TOK_SELECT']] = 0.0
+        p_null = get_sinusoidal_vec(0, self.d_sin, cfg.M_base)
+
+        W_Q[2:2+self.d_sin, self.ID_START:self.ID_END] = (
+            cfg.xi * torch.outer(p_null, u_comp))
+        W_K[2:2+self.d_sin, self.PE_SIN_START:self.PE_SIN_END] = (
+            torch.eye(self.d_sin, dtype=torch.float64))
+
+        # --- Value: copy id(Eval winner) -> buf1(Select) ---
+        # This deposits u˜_{a*} (action identity) into Select's buf1
+        W_V[self.BUF1_START:self.BUF1_END, self.ID_START:self.ID_END] = (
+            torch.eye(self.d_te, dtype=torch.float64))
+
+        return ExactAttentionHead(W_Q, W_K, W_V, temperature=select_beta)
+
     # ------------------------------------------------------------------
     # Embedding construction
     # ------------------------------------------------------------------
@@ -453,7 +535,7 @@ class QLearningTransformer(nn.Module):
         cfg = self.config
         x = torch.zeros(self.d_model, dtype=torch.float64)
         x[tok_id] = 1.0
-        x[self.PE_F_IDX] = f_recency(abs_pos)
+        x[self.PE_F_IDX] = f_recency(abs_pos, cfg.n_actions)
         x[self.PE_SIN_START:self.PE_SIN_END] = get_sinusoidal_vec(abs_pos, self.d_sin, cfg.M_base)
         return x
 
@@ -461,81 +543,143 @@ class QLearningTransformer(nn.Module):
     # Public API
     # ------------------------------------------------------------------
 
-    def step(self, s: int, a: int, r: float, s_next: int) -> float:
-        """
-        Process one MDP transition and return Q_{t+1}(s, a).
+    def _layer1(self, seq: torch.Tensor) -> torch.Tensor:
+        """Layer 1: all offset-retrieval heads summed (multi-head residual update)."""
+        return (seq
+                + self.l1_eval_s(seq)  + self.l1_eval_a(seq)
+                + self.l1_qcurr_s(seq) + self.l1_qcurr_a(seq))
 
-        The transformer computes max_a Q(s',a) via the Eval+Qnext mechanism.
+    def _layer2(self, seq: torch.Tensor) -> torch.Tensor:
+        """Layer 2: content-based Q-value retrieval from COCONUT history."""
+        return seq + self.layer2_content(seq)
+
+    def _layer2_5(self, seq: torch.Tensor) -> torch.Tensor:
+        """Layer 2.5: Qnext pools max_a Q(s',a) from Eval tokens."""
+        return seq + self.layer2_qnext_pool(seq)
+
+    def _layer3(self, seq: torch.Tensor) -> torch.Tensor:
+        """Layer 3: Select head (Pass 1) + TD aggregation heads (Pass 2), summed."""
+        return (seq
+                + self.l3_select(seq)
+                + self.l3_h1(seq) + self.l3_h2(seq)
+                + self.l3_h3(seq) + self.l3_h4(seq))
+
+    def _forward(self, seq: torch.Tensor) -> torch.Tensor:
+        """Full 3-layer causal transformer forward pass (residual stream)."""
+        seq = self._layer1(seq)
+        seq = self._layer2(seq)
+        seq = self._layer2_5(seq)
+        seq = self._layer3(seq)
+        return seq
+
+    def step(self, s: int, a: int, r: float, s_next: int) -> tuple:
+        """
+        Process one MDP transition via two autoregressive transformer passes.
+        Returns (Q_{t+1}(s, a), a_next).
+
+        ── Pass 1 (action selection, Section 4 Phase I) ──────────────────
+        Input sequence ends at ⟨Select⟩:
+            [history | s_t, a_t, r, s', (s', a_c, Eval)×|A|, Select]
+
+        All 3 transformer layers run on this sequence. The output at the
+        ⟨Select⟩ position is projected through the decoding matrix W_O to
+        obtain action logits. After scaling by
+            c = ln(|A|*(1-ε)/ε + 1)
+        softmax sampling recovers the exact ε-greedy policy, yielding ⟨a_{t+1}⟩.
+
+        ── Pass 2 (Q-value update + COCONUT emission, Section 4 Phase II) ─
+        The real ⟨a_{t+1}⟩ token is appended, then [Qcurr, Qnext, Update]:
+            [history | s_t, a_t, r, s', (s',a_c,Eval)×|A|, Select,
+             a_{t+1}, Qcurr, Qnext, Update]
+
+        All 3 transformer layers run again on this full sequence (causal
+        attention, so Pass 1 residual states are visible to Pass 2 tokens).
+        The output at ⟨Update⟩ is appended to the COCONUT history as the
+        continuous event token v^(t), encoding Q_{t+1}(s_t, a_t).
         """
         cfg = self.config
-        v = self.vocab
-        nA = cfg.n_actions
+        v   = self.vocab
+        nA  = cfg.n_actions
         base_pos = len(self._event_tokens)
 
-        # Build round block
-        tokens = []
-        tokens.append(v['TOK_S'][s])         # 0: s_t
-        tokens.append(v['TOK_A'][a])         # 1: a_t
-        tokens.append(v['TOK_R'])            # 2: r
-        tokens.append(v['TOK_S'][s_next])    # 3: s'
+        # ── Shared prefix: s_t, a_t, r, s', Eval-blocks ──────────────────
+        phase1_toks = []
+        phase1_toks.append(v['TOK_S'][s])         # IDX_ST
+        phase1_toks.append(v['TOK_A'][a])         # IDX_AT
+        phase1_toks.append(v['TOK_R'])            # IDX_R
+        phase1_toks.append(v['TOK_S'][s_next])    # IDX_SNEXT
+        for c in range(nA):
+            phase1_toks.append(v['TOK_S'][s_next])
+            phase1_toks.append(v['TOK_A'][c])
+            phase1_toks.append(v['TOK_EVAL'])
+        phase1_toks.append(v['TOK_SELECT'])       # IDX_SELECT
 
-        for c in range(nA):                  # Eval triples
-            tokens.append(v['TOK_S'][s_next])
-            tokens.append(v['TOK_A'][c])
-            tokens.append(v['TOK_EVAL'])
+        assert len(phase1_toks) == self.PHASE1_LEN
 
-        tokens.append(v['TOK_SELECT'])       # Select
-        tokens.append(v['TOK_QCURR'])        # Qcurr
-        tokens.append(v['TOK_QNEXT'])        # Qnext
-        tokens.append(v['TOK_UPDATE'])        # Update
+        x_p1 = torch.zeros(self.PHASE1_LEN, self.d_model, dtype=torch.float64)
+        for i, tok in enumerate(phase1_toks):
+            x_p1[i] = self._embed_token(tok, base_pos + i)
+        x_p1[self.IDX_R, self.BUF1_START + self.e_val] = r
 
-        assert len(tokens) == self.ROUND_LEN
+        history = torch.stack(self._event_tokens)   # shape [H, d_model]
 
-        x_block = torch.zeros(len(tokens), self.d_model, dtype=torch.float64)
-        for i, tok in enumerate(tokens):
-            x_block[i] = self._embed_token(tok, base_pos + i)
+        # ══════════════════════════════════════════════════════════════════
+        # PASS 1: sequence = [history | phase1_block]  (ends at ⟨Select⟩)
+        # ══════════════════════════════════════════════════════════════════
+        seq1 = torch.cat([history, x_p1], dim=0).unsqueeze(0)  # [1, H+PHASE1_LEN, d]
+        seq1 = self._forward(seq1)
 
-        # Seed reward into buf1[e_val] of r-token
-        x_block[self.IDX_R, self.BUF1_START + self.e_val] = r
+        # Decode ⟨a_{t+1}⟩ from ⟨Select⟩ output via W_O (Section 4, Phase I)
+        #   logit_c = c_scale * (W_O[c] · h_Select)
+        #           = c_scale * ⟨ũ_{a_c}, id(h_Select)⟩
+        select_out  = seq1[0, base_pos + self.IDX_SELECT]        # h_Select
+        raw_logits  = self.W_O @ select_out                      # [nA]
+        c_scale     = math.log(nA * (1.0 - cfg.epsilon) / cfg.epsilon + 1.0)
+        action_probs = F.softmax(c_scale * raw_logits, dim=0)
+        a_next = int(torch.multinomial(action_probs.float(), num_samples=1).item())
 
-        # Concatenate history + round block
-        history = torch.stack(self._event_tokens)
-        full = torch.cat([history, x_block], dim=0).unsqueeze(0)
+        # ══════════════════════════════════════════════════════════════════
+        # PASS 2: append real ⟨a_{t+1}⟩ + [Qcurr, Qnext, Update]
+        # ══════════════════════════════════════════════════════════════════
+        phase2_toks = [
+            v['TOK_A'][a_next],   # IDX_ANEXT — real decoded action
+            v['TOK_QCURR'],       # IDX_QCURR
+            v['TOK_QNEXT'],       # IDX_QNEXT
+            v['TOK_UPDATE'],      # IDX_UPDATE
+        ]
+        x_p2 = torch.zeros(len(phase2_toks), self.d_model, dtype=torch.float64)
+        for i, tok in enumerate(phase2_toks):
+            x_p2[i] = self._embed_token(tok, base_pos + self.PHASE1_LEN + i)
 
-        # === Layer 1: within-round offset retrieval ===
-        full = full + self.l1_eval_s(full) + self.l1_eval_a(full)
-        full = full + self.l1_qcurr_s(full) + self.l1_qcurr_a(full)
+        # Full sequence: re-embed from scratch so causal attention sees the
+        # correct, unmodified input embeddings at all positions.
+        # (Pass 1 residual states are NOT reused — each pass is a fresh
+        # forward of the same fixed-weight transformer, as in autoregressive
+        # decoding where the full context is reprocessed each step.)
+        x_full = torch.cat([x_p1, x_p2], dim=0)
+        seq2   = torch.cat([history, x_full], dim=0).unsqueeze(0)
+        seq2   = self._forward(seq2)
 
-        # === Layer 2: content-based Q-value retrieval from history ===
-        full = full + self.layer2_content(full)
+        # Emit continuous event token v^(t) via COCONUT
+        update_out  = seq2[0, base_pos + self.IDX_UPDATE].detach().clone()
 
-        # === Layer 2.5: Qnext pools max Q from Eval tokens ===
-        full = full + self.layer2_qnext_pool(full)
-
-        # === Layer 3: TD aggregation + emission ===
-        full = full + self.l3_h1(full) + self.l3_h2(full) + self.l3_h3(full) + self.l3_h4(full)
-
-        # Emit event token v^(t)
-        update_seq_idx = base_pos + self.IDX_UPDATE
-        event_token = full[0, update_seq_idx].detach().clone()
-
-        # Re-stamp absolute PE
+        # Re-stamp PE to the event token's permanent history position
         history_pos = len(self._event_tokens)
-        event_token[self.PE_F_IDX] = f_recency(history_pos)
-        event_token[self.PE_SIN_START:self.PE_SIN_END] = get_sinusoidal_vec(
+        update_out[self.PE_F_IDX] = f_recency(history_pos, cfg.n_actions)
+        update_out[self.PE_SIN_START:self.PE_SIN_END] = get_sinusoidal_vec(
             history_pos, self.d_sin, cfg.M_base)
 
-        self._event_tokens.append(event_token)
+        self._event_tokens.append(update_out)
 
-        q_new = float(event_token[self.BUF1_START + self.e_val])
-
+        q_new = float(update_out[self.BUF1_START + self.e_val])
         Q_new = self.q_history[-1].copy()
         Q_new[s, a] = q_new
         self.q_history.append(Q_new)
         self.step_count += 1
 
-        logger.debug("Step %d: Q(%d,%d) <- %.6f", self.step_count, s, a, q_new)
-        return q_new
+        logger.debug("Step %d: Q(%d,%d) <- %.6f  a_next=%d",
+                     self.step_count, s, a, q_new, a_next)
+        return q_new, a_next
 
     def get_q_history(self) -> List[np.ndarray]:
         return self.q_history
@@ -565,7 +709,7 @@ if __name__ == "__main__":
     max_err = 0.0
     for t, (s, a, r, s_next) in enumerate(traj):
         q_c = ql.step(s, a, r, s_next)
-        q_t = tf.step(s, a, r, s_next)
+        q_t, a_next = tf.step(s, a, r, s_next)
         err = abs(q_c - q_t)
         max_err = max(max_err, err)
         if err > 1e-6:
