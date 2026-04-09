@@ -1,0 +1,301 @@
+============================================================
+ COCONUT Q-Learning Transformer — Full Experiment Pipeline
+============================================================
+ SLURM Job:  3201883
+ Node:       luthien
+ GPU:         NVIDIA A100 80GB PCIe
+ VRAM:        85.1 GB
+ PyTorch:     2.9.1+cu128
+ n_sequences : 50000
+ epochs      : 20
+ batch_size  : 64
+============================================================
+
+=== Step 1/4: Generating training data ===
+Start: Wed Apr  8 07:00:40 PM PDT 2026
+Generating 50,000 COCONUT sequences (5 states, 2 actions, steps=[10,50]) ...
+  70% epsilon-greedy (ε=0.2), 30% random walk, trap_prob=0.2
+
+Vocabulary (vocab_size=15):
+  NULL=0  START=1
+  S=[2, 3, 4, 5, 6]
+  A=[7, 8]
+  R=9  EVAL=10  SELECT=11
+  QCURR=12  QNEXT=13  UPDATE=14
+
+Round length: 14 tokens
+Max sequence length: 2 + 14*50 = 702 tokens
+  generated 5,000 / 50,000 sequences...
+  generated 10,000 / 50,000 sequences...
+  generated 15,000 / 50,000 sequences...
+  generated 20,000 / 50,000 sequences...
+  generated 25,000 / 50,000 sequences...
+  generated 30,000 / 50,000 sequences...
+  generated 35,000 / 50,000 sequences...
+  generated 40,000 / 50,000 sequences...
+  generated 45,000 / 50,000 sequences...
+  generated 50,000 / 50,000 sequences...
+
+Sequence length stats:
+  min=152  max=752  mean=453.3
+
+Sample sequence  (n_steps=28, seq_len=422)
+  select_targets : [0, 0, 1] ...
+  update_targets[0] : ['0.0660', '0.0000']
+
+   pos  name          id  note
+  ----  ----------  ----  ------------------------------
+     0  NULL           0  
+     1  START          1  
+     2  S4             6  
+     3  A0             7  
+     4  R              9  r=0.6597
+     5  S0             2  
+     6  S0             2  
+     7  A0             7  
+     8  EVAL          10  
+     9  S0             2  
+    10  A1             8  
+    11  EVAL          10  
+    12  SELECT        11  target_action=0
+    13  A0             7  
+    14  QCURR         12  
+    15  QNEXT         13  
+    16  UPDATE        14  Q=[0.066, 0.000]
+    17  S0             2  
+    18  A0             7  
+    19  R              9  r=0.7910
+    20  S4             6  
+    21  S4             6  
+    22  A0             7  
+    23  EVAL          10  
+    24  S4             6  
+    25  A1             8  
+    26  EVAL          10  
+    27  SELECT        11  target_action=0
+    28  A0             7  
+    29  QCURR         12  
+    30  QNEXT         13  
+    31  UPDATE        14  Q=[0.085, 0.000]
+    32  S4             6  
+    33  A0             7  
+    34  R              9  r=0.6597
+    35  S2             4  
+    36  S2             4  
+    37  A0             7  
+    38  EVAL          10  
+    39  S2             4  
+    40  A1             8  
+    41  EVAL          10  
+    42  SELECT        11  target_action=1
+    43  A1             8  
+    44  QCURR         12  
+    45  QNEXT         13  
+    46  UPDATE        14  Q=[0.125, 0.000]
+    47  S2             4  
+    48  A1             8  
+    49  R              9  r=0.5428
+  ... (372 more tokens)
+
+Dataset saved to data/coconut_dataset.pt  (110.8 MB)
+  train: 45,000 sequences
+  val:   5,000 sequences
+Done: Wed Apr  8 07:02:25 PM PDT 2026
+
+=== Step 2/4: Model architecture summary ===
+============================================================
+COCONUTTransformer — Architecture Summary
+============================================================
+  n_states    : 5
+  n_actions   : 2
+  vocab_size  : 15
+  n_layers    : 4
+  n_heads     : 4
+  d_model     : 128
+  d_ff        : 512
+  max_seq_len : 1024
+  dropout     : 0.1
+
+  Modules:
+    tok_emb                    1,920 params
+    pos_emb                  131,072 params
+    reward_proj                  128 params
+    emb_drop                       0 params
+    blocks                   791,040 params
+    final_norm                   256 params
+    action_head                  258 params
+    q_value_head                 258 params
+
+  Total trainable parameters: 924,932
+============================================================
+  Smoke test forward pass:
+    input_ids     : [2, 64]
+    action_logits : [2, 5, 2]   (expect [B=2, n_sel=5, n_actions=2])
+    q_value_preds : [2, 5, 2]   (expect [B=2, n_upd=5, n_actions=2])
+============================================================
+
+=== Step 3/4: Training ===
+Start: Wed Apr  8 07:02:28 PM PDT 2026
+Device: cuda
+  GPU: NVIDIA A100 80GB PCIe
+  VRAM: 85.1 GB
+
+Loading dataset from data/coconut_dataset.pt ...
+  train: 45,000  val: 5,000
+  n_states=5, n_actions=2
+
+Model parameters: 924,932
+
+Training for 20 epochs, 14,080 steps total
+  warmup: 500 steps  |  batch_size: 64
+  lr: 0.0001  |  weight_decay: 0.01
+  AMP: True
+
+[ep 01 | step    500]  train: CE=0.6827  MSE=0.0119  Tot=0.6946  |  val: CE=0.6756  MSE=0.0067  Tot=0.6823  |  lr=1.00e-04  t=65s
+  -> Saved best checkpoint (val_loss=0.6823)
+
+[epoch 01 END]  val: CE=0.6713  MSE=0.0061  Tot=0.6774
+
+  -> Saved best checkpoint (val_loss=0.6774)
+[ep 02 | step   1000]  train: CE=0.6713  MSE=0.0056  Tot=0.6769  |  val: CE=0.6673  MSE=0.0049  Tot=0.6722  |  lr=9.97e-05  t=135s
+  -> Saved best checkpoint (val_loss=0.6722)
+
+[epoch 02 END]  val: CE=0.6667  MSE=0.0048  Tot=0.6715
+
+  -> Saved best checkpoint (val_loss=0.6715)
+[ep 03 | step   1500]  train: CE=0.6672  MSE=0.0050  Tot=0.6722  |  val: CE=0.6661  MSE=0.0047  Tot=0.6708  |  lr=9.87e-05  t=206s
+  -> Saved best checkpoint (val_loss=0.6708)
+[ep 03 | step   2000]  train: CE=0.6669  MSE=0.0048  Tot=0.6717  |  val: CE=0.6655  MSE=0.0046  Tot=0.6701  |  lr=9.70e-05  t=247s
+  -> Saved best checkpoint (val_loss=0.6701)
+
+[epoch 03 END]  val: CE=0.6674  MSE=0.0049  Tot=0.6723
+
+[ep 04 | step   2500]  train: CE=0.6663  MSE=0.0046  Tot=0.6710  |  val: CE=0.6650  MSE=0.0043  Tot=0.6693  |  lr=9.47e-05  t=318s
+  -> Saved best checkpoint (val_loss=0.6693)
+
+[epoch 04 END]  val: CE=0.6664  MSE=0.0045  Tot=0.6708
+
+[ep 05 | step   3000]  train: CE=0.6658  MSE=0.0044  Tot=0.6703  |  val: CE=0.6649  MSE=0.0043  Tot=0.6692  |  lr=9.19e-05  t=389s
+  -> Saved best checkpoint (val_loss=0.6692)
+[ep 05 | step   3500]  train: CE=0.6655  MSE=0.0042  Tot=0.6697  |  val: CE=0.6652  MSE=0.0040  Tot=0.6692  |  lr=8.84e-05  t=431s
+
+[epoch 05 END]  val: CE=0.6648  MSE=0.0041  Tot=0.6689
+
+  -> Saved best checkpoint (val_loss=0.6689)
+[ep 06 | step   4000]  train: CE=0.6649  MSE=0.0040  Tot=0.6689  |  val: CE=0.6657  MSE=0.0037  Tot=0.6694  |  lr=8.45e-05  t=502s
+
+[epoch 06 END]  val: CE=0.6652  MSE=0.0037  Tot=0.6689
+
+[ep 07 | step   4500]  train: CE=0.6657  MSE=0.0039  Tot=0.6696  |  val: CE=0.6644  MSE=0.0035  Tot=0.6678  |  lr=8.01e-05  t=573s
+  -> Saved best checkpoint (val_loss=0.6678)
+
+[epoch 07 END]  val: CE=0.6644  MSE=0.0034  Tot=0.6678
+
+  -> Saved best checkpoint (val_loss=0.6678)
+[ep 08 | step   5000]  train: CE=0.6648  MSE=0.0037  Tot=0.6685  |  val: CE=0.6656  MSE=0.0035  Tot=0.6690  |  lr=7.53e-05  t=643s
+[ep 08 | step   5500]  train: CE=0.6650  MSE=0.0036  Tot=0.6686  |  val: CE=0.6643  MSE=0.0032  Tot=0.6675  |  lr=7.01e-05  t=684s
+  -> Saved best checkpoint (val_loss=0.6675)
+
+[epoch 08 END]  val: CE=0.6646  MSE=0.0032  Tot=0.6678
+
+[ep 09 | step   6000]  train: CE=0.6652  MSE=0.0035  Tot=0.6687  |  val: CE=0.6644  MSE=0.0032  Tot=0.6676  |  lr=6.47e-05  t=754s
+
+[epoch 09 END]  val: CE=0.6643  MSE=0.0032  Tot=0.6675
+
+[ep 10 | step   6500]  train: CE=0.6643  MSE=0.0034  Tot=0.6677  |  val: CE=0.6647  MSE=0.0030  Tot=0.6677  |  lr=5.91e-05  t=824s
+[ep 10 | step   7000]  train: CE=0.6649  MSE=0.0034  Tot=0.6683  |  val: CE=0.6643  MSE=0.0030  Tot=0.6673  |  lr=5.34e-05  t=866s
+  -> Saved best checkpoint (val_loss=0.6673)
+
+[epoch 10 END]  val: CE=0.6640  MSE=0.0031  Tot=0.6671
+
+  -> Saved best checkpoint (val_loss=0.6671)
+[ep 11 | step   7500]  train: CE=0.6640  MSE=0.0033  Tot=0.6674  |  val: CE=0.6641  MSE=0.0029  Tot=0.6670  |  lr=4.76e-05  t=937s
+  -> Saved best checkpoint (val_loss=0.6670)
+
+[epoch 11 END]  val: CE=0.6642  MSE=0.0030  Tot=0.6671
+
+[ep 12 | step   8000]  train: CE=0.6649  MSE=0.0033  Tot=0.6682  |  val: CE=0.6640  MSE=0.0029  Tot=0.6669  |  lr=4.18e-05  t=1008s
+  -> Saved best checkpoint (val_loss=0.6669)
+
+[epoch 12 END]  val: CE=0.6637  MSE=0.0029  Tot=0.6666
+
+  -> Saved best checkpoint (val_loss=0.6666)
+[ep 13 | step   8500]  train: CE=0.6640  MSE=0.0032  Tot=0.6672  |  val: CE=0.6641  MSE=0.0029  Tot=0.6670  |  lr=3.62e-05  t=1078s
+[ep 13 | step   9000]  train: CE=0.6645  MSE=0.0032  Tot=0.6677  |  val: CE=0.6637  MSE=0.0029  Tot=0.6666  |  lr=3.07e-05  t=1119s
+
+[epoch 13 END]  val: CE=0.6638  MSE=0.0029  Tot=0.6666
+
+[ep 14 | step   9500]  train: CE=0.6636  MSE=0.0032  Tot=0.6668  |  val: CE=0.6639  MSE=0.0028  Tot=0.6668  |  lr=2.55e-05  t=1189s
+
+[epoch 14 END]  val: CE=0.6637  MSE=0.0028  Tot=0.6665
+
+  -> Saved best checkpoint (val_loss=0.6665)
+[ep 15 | step  10000]  train: CE=0.6638  MSE=0.0031  Tot=0.6669  |  val: CE=0.6634  MSE=0.0028  Tot=0.6662  |  lr=2.07e-05  t=1259s
+  -> Saved best checkpoint (val_loss=0.6662)
+[ep 15 | step  10500]  train: CE=0.6641  MSE=0.0031  Tot=0.6672  |  val: CE=0.6635  MSE=0.0028  Tot=0.6663  |  lr=1.62e-05  t=1301s
+
+[epoch 15 END]  val: CE=0.6635  MSE=0.0028  Tot=0.6663
+
+[ep 16 | step  11000]  train: CE=0.6640  MSE=0.0031  Tot=0.6671  |  val: CE=0.6633  MSE=0.0028  Tot=0.6662  |  lr=1.22e-05  t=1386s
+  -> Saved best checkpoint (val_loss=0.6662)
+
+[epoch 16 END]  val: CE=0.6633  MSE=0.0028  Tot=0.6661
+
+  -> Saved best checkpoint (val_loss=0.6661)
+[ep 17 | step  11500]  train: CE=0.6630  MSE=0.0031  Tot=0.6661  |  val: CE=0.6634  MSE=0.0028  Tot=0.6662  |  lr=8.64e-06  t=1476s
+
+[epoch 17 END]  val: CE=0.6633  MSE=0.0027  Tot=0.6660
+
+  -> Saved best checkpoint (val_loss=0.6660)
+[ep 18 | step  12000]  train: CE=0.6640  MSE=0.0030  Tot=0.6671  |  val: CE=0.6635  MSE=0.0027  Tot=0.6662  |  lr=5.68e-06  t=1566s
+[ep 18 | step  12500]  train: CE=0.6636  MSE=0.0031  Tot=0.6667  |  val: CE=0.6633  MSE=0.0027  Tot=0.6661  |  lr=3.30e-06  t=1613s
+
+[epoch 18 END]  val: CE=0.6633  MSE=0.0027  Tot=0.6661
+
+[ep 19 | step  13000]  train: CE=0.6633  MSE=0.0030  Tot=0.6663  |  val: CE=0.6633  MSE=0.0027  Tot=0.6660  |  lr=1.55e-06  t=1696s
+
+[epoch 19 END]  val: CE=0.6633  MSE=0.0027  Tot=0.6661
+
+[ep 20 | step  13500]  train: CE=0.6637  MSE=0.0030  Tot=0.6667  |  val: CE=0.6633  MSE=0.0027  Tot=0.6661  |  lr=4.49e-07  t=1766s
+[ep 20 | step  14000]  train: CE=0.6634  MSE=0.0030  Tot=0.6665  |  val: CE=0.6633  MSE=0.0027  Tot=0.6661  |  lr=8.56e-09  t=1807s
+
+[epoch 20 END]  val: CE=0.6633  MSE=0.0027  Tot=0.6661
+
+
+Training complete in 30.4 min
+Best val loss: 0.6660
+Checkpoint saved to: checkpoints/coconut_transformer.pt
+Done: Wed Apr  8 07:33:10 PM PDT 2026
+
+=== Step 4/4: Evaluation ===
+Start: Wed Apr  8 07:33:10 PM PDT 2026
+Loading checkpoint from checkpoints/coconut_transformer.pt ...
+  Loaded (trained 17 epochs, step 11968, val_loss=0.6660)
+
+Model: 924,932 params  |  device: cuda
+MDP:   n_states=5, n_actions=2
+
+Generating fresh eval MDP (seed=9999) ...
+Running tabular Q-learning for 50 steps ...
+Running transformer inference step-by-step ...
+
+--- Frobenius Norm Error ||Q_model(t) - Q_tabular(t)||_F ---
+  Step   5: 0.0836
+  Step  15: 0.2149
+  Step  50: 0.5587
+  Mean over all steps: 0.3260
+  Final step 50: 0.5587
+
+Generating plots ...
+  Saved: figures/frobenius_norm.png
+  Saved: figures/qtable_comparison.png
+
+Greedy action agreement (model vs tabular): 49/50 = 98.00%
+Done: Wed Apr  8 07:33:27 PM PDT 2026
+
+============================================================
+ Pipeline complete.
+ Checkpoint : checkpoints/coconut_transformer.pt
+ Figures    : figures/frobenius_norm.png
+              figures/qtable_comparison.png
+============================================================
