@@ -44,7 +44,7 @@ import torch.nn.functional as F
 
 @dataclass
 class COCONUTConfig:
-    n_states:    int   = 5
+    n_states:    int   = 4
     n_actions:   int   = 2
     n_layers:    int   = 4
     n_heads:     int   = 8
@@ -234,7 +234,23 @@ class COCONUTTransformer(nn.Module):
         # Single output head — CE loss on action prediction at SELECT positions
         self.action_head = nn.Linear(config.d_model, config.n_actions)
 
+        # Precompute token ID offsets (mirrors build_vocab in 1_generate_data.py)
+        self._tok_s_start = 2                    # TOK_S[i] = 2 + i
+        self._tok_a_start = 2 + config.n_states  # TOK_A[i] = 2 + n_states + i
+
+        # Teacher COT construction parameters (for forward_teacher_forced)
+        # cot_update_bias: learnable "this is a Q-update COT" signal
+        # eval_vector: direction in d_model space along which Q-values are encoded
+        self.cot_update_bias = nn.Parameter(torch.empty(config.d_model))
+        self.eval_vector     = nn.Parameter(torch.empty(config.d_model))
+
         self._init_weights()
+
+        # Initialize teacher COT params after _init_weights (explicit init overrides)
+        nn.init.normal_(self.cot_update_bias, mean=0.0, std=0.02)
+        v = torch.randn(config.d_model)
+        v = v / v.norm()
+        self.eval_vector.data.copy_(v)
 
     # ------------------------------------------------------------------
     # Initialisation
@@ -326,6 +342,47 @@ class COCONUTTransformer(nn.Module):
         return hidden.gather(1, idx)                        # [B, n_pos, d]
 
     # ------------------------------------------------------------------
+    # Teacher COT embedding construction
+    # ------------------------------------------------------------------
+
+    def construct_teacher_cot_embedding(
+        self,
+        st_ids:   torch.Tensor,   # [B] long — permuted state indices (0-based)
+        at_ids:   torch.Tensor,   # [B] long — permuted action indices (0-based)
+        q_values: torch.Tensor,   # [B] float — Q_{t+1}(s_t, a_t)
+    ) -> torch.Tensor:
+        """Build teacher-prescribed COT embeddings for one round.
+
+        Encodes the Q-value update as:
+            id_part  = cot_update_bias + tok_emb(S[st]) + tok_emb(A[at])
+            buf_part = q_value * eval_vector
+            result   = id_part + buf_part   shape [B, d_model]
+
+        This provides the model a structured signal of *what* Q-value was just
+        updated for *which* (s, a) pair, giving Phase A training concrete targets
+        to learn from before Phase B switches to model-generated COT.
+
+        Returns
+        -------
+        teacher_emb : [B, d_model]
+        """
+        # Convert 0-based state/action indices to vocabulary token IDs
+        tok_s_ids = st_ids + self._tok_s_start   # [B]
+        tok_a_ids = at_ids + self._tok_a_start   # [B]
+
+        # Identity part: learnable bias + state embedding + action embedding
+        id_part = (
+            self.cot_update_bias.unsqueeze(0)    # [1, d_model] broadcast to [B, d_model]
+            + self.tok_emb(tok_s_ids)            # [B, d_model]
+            + self.tok_emb(tok_a_ids)            # [B, d_model]
+        )
+
+        # Buffer part: Q-value scalar projected onto the eval_vector direction
+        buf_part = q_values.unsqueeze(-1) * self.eval_vector.unsqueeze(0)  # [B, d_model]
+
+        return id_part + buf_part   # [B, d_model]
+
+    # ------------------------------------------------------------------
     # Standard forward (single pass — no COCONUT feedback)
     # Used as baseline / ablation (--no_coconut flag in training/eval)
     # ------------------------------------------------------------------
@@ -356,13 +413,14 @@ class COCONUTTransformer(nn.Module):
 
     def forward_coconut(
         self,
-        input_ids:        torch.Tensor,            # [B, T]
-        reward_values:    Optional[torch.Tensor],  # [B, n_r]
-        reward_positions: Optional[torch.Tensor],  # [B, n_r]
-        select_positions: torch.Tensor,            # [B, n_sel]
-        think_positions:  torch.Tensor,            # [B, n_rounds]
-        cot_positions:    torch.Tensor,            # [B, n_rounds]
-        return_hidden:    bool = False,
+        input_ids:             torch.Tensor,            # [B, T]
+        reward_values:         Optional[torch.Tensor],  # [B, n_r]
+        reward_positions:      Optional[torch.Tensor],  # [B, n_r]
+        select_positions:      torch.Tensor,            # [B, n_sel]
+        think_positions:       torch.Tensor,            # [B, n_rounds]
+        cot_positions:         torch.Tensor,            # [B, n_rounds]
+        return_hidden:         bool = False,
+        truncate_bptt_window:  int  = 5,
     ):
         """COCONUT forward pass with continuous thought feedback.
 
@@ -411,14 +469,19 @@ class COCONUTTransformer(nn.Module):
             max_prefix = int(think_pos_r[valid].max().item()) + 1
             h = self._run_blocks_only(x[:, :max_prefix, :].clone())  # [B, max_prefix, d]
 
-            # Inject hidden state at THINK into COT position (detached to
-            # stop gradients from flowing through the recurrence, which would
-            # otherwise create an O(n_rounds)-deep computational graph).
+            # Inject hidden state at THINK into COT position.
+            # Truncated BPTT: only the last `truncate_bptt_window` rounds keep
+            # live gradients; earlier rounds are detached to keep the graph shallow.
+            # When n_rounds <= truncate_bptt_window (early curriculum), all rounds
+            # have live gradients since the detach condition is never true.
             for b in range(B):
                 if valid[b]:
                     t_pos = int(think_pos_r[b].item())
                     c_pos = int(cot_pos_r[b].item())
-                    x[b, c_pos, :] = h[b, t_pos, :].detach()
+                    if r < n_rounds - truncate_bptt_window:
+                        x[b, c_pos, :] = h[b, t_pos, :].detach()
+                    else:
+                        x[b, c_pos, :] = h[b, t_pos, :]
 
         # Step 3: Final full-sequence forward pass with COT embeddings injected.
         # Uses _run_transformer (blocks + final_norm) for the complete hidden states.
@@ -430,6 +493,61 @@ class COCONUTTransformer(nn.Module):
 
         if return_hidden:
             return action_logits, h_final
+        return action_logits
+
+    # ------------------------------------------------------------------
+    # Teacher-forced forward (Phase A training — single pass, no recurrence)
+    # ------------------------------------------------------------------
+
+    def forward_teacher_forced(
+        self,
+        input_ids:              torch.Tensor,            # [B, T]
+        reward_values:          Optional[torch.Tensor],  # [B, n_r]
+        reward_positions:       Optional[torch.Tensor],  # [B, n_r]
+        select_positions:       torch.Tensor,            # [B, n_sel]
+        cot_positions:          torch.Tensor,            # [B, n_rounds]
+        teacher_cot_embeddings: torch.Tensor,            # [B, n_rounds, d_model]
+    ) -> torch.Tensor:
+        """Teacher-forced COCONUT forward pass.
+
+        Instead of running sequential prefix passes to produce COT embeddings,
+        directly injects pre-computed teacher_cot_embeddings at each COT position.
+        Then does a single full-sequence transformer pass.
+
+        This is O(1) forward passes (vs O(n_rounds) for forward_coconut), giving
+        ~5–8x speedup for Phase A training. Gradients flow through the injected
+        teacher embeddings back into construct_teacher_cot_embedding's parameters
+        (cot_update_bias, eval_vector, tok_emb for the s/a tokens).
+
+        Parameters
+        ----------
+        teacher_cot_embeddings : [B, n_rounds, d_model]  — from construct_teacher_cot_embedding
+
+        Returns
+        -------
+        action_logits : [B, n_sel, n_actions]
+        """
+        B = input_ids.shape[0]
+        n_rounds = cot_positions.shape[1]
+
+        # Build full embeddings (token + position + reward injection)
+        x = self._embed(input_ids, reward_values, reward_positions).clone()  # [B, T, d]
+
+        # Overwrite COT positions with teacher embeddings
+        for r in range(n_rounds):
+            cot_pos_r = cot_positions[:, r]   # [B]
+            valid = (cot_pos_r >= 0)          # [B]
+            for b in range(B):
+                if valid[b]:
+                    c_pos = int(cot_pos_r[b].item())
+                    x[b, c_pos, :] = teacher_cot_embeddings[b, r, :]
+
+        # Single full-sequence forward pass (blocks + final_norm)
+        h = self._run_transformer(x)          # [B, T, d]
+
+        # Extract action logits at SELECT positions
+        sel_hidden    = self._gather_at_positions(h, select_positions)  # [B, n_sel, d]
+        action_logits = self.action_head(sel_hidden)                     # [B, n_sel, n_actions]
         return action_logits
 
     # ------------------------------------------------------------------
@@ -507,7 +625,7 @@ def print_model_summary(config: COCONUTConfig) -> None:
 
 if __name__ == '__main__':
     cfg = COCONUTConfig(
-        n_states=5, n_actions=2,
+        n_states=4, n_actions=2,
         n_layers=4, n_heads=8, d_model=256, d_ff=1024,
         dropout=0.1, max_seq_len=1024,
     )

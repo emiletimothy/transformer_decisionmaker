@@ -120,7 +120,8 @@ def truncate_sequence(seq: Dict, max_steps: int) -> Dict:
     trunc['input_ids'] = seq['input_ids'][:2 + n * round_len]
     for field in ('reward_values', 'reward_positions',
                   'select_positions', 'select_targets',
-                  'think_positions', 'cot_positions'):
+                  'think_positions', 'cot_positions',
+                  'q_values_for_cot'):
         if field in seq:
             trunc[field] = seq[field][:n]
     trunc['n_steps'] = n
@@ -196,6 +197,9 @@ def collate_fn(batch: List[Dict]) -> Dict[str, torch.Tensor]:
     select_targets_list   = []
     think_positions_list  = []
     cot_positions_list    = []
+    cot_st_ids_list       = []
+    cot_at_ids_list       = []
+    cot_q_new_list        = []
 
     for s in batch:
         input_ids_list.append(pad_ids(s['input_ids'], max_seq))
@@ -206,6 +210,13 @@ def collate_fn(batch: List[Dict]) -> Dict[str, torch.Tensor]:
         think_positions_list.append(pad_ints(s.get('think_positions', []), max_steps))
         cot_positions_list.append(pad_ints(s.get('cot_positions', []), max_steps))
 
+        # Batch q_values_for_cot: extract st, at, q_new and pad to max_steps
+        qvc   = s.get('q_values_for_cot', [])
+        n_pad = max_steps - len(qvc)
+        cot_st_ids_list.append([e['st']    for e in qvc] + [0]   * n_pad)
+        cot_at_ids_list.append([e['at']    for e in qvc] + [0]   * n_pad)
+        cot_q_new_list.append( [e['q_new'] for e in qvc] + [0.0] * n_pad)
+
     return {
         'input_ids':        torch.tensor(input_ids_list,        dtype=torch.long),
         'reward_values':    torch.tensor(reward_values_list,    dtype=torch.float32),
@@ -214,6 +225,9 @@ def collate_fn(batch: List[Dict]) -> Dict[str, torch.Tensor]:
         'select_targets':   torch.tensor(select_targets_list,   dtype=torch.long),
         'think_positions':  torch.tensor(think_positions_list,  dtype=torch.long),
         'cot_positions':    torch.tensor(cot_positions_list,    dtype=torch.long),
+        'cot_st_ids':       torch.tensor(cot_st_ids_list,       dtype=torch.long),
+        'cot_at_ids':       torch.tensor(cot_at_ids_list,       dtype=torch.long),
+        'cot_q_new':        torch.tensor(cot_q_new_list,        dtype=torch.float32),
     }
 
 
@@ -437,7 +451,10 @@ def train(args) -> None:
     # ---- Checkpointing ----
     ckpt_dir  = args.checkpoint_dir
     os.makedirs(ckpt_dir, exist_ok=True)
-    ckpt_path = os.path.join(ckpt_dir, 'coconut_transformer.pt')
+    if args.run_name:
+        ckpt_path = os.path.join(ckpt_dir, f'coconut_transformer_{args.run_name}.pt')
+    else:
+        ckpt_path = os.path.join(ckpt_dir, 'coconut_transformer.pt')
 
     best_val_loss = float('inf')
     global_step   = 0
@@ -452,6 +469,11 @@ def train(args) -> None:
 
     # ---- Scheduler: initialized at first stage transition ----
     scheduler = None
+
+    # ---- Two-phase training: Phase A (teacher-forced) then Phase B (model COT) ----
+    # phase_a_end_epoch_per_stage[stage_idx] = last epoch of Phase A for that stage
+    phase_a_end_epoch_per_stage: Dict[int, int] = {}
+    in_phase_a = True   # start in Phase A
 
     print()
 
@@ -481,6 +503,25 @@ def train(args) -> None:
             stage_warmup      = min(100, stage_total_steps // 10)
             scheduler = get_warmup_cosine_scheduler(optimizer, stage_warmup, stage_total_steps)
 
+            # Compute Phase A/B boundary for this stage (Phase A = first 40% of epochs)
+            stage_first_ep = CURRICULUM_STAGES[current_stage - 1][0] + 1 if current_stage > 0 else 1
+            n_stage_epochs = stage_last_ep - stage_first_ep + 1
+            n_phase_a      = max(1, math.ceil(n_stage_epochs * 0.4))
+            phase_a_end_epoch_per_stage[current_stage] = stage_first_ep + n_phase_a - 1
+            print(f"[phase] Stage {current_stage + 1}: "
+                  f"Phase A epochs {stage_first_ep}–{stage_first_ep + n_phase_a - 1}, "
+                  f"Phase B epochs {stage_first_ep + n_phase_a}–{stage_last_ep}")
+
+        # Determine current training phase
+        phase_a_end = phase_a_end_epoch_per_stage.get(current_stage, 0)
+        in_phase_a  = (epoch <= phase_a_end)
+
+        # Detect Phase A → B transition: clear optimizer momentum for a clean Phase B start
+        if use_coconut and (not in_phase_a) and (epoch == phase_a_end + 1):
+            optimizer.state.clear()
+            print(f"[phase] Stage {current_stage + 1}: Phase A→B transition — "
+                  f"optimizer momentum reset at epoch {epoch}")
+
         model.train()
 
         for batch in train_loader:
@@ -489,16 +530,37 @@ def train(args) -> None:
             optimizer.zero_grad(set_to_none=True)
 
             with torch.cuda.amp.autocast(enabled=use_amp):
-                if use_coconut:
+                if use_coconut and in_phase_a:
+                    # Phase A: teacher-forced COT — single forward pass, fast
+                    n_rounds = batch['cot_positions'].shape[1]
+                    teacher_embs = torch.stack([
+                        model.construct_teacher_cot_embedding(
+                            batch['cot_st_ids'][:, r],
+                            batch['cot_at_ids'][:, r],
+                            batch['cot_q_new'][:, r],
+                        ) for r in range(n_rounds)
+                    ], dim=1)   # [B, n_rounds, d_model]
+                    action_logits = model.forward_teacher_forced(
+                        input_ids              = batch['input_ids'],
+                        reward_values          = batch['reward_values'],
+                        reward_positions       = batch['reward_positions'],
+                        select_positions       = batch['select_positions'],
+                        cot_positions          = batch['cot_positions'],
+                        teacher_cot_embeddings = teacher_embs,
+                    )
+                elif use_coconut:
+                    # Phase B: model-generated COT with truncated BPTT (window=5)
                     action_logits = model.forward_coconut(
-                        input_ids        = batch['input_ids'],
-                        reward_values    = batch['reward_values'],
-                        reward_positions = batch['reward_positions'],
-                        select_positions = batch['select_positions'],
-                        think_positions  = batch['think_positions'],
-                        cot_positions    = batch['cot_positions'],
+                        input_ids             = batch['input_ids'],
+                        reward_values         = batch['reward_values'],
+                        reward_positions      = batch['reward_positions'],
+                        select_positions      = batch['select_positions'],
+                        think_positions       = batch['think_positions'],
+                        cot_positions         = batch['cot_positions'],
+                        truncate_bptt_window  = 5,
                     )
                 else:
+                    # No-COCONUT ablation (unchanged)
                     action_logits = model(
                         input_ids        = batch['input_ids'],
                         reward_values    = batch['reward_values'],
@@ -557,6 +619,7 @@ def train(args) -> None:
                         "lr":                   lr_now,
                         "curriculum/stage":     current_stage + 1,
                         "curriculum/max_steps": CURRICULUM_STAGES[current_stage][1],
+                        "training/phase":       "A" if in_phase_a else "B",
                         "epoch":                epoch,
                         "step":                 global_step,
                     })
@@ -663,7 +726,7 @@ def main():
 
     # Training hyperparameters
     parser.add_argument('--epochs',       type=int,   default=28)
-    parser.add_argument('--batch_size',   type=int,   default=64)
+    parser.add_argument('--batch_size',   type=int,   default=128)
     parser.add_argument('--lr',           type=float, default=1e-4)
     parser.add_argument('--weight_decay', type=float, default=1e-2)
     parser.add_argument('--eval_every',   type=int,   default=500)

@@ -63,7 +63,7 @@ echo "=== Step 1/4: Generating training data ==="
 echo "Start: $(date)"
 python3 scripts/1_generate_data.py \
   --n_sequences "$N_SEQUENCES" \
-  --n_states 5 \
+  --n_states 4 \
   --n_actions 2 \
   --min_steps 10 \
   --max_steps 50 \

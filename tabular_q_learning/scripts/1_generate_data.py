@@ -167,12 +167,14 @@ def generate_episode(
     Q = np.zeros((n_states, n_actions), dtype=np.float32)
     s = int(rng.integers(n_states))
 
-    states       = []
-    actions      = []
-    rewards      = []
-    next_states  = []
-    next_actions = []
-    q_snapshots  = []
+    states           = []
+    actions          = []
+    rewards          = []
+    next_states      = []
+    next_actions     = []
+    q_snapshots      = []
+    q_before_updates = []   # Q-table BEFORE the TD update at each step
+    q_values_for_cot = []   # post-update Q(s_t, a_t) with (s_t, a_t) indices
 
     for _ in range(n_steps):
         # Behavior policy: epsilon-greedy or pure random
@@ -189,6 +191,9 @@ def generate_episode(
         # Environment step: deterministic reward, stochastic transition
         r = float(R[s, a])
         s_next = int(rng.choice(n_states, p=P[s, a]))
+
+        # Capture Q BEFORE the TD update
+        q_before = Q.copy()
 
         # Q-learning update (off-policy: uses greedy max over s_next)
         max_q_next = float(np.max(Q[s_next]))
@@ -207,15 +212,21 @@ def generate_episode(
         next_actions.append(a_next)
         q_snapshots.append(Q.copy())
 
+        # New: store pre-update Q-table and post-update Q(s_t, a_t) for COT scaffolding
+        q_before_updates.append(q_before)
+        q_values_for_cot.append({'st': s, 'at': a, 'q_new': float(Q[s, a])})
+
         s = s_next
 
     return {
-        'states':       states,
-        'actions':      actions,
-        'rewards':      rewards,
-        'next_states':  next_states,
-        'next_actions': next_actions,
-        'q_snapshots':  q_snapshots,   # List of (n_states, n_actions) arrays
+        'states':           states,
+        'actions':          actions,
+        'rewards':          rewards,
+        'next_states':      next_states,
+        'next_actions':     next_actions,
+        'q_snapshots':      q_snapshots,      # List of (n_states, n_actions) arrays, AFTER update
+        'q_before_updates': q_before_updates, # List of (n_states, n_actions) arrays, BEFORE update
+        'q_values_for_cot': q_values_for_cot, # List of {'st', 'at', 'q_new'} per step
     }
 
 
@@ -255,15 +266,31 @@ def apply_permutations(
         Q_new = Q[np.ix_(inv_s, inv_a)]   # reindex rows then cols
         new_q_snapshots.append(Q_new)
 
+    # Permute q_before_updates (same logic as q_snapshots)
+    new_q_before_updates = []
+    for Q in episode.get('q_before_updates', []):
+        new_q_before_updates.append(Q[np.ix_(inv_s, inv_a)])
+
+    # Permute q_values_for_cot: remap st and at indices; q_new scalar is invariant
+    new_q_values_for_cot = []
+    for entry in episode.get('q_values_for_cot', []):
+        new_q_values_for_cot.append({
+            'st':    int(perm_s[entry['st']]),
+            'at':    int(perm_a[entry['at']]),
+            'q_new': entry['q_new'],
+        })
+
     return {
-        'states':       new_states,
-        'actions':      new_actions,
-        'rewards':      episode['rewards'],
-        'next_states':  new_next_states,
-        'next_actions': new_next_actions,
-        'q_snapshots':  new_q_snapshots,
-        'perm_s':       perm_s.tolist(),
-        'perm_a':       perm_a.tolist(),
+        'states':           new_states,
+        'actions':          new_actions,
+        'rewards':          episode['rewards'],
+        'next_states':      new_next_states,
+        'next_actions':     new_next_actions,
+        'q_snapshots':      new_q_snapshots,
+        'q_before_updates': new_q_before_updates,
+        'q_values_for_cot': new_q_values_for_cot,
+        'perm_s':           perm_s.tolist(),
+        'perm_a':           perm_a.tolist(),
     }
 
 
@@ -385,6 +412,7 @@ def build_coconut_sequence(
         'think_positions':  think_positions,
         'cot_positions':    cot_positions,
         'n_steps':          n_steps,
+        'q_values_for_cot': episode.get('q_values_for_cot', []),
     }
 
 
@@ -495,7 +523,7 @@ def main():
         description='Generate COCONUT Q-learning dataset'
     )
     parser.add_argument('--n_sequences', type=int, default=50_000)
-    parser.add_argument('--n_states',    type=int, default=5)
+    parser.add_argument('--n_states',    type=int, default=4)
     parser.add_argument('--n_actions',   type=int, default=2)
     parser.add_argument('--min_steps',   type=int, default=10)
     parser.add_argument('--max_steps',   type=int, default=50)
