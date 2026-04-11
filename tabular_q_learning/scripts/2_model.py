@@ -52,10 +52,13 @@ class COCONUTConfig:
     d_ff:        int   = 1024     # feed-forward hidden dim (4 * d_model)
     dropout:     float = 0.1
     max_seq_len: int   = 1024
+    n_q_bins:    int   = 32       # number of Q-value discretization bins
+    q_bin_min:   float = 0.0      # lower bound for Q-value binning
+    q_bin_max:   float = 5.0      # upper bound (~1/(1-gamma) with headroom)
 
     @property
     def vocab_size(self) -> int:
-        return 2 + self.n_states + self.n_actions + 5
+        return 2 + self.n_states + self.n_actions + 5 + self.n_q_bins
 
     def to_dict(self) -> Dict:
         d = asdict(self)
@@ -72,9 +75,10 @@ class COCONUTConfig:
 # Vocabulary helpers (mirrors 1_generate_data.py)
 # ---------------------------------------------------------------------------
 
-def build_vocab(n_states: int, n_actions: int) -> Dict[str, object]:
+def build_vocab(n_states: int, n_actions: int, n_q_bins: int = 32) -> Dict[str, object]:
     """Return token ID constants for the COCONUT vocabulary."""
     TOK_R = 2 + n_states + n_actions
+    old_vocab = 2 + n_states + n_actions + 5
     return {
         'TOK_NULL':   0,
         'TOK_START':  1,
@@ -85,8 +89,16 @@ def build_vocab(n_states: int, n_actions: int) -> Dict[str, object]:
         'TOK_SELECT': TOK_R + 2,
         'TOK_THINK':  TOK_R + 3,
         'TOK_COT':    TOK_R + 4,
-        'vocab_size': 2 + n_states + n_actions + 5,
+        'TOK_QBIN':   list(range(old_vocab, old_vocab + n_q_bins)),
+        'vocab_size': old_vocab + n_q_bins,
     }
+
+
+def discretize_q_value(q: float, n_bins: int, q_min: float, q_max: float) -> int:
+    """Map a continuous Q-value to a bin index in [0, n_bins-1]."""
+    frac = (q - q_min) / (q_max - q_min) if q_max > q_min else 0.0
+    frac = max(0.0, min(1.0, frac))
+    return min(int(frac * n_bins), n_bins - 1)
 
 
 # ---------------------------------------------------------------------------
@@ -135,6 +147,48 @@ class CausalMultiHeadAttention(nn.Module):
         out = out.transpose(1, 2).contiguous().view(B, T, C)
         return self.resid_drop(self.out_proj(out))
 
+    def forward_with_kv_cache(
+        self,
+        x: torch.Tensor,
+        past_kv: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
+    ) -> Tuple[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+        """Attention with KV cache for incremental decoding.
+
+        Parameters
+        ----------
+        x      : [B, T_new, d_model] — new token embeddings only
+        past_kv: (past_k, past_v) each [B, H, T_past, d_head], or None
+
+        Returns
+        -------
+        out    : [B, T_new, d_model]
+        new_kv : (k, v) each [B, H, T_past+T_new, d_head]
+        """
+        B, T_new, C = x.shape
+        qkv = self.qkv_proj(x)                              # [B, T_new, 3C]
+        q, k, v = qkv.split(C, dim=-1)
+
+        q = q.view(B, T_new, self.n_heads, self.d_head).transpose(1, 2)
+        k = k.view(B, T_new, self.n_heads, self.d_head).transpose(1, 2)
+        v = v.view(B, T_new, self.n_heads, self.d_head).transpose(1, 2)
+
+        if past_kv is not None:
+            k = torch.cat([past_kv[0], k], dim=2)
+            v = torch.cat([past_kv[1], v], dim=2)
+
+        T_total = k.shape[2]
+        attn = (q @ k.transpose(-2, -1)) / self.scale       # [B, H, T_new, T_total]
+        causal_mask = torch.triu(
+            torch.ones(T_new, T_total, device=x.device, dtype=torch.bool),
+            diagonal=T_total - T_new + 1,
+        )
+        attn = attn.masked_fill(causal_mask.unsqueeze(0).unsqueeze(0), float('-inf'))
+        attn = F.softmax(attn, dim=-1)
+        attn = self.attn_drop(attn)
+
+        out = (attn @ v).transpose(1, 2).contiguous().view(B, T_new, C)
+        return self.resid_drop(self.out_proj(out)), (k, v)
+
 
 class FeedForward(nn.Module):
     """Position-wise feed-forward network with GELU activation."""
@@ -167,6 +221,17 @@ class TransformerBlock(nn.Module):
         x = x + self.attn(self.norm1(x))
         x = x + self.ff(self.norm2(x))
         return x
+
+    def forward_with_kv_cache(
+        self,
+        x: torch.Tensor,
+        past_kv: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
+    ) -> Tuple[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+        """Pre-norm block with KV cache for incremental decoding."""
+        attn_out, new_kv = self.attn.forward_with_kv_cache(self.norm1(x), past_kv)
+        x = x + attn_out
+        x = x + self.ff(self.norm2(x))
+        return x, new_kv
 
 
 # ---------------------------------------------------------------------------
@@ -233,6 +298,9 @@ class COCONUTTransformer(nn.Module):
 
         # Single output head — CE loss on action prediction at SELECT positions
         self.action_head = nn.Linear(config.d_model, config.n_actions)
+
+        # Explanation head — CE loss on discrete explain tokens (Hao curriculum)
+        self.explain_head = nn.Linear(config.d_model, config.vocab_size)
 
         # Precompute token ID offsets (mirrors build_vocab in 1_generate_data.py)
         self._tok_s_start = 2                    # TOK_S[i] = 2 + i
@@ -319,6 +387,30 @@ class COCONUTTransformer(nn.Module):
         for block in self.blocks:
             x = block(x)
         return x
+
+    def _run_blocks_cached(
+        self,
+        x_new: torch.Tensor,
+        past_kvs: Optional[list] = None,
+    ) -> Tuple[torch.Tensor, list]:
+        """Run blocks on new tokens only, reusing cached K/V.
+
+        Parameters
+        ----------
+        x_new    : [B, T_new, d] — embeddings for new token(s)
+        past_kvs : list of (past_k, past_v) per layer, or None for cold start
+
+        Returns
+        -------
+        h_new    : [B, T_new, d] — block outputs (no final_norm)
+        new_kvs  : list of (k, v) per layer (past + new concatenated)
+        """
+        new_kvs = []
+        for i, block in enumerate(self.blocks):
+            pkv = past_kvs[i] if past_kvs is not None else None
+            x_new, kv = block.forward_with_kv_cache(x_new, pkv)
+            new_kvs.append(kv)
+        return x_new, new_kvs
 
     # ------------------------------------------------------------------
     # Gather helper
@@ -549,6 +641,144 @@ class COCONUTTransformer(nn.Module):
         sel_hidden    = self._gather_at_positions(h, select_positions)  # [B, n_sel, d]
         action_logits = self.action_head(sel_hidden)                     # [B, n_sel, n_actions]
         return action_logits
+
+    # ------------------------------------------------------------------
+    # Hao-style forward (mixed discrete/continuous explanation tokens)
+    # ------------------------------------------------------------------
+
+    def forward_hao(
+        self,
+        input_ids:             torch.Tensor,            # [B, T]
+        reward_values:         Optional[torch.Tensor],  # [B, n_r]
+        reward_positions:      Optional[torch.Tensor],  # [B, n_r]
+        select_positions:      torch.Tensor,            # [B, n_sel]
+        think_positions:       torch.Tensor,            # [B, n_rounds]
+        explain_positions:     torch.Tensor,            # [B, n_rounds, 3]
+        n_continuous:          int,                      # 0, 1, 2, or 3
+        return_hidden:         bool = False,
+        truncate_bptt_window:  int  = 5,
+    ):
+        """Hao-style forward with progressive discrete->continuous explanation.
+
+        Each round has 3 explanation token positions. The first (3-n_continuous)
+        are discrete tokens with standard embeddings; the last n_continuous are
+        continuous thoughts produced via COCONUT hidden-state feedback.
+
+        Uses KV caching for the COCONUT injection loop to avoid recomputing the
+        full prefix for each continuous thought. After all injections, a final
+        full-sequence pass through blocks+final_norm produces the hidden states
+        used for action prediction and explanation logits.
+
+        Parameters
+        ----------
+        explain_positions : [B, n_rounds, 3] — positions of the 3 explain tokens
+        n_continuous      : how many of the 3 are continuous (0=fully discrete)
+        return_hidden     : if True, also return h_final [B, T, d_model] for probing
+
+        Returns
+        -------
+        action_logits  : [B, n_sel, n_actions]
+        explain_logits : [B, n_rounds, 3, vocab_size]
+        h_final        : [B, T, d_model]  (only if return_hidden=True)
+        """
+        B, T = input_ids.shape
+        n_rounds = think_positions.shape[1]
+        n_discrete = 3 - n_continuous
+
+        # ---- Fast path: fully discrete (Stage 0) ----
+        if n_continuous == 0:
+            x = self._embed(input_ids, reward_values, reward_positions)
+            h = self._run_transformer(x)                                # [B, T, d]
+
+            sel_h = self._gather_at_positions(h, select_positions)      # [B, n_sel, d]
+            action_logits = self.action_head(sel_h)                     # [B, n_sel, n_act]
+
+            ep_flat = explain_positions.view(B, -1)                     # [B, n_rounds*3]
+            exp_h = self._gather_at_positions(h, ep_flat)               # [B, n_rounds*3, d]
+            exp_h = exp_h.view(B, n_rounds, 3, self.d_model)
+            explain_logits = self.explain_head(exp_h)                   # [B, n_rounds, 3, V]
+
+            if return_hidden:
+                return action_logits, explain_logits, h
+            return action_logits, explain_logits
+
+        # ---- COCONUT path: n_continuous > 0 ----
+        # Build embeddings. Continuous positions hold TOK_COT placeholders
+        # which will be overwritten by hidden-state feedback below.
+        x = self._embed(input_ids, reward_values, reward_positions).clone()  # [B, T, d]
+
+        # KV-cached injection loop: incrementally process tokens and inject
+        # continuous thoughts. The cache avoids recomputing the full prefix
+        # each time we need a hidden state for injection.
+        kv_cache = None    # list of (k, v) per layer
+        cache_end = 0      # exclusive end of cached positions
+        h_last = None      # [B, d] — block output at last cached position
+
+        for r in range(n_rounds):
+            think_pos_r = think_positions[:, r]       # [B]
+            exp_pos_r   = explain_positions[:, r, :]  # [B, 3]
+            valid = (think_pos_r >= 0)
+
+            if not valid.any():
+                break
+
+            detach = (r < n_rounds - truncate_bptt_window)
+
+            # --- Feed discrete tokens: everything from cache_end through
+            #     THINK + any discrete explanation tokens ---
+            if n_discrete > 0:
+                feed_to = int(exp_pos_r[valid, n_discrete - 1].max().item()) + 1
+            else:
+                feed_to = int(think_pos_r[valid].max().item()) + 1
+
+            if feed_to > cache_end:
+                new_x = x[:, cache_end:feed_to, :]
+                if detach:
+                    new_x = new_x.detach()
+                h_new, kv_cache = self._run_blocks_cached(new_x, kv_cache)
+                h_last = h_new[:, -1, :]   # [B, d]
+                cache_end = feed_to
+
+            # --- Chain continuous thoughts ---
+            for j in range(n_continuous):
+                exp_idx = n_discrete + j
+                # Inject source hidden into target continuous-thought position
+                for b in range(B):
+                    if valid[b]:
+                        tgt = int(exp_pos_r[b, exp_idx].item())
+                        if detach:
+                            x[b, tgt, :] = h_last[b].detach()
+                        else:
+                            x[b, tgt, :] = h_last[b]
+
+                # Feed the (now-injected) continuous thought token
+                max_tgt = int(exp_pos_r[valid, exp_idx].max().item()) + 1
+                ct_x = x[:, cache_end:max_tgt, :]
+                if detach:
+                    ct_x = ct_x.detach()
+                h_ct, kv_cache = self._run_blocks_cached(ct_x, kv_cache)
+                h_last = h_ct[:, -1, :]
+                cache_end = max_tgt
+
+        # --- Final full-sequence pass ---
+        # All continuous thought embeddings have been injected into x.
+        # Run full blocks+final_norm to get hidden states at all positions.
+        # (Same pattern as forward_coconut's final step.)
+        h_final = self._run_transformer(x)  # [B, T, d]
+
+        # Extract action logits at SELECT positions
+        sel_h = self._gather_at_positions(h_final, select_positions)
+        action_logits = self.action_head(sel_h)
+
+        # Extract explain logits at all 3 explanation positions per round
+        ep_flat = explain_positions.view(B, -1)
+        exp_h = self._gather_at_positions(h_final, ep_flat)
+        exp_h = exp_h.view(B, n_rounds, 3, self.d_model)
+        explain_logits = self.explain_head(exp_h)
+
+        if return_hidden:
+            return action_logits, explain_logits, h_final
+        return action_logits, explain_logits
 
     # ------------------------------------------------------------------
     # Parameter count

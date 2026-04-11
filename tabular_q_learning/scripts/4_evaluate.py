@@ -1,28 +1,28 @@
 #!/usr/bin/env python3
 """
-4_evaluate.py — Evaluation Script
+4_evaluate.py — Evaluation Script (Hao-Style Curriculum)
 
 Tests the trained COCONUTTransformer on two complementary metrics:
 
 Part 1 — Action prediction evaluation
 --------------------------------------
 For each of 10 eval MDPs, run a 50-step Q-learning trajectory and feed it
-to the model step-by-step using forward_coconut. At each SELECT position,
+to the model step-by-step using forward_hao. At each SELECT position,
 record model's argmax action vs Q-learning's greedy action. Report per-step
 action agreement mean ± std over 10 MDPs.
 
 Part 2 — Q-value probing (emergence evidence)
 -----------------------------------------------
 Freeze the model and train two linear probes that map the COCONUT hidden
-state at THINK and COT positions to the full Q-table:
-    probe_think : hidden_at_THINK -> Q(n_states, n_actions)
-    probe_cot   : hidden_at_COT   -> Q(n_states, n_actions)
+state at THINK and last-explain positions to the full Q-table:
+    probe_think   : hidden_at_THINK        -> Q(n_states, n_actions)
+    probe_explain : hidden_at_last_explain -> Q(n_states, n_actions)
 
 High probe R² means the model has learned to represent Q-values internally
 without ever being told to — the analogous result to the MWU model's implicit
 weight tracking. Report both probes; use the better-R² probe as primary result.
 
-Training procedure: 1000 trajectories (one full forward_coconut per trajectory,
+Training procedure: 1000 trajectories (one full forward_hao per trajectory,
 NOT per step), extract hidden states at all rounds, train probe with MSE.
 
 The Frobenius plot includes a zero baseline (||Q_tabular(t)||_F) to guard
@@ -30,8 +30,9 @@ against trivially low early errors when Q-values are near zero.
 
 Ablation (--no_coconut)
 ------------------------
-Re-run Part 1 using model.forward() (no COCONUT feedback) on the SAME 10
-eval MDP seeds and trajectories. Compare action accuracy with paired statistics.
+Re-run Part 1 using forward_hao with n_continuous=0 (all discrete) on the
+SAME 10 eval MDP seeds and trajectories. Compare action accuracy with paired
+statistics.
 
 Output files
 ------------
@@ -68,6 +69,7 @@ _spec.loader.exec_module(_mod)
 COCONUTConfig      = _mod.COCONUTConfig
 COCONUTTransformer = _mod.COCONUTTransformer
 build_vocab        = _mod.build_vocab
+discretize_q_value = _mod.discretize_q_value
 
 
 # ---------------------------------------------------------------------------
@@ -149,23 +151,34 @@ def run_tabular_q_learning(
 
 
 # ---------------------------------------------------------------------------
-# Sequence builder for eval (returns tensors directly, not raw lists)
+# Sequence builder for eval — expanded 3-token explain format
 # ---------------------------------------------------------------------------
 
 def trajectory_to_tensors(
     trajectory: List[Dict],
     vocab: Dict,
     n_actions: int,
+    n_continuous: int,
+    config: 'COCONUTConfig',
     device: torch.device,
     n_steps: Optional[int] = None,
+    q_snapshots: Optional[np.ndarray] = None,
 ) -> Dict[str, torch.Tensor]:
-    """Build full COCONUT token sequence from a trajectory and return tensors.
+    """Build expanded COCONUT token sequence from a trajectory.
 
-    Replicates build_coconut_sequence from 1_generate_data.py but returns
-    tensors with batch dim=1, suitable for direct model input.
+    Each round's single COT token is expanded into 3 explanation tokens:
+        [<s_t>, <a_t>, <Q_bin>]
+    where the last n_continuous are replaced with TOK_COT placeholders
+    (for continuous thought injection by forward_hao).
 
-    Used by the Q-value probe to do one forward_coconut call per trajectory
-    (rather than one per step), which is 50x more efficient.
+    Parameters
+    ----------
+    q_snapshots : (n_steps, n_states, n_actions) — needed to compute Q-value
+                  at (s_next, greedy_action) for the Q_bin token. If None,
+                  Q-bin targets default to bin 0 (doesn't affect inference,
+                  only matters for discrete explain tokens).
+
+    Returns dict with batch dim=1 tensors for direct model input.
     """
     TOK_S      = vocab['TOK_S']
     TOK_A      = vocab['TOK_A']
@@ -174,18 +187,24 @@ def trajectory_to_tensors(
     TOK_SELECT = vocab['TOK_SELECT']
     TOK_THINK  = vocab['TOK_THINK']
     TOK_COT    = vocab['TOK_COT']
+    TOK_QBIN   = vocab['TOK_QBIN']
     TOK_NULL   = vocab['TOK_NULL']
     TOK_START  = vocab['TOK_START']
 
     if n_steps is None:
         n_steps = len(trajectory)
 
+    n_q_bins  = config.n_q_bins
+    q_bin_min = config.q_bin_min
+    q_bin_max = config.q_bin_max
+    n_discrete = 3 - n_continuous
+
     ids              = [TOK_NULL, TOK_START]
     reward_values    = []
     reward_positions = []
     select_positions = []
     think_positions  = []
-    cot_positions    = []
+    explain_positions = []  # list of [pos0, pos1, pos2]
 
     for t in range(n_steps):
         step = trajectory[t]
@@ -193,6 +212,7 @@ def trajectory_to_tensors(
         a   = step['a']
         r   = step['r']
         s_p = step['s_next']
+        a_next = step['a_next']
 
         ids.append(TOK_S[s])
         ids.append(TOK_A[a])
@@ -212,19 +232,38 @@ def trajectory_to_tensors(
         think_positions.append(len(ids))
         ids.append(TOK_THINK)
 
-        cot_positions.append(len(ids))
-        ids.append(TOK_COT)
+        # 3 explanation tokens in place of single COT
+        # Compute Q-bin target for this round
+        if q_snapshots is not None:
+            # Q-value AFTER this step's update, at (s_next, greedy_action)
+            q_val = float(q_snapshots[t, s_p, a_next])
+            q_bin = discretize_q_value(q_val, n_q_bins, q_bin_min, q_bin_max)
+        else:
+            q_bin = 0  # placeholder — doesn't matter for inference
+
+        discrete_tokens = [TOK_S[s_p], TOK_A[a_next], TOK_QBIN[q_bin]]
+
+        exp_pos = []
+        for j in range(3):
+            pos = len(ids)
+            exp_pos.append(pos)
+            if j >= n_discrete:
+                ids.append(TOK_COT)  # placeholder for continuous
+            else:
+                ids.append(discrete_tokens[j])
+        explain_positions.append(exp_pos)
 
     def to_tensor(lst, dtype):
         return torch.tensor([lst], dtype=dtype, device=device)
 
     return {
-        'input_ids':        to_tensor(ids,              torch.long),
-        'reward_values':    to_tensor(reward_values,    torch.float32),
-        'reward_positions': to_tensor(reward_positions, torch.long),
-        'select_positions': to_tensor(select_positions, torch.long),
-        'think_positions':  to_tensor(think_positions,  torch.long),
-        'cot_positions':    to_tensor(cot_positions,    torch.long),
+        'input_ids':         to_tensor(ids,              torch.long),
+        'reward_values':     to_tensor(reward_values,    torch.float32),
+        'reward_positions':  to_tensor(reward_positions, torch.long),
+        'select_positions':  to_tensor(select_positions, torch.long),
+        'think_positions':   to_tensor(think_positions,  torch.long),
+        'explain_positions': torch.tensor([explain_positions], dtype=torch.long, device=device),
+        # explain_positions: [1, n_steps, 3]
     }
 
 
@@ -237,13 +276,15 @@ def run_action_inference(
     trajectory: List[Dict],
     vocab: Dict,
     n_actions: int,
+    n_continuous: int,
+    config: 'COCONUTConfig',
     device: torch.device,
-    use_coconut: bool = True,
 ) -> np.ndarray:
     """Feed trajectory to model step-by-step and collect predicted actions.
 
-    At each step, builds the COCONUT sequence accumulated so far, runs one
-    forward pass, and reads the action prediction at the latest SELECT position.
+    At each step, builds the expanded COCONUT sequence accumulated so far,
+    runs one forward_hao pass, and reads the action prediction at the latest
+    SELECT position.
 
     Returns
     -------
@@ -256,8 +297,14 @@ def run_action_inference(
     TOK_SELECT = vocab['TOK_SELECT']
     TOK_THINK  = vocab['TOK_THINK']
     TOK_COT    = vocab['TOK_COT']
+    TOK_QBIN   = vocab['TOK_QBIN']
     TOK_NULL   = vocab['TOK_NULL']
     TOK_START  = vocab['TOK_START']
+
+    n_q_bins  = config.n_q_bins
+    q_bin_min = config.q_bin_min
+    q_bin_max = config.q_bin_max
+    n_discrete = 3 - n_continuous
 
     model.eval()
     predicted_actions = []
@@ -267,14 +314,15 @@ def run_action_inference(
     reward_positions = []
     select_positions = []
     think_positions  = []
-    cot_positions    = []
+    explain_positions = []  # list of [pos0, pos1, pos2]
 
     with torch.no_grad():
-        for step, traj in enumerate(trajectory):
+        for step_idx, traj in enumerate(trajectory):
             s   = traj['s']
             a   = traj['a']
             r   = traj['r']
             s_p = traj['s_next']
+            a_next = traj['a_next']
 
             ids.append(TOK_S[s])
             ids.append(TOK_A[a])
@@ -294,33 +342,38 @@ def run_action_inference(
             think_positions.append(len(ids))
             ids.append(TOK_THINK)
 
-            cot_positions.append(len(ids))
-            ids.append(TOK_COT)
+            # 3 explanation tokens — use placeholder Q-bin (0) since we don't
+            # have ground-truth Q-values during inference; the discrete token
+            # content doesn't matter when n_continuous > 0 for those positions.
+            discrete_tokens = [TOK_S[s_p], TOK_A[a_next], TOK_QBIN[0]]
+
+            exp_pos = []
+            for j in range(3):
+                pos = len(ids)
+                exp_pos.append(pos)
+                if j >= n_discrete:
+                    ids.append(TOK_COT)
+                else:
+                    ids.append(discrete_tokens[j])
+            explain_positions.append(exp_pos)
 
             # Forward pass on full accumulated sequence
-            input_ids_t = torch.tensor([ids],              dtype=torch.long,    device=device)
-            rew_vals_t  = torch.tensor([reward_values],    dtype=torch.float32, device=device)
-            rew_pos_t   = torch.tensor([reward_positions], dtype=torch.long,    device=device)
-            sel_pos_t   = torch.tensor([select_positions], dtype=torch.long,    device=device)
-            thk_pos_t   = torch.tensor([think_positions],  dtype=torch.long,    device=device)
-            cot_pos_t   = torch.tensor([cot_positions],    dtype=torch.long,    device=device)
+            input_ids_t = torch.tensor([ids],               dtype=torch.long,    device=device)
+            rew_vals_t  = torch.tensor([reward_values],     dtype=torch.float32, device=device)
+            rew_pos_t   = torch.tensor([reward_positions],  dtype=torch.long,    device=device)
+            sel_pos_t   = torch.tensor([select_positions],  dtype=torch.long,    device=device)
+            thk_pos_t   = torch.tensor([think_positions],   dtype=torch.long,    device=device)
+            exp_pos_t   = torch.tensor([explain_positions], dtype=torch.long,    device=device)
 
-            if use_coconut:
-                action_logits = model.forward_coconut(
-                    input_ids        = input_ids_t,
-                    reward_values    = rew_vals_t,
-                    reward_positions = rew_pos_t,
-                    select_positions = sel_pos_t,
-                    think_positions  = thk_pos_t,
-                    cot_positions    = cot_pos_t,
-                )
-            else:
-                action_logits = model(
-                    input_ids        = input_ids_t,
-                    reward_values    = rew_vals_t,
-                    reward_positions = rew_pos_t,
-                    select_positions = sel_pos_t,
-                )
+            action_logits, _ = model.forward_hao(
+                input_ids        = input_ids_t,
+                reward_values    = rew_vals_t,
+                reward_positions = rew_pos_t,
+                select_positions = sel_pos_t,
+                think_positions  = thk_pos_t,
+                explain_positions = exp_pos_t,
+                n_continuous     = n_continuous,
+            )
 
             # action_logits : [1, n_sel_so_far, n_actions] — take the last (current step)
             pred_a = int(action_logits[0, -1].argmax().item())
@@ -353,26 +406,28 @@ def collect_probe_data(
     n_states: int,
     n_actions: int,
     vocab: Dict,
+    n_continuous: int,
+    config: 'COCONUTConfig',
     device: torch.device,
     n_steps: int = 50,
     seed_offset: int = 20000,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Collect hidden states and Q-table targets for probe training/evaluation.
 
-    For each trajectory, calls forward_coconut ONCE on the full sequence,
-    then extracts hidden states at all THINK and COT positions. Each position
-    is paired with the ground-truth Q-table snapshot at that step.
+    For each trajectory, calls forward_hao ONCE on the full sequence with
+    return_hidden=True, then extracts hidden states at THINK positions and
+    last explain positions (where the continuous thought lives in stages 1-3).
 
     Returns
     -------
-    h_think_all : (n_trajectories * n_steps, d_model)
-    h_cot_all   : (n_trajectories * n_steps, d_model)
-    q_true_all  : (n_trajectories * n_steps, n_states, n_actions)
+    h_think_all   : (n_trajectories * n_steps, d_model)
+    h_explain_all : (n_trajectories * n_steps, d_model)
+    q_true_all    : (n_trajectories * n_steps, n_states, n_actions)
     """
     model.eval()
-    h_think_list = []
-    h_cot_list   = []
-    q_true_list  = []
+    h_think_list   = []
+    h_explain_list = []
+    q_true_list    = []
 
     with torch.no_grad():
         for i in range(n_trajectories):
@@ -383,33 +438,37 @@ def collect_probe_data(
             )
 
             # Build full-sequence tensors (1 forward call per trajectory)
-            tensors = trajectory_to_tensors(trajectory, vocab, n_actions, device)
+            tensors = trajectory_to_tensors(
+                trajectory, vocab, n_actions, n_continuous, config, device,
+                q_snapshots=q_snapshots,
+            )
 
-            _, h_final = model.forward_coconut(
-                input_ids        = tensors['input_ids'],
-                reward_values    = tensors['reward_values'],
-                reward_positions = tensors['reward_positions'],
-                select_positions = tensors['select_positions'],
-                think_positions  = tensors['think_positions'],
-                cot_positions    = tensors['cot_positions'],
-                return_hidden    = True,
+            _, _, h_final = model.forward_hao(
+                input_ids         = tensors['input_ids'],
+                reward_values     = tensors['reward_values'],
+                reward_positions  = tensors['reward_positions'],
+                select_positions  = tensors['select_positions'],
+                think_positions   = tensors['think_positions'],
+                explain_positions = tensors['explain_positions'],
+                n_continuous      = n_continuous,
+                return_hidden     = True,
             )
             # h_final : [1, T, d_model]
 
-            # Extract hidden states at each round's THINK and COT positions
-            thk_pos = tensors['think_positions'][0].cpu().numpy()  # (n_steps,)
-            cot_pos = tensors['cot_positions'][0].cpu().numpy()    # (n_steps,)
-            h = h_final[0].cpu().numpy()                           # (T, d_model)
+            # Extract hidden states at THINK and last explain positions
+            thk_pos = tensors['think_positions'][0].cpu().numpy()        # (n_steps,)
+            exp_pos = tensors['explain_positions'][0, :, -1].cpu().numpy()  # (n_steps,) — last explain pos
+            h = h_final[0].cpu().numpy()                                  # (T, d_model)
 
             for t in range(n_steps):
                 h_think_list.append(h[thk_pos[t]])
-                h_cot_list.append(h[cot_pos[t]])
+                h_explain_list.append(h[exp_pos[t]])
                 q_true_list.append(q_snapshots[t])
 
     return (
-        np.stack(h_think_list, axis=0),   # (N, d_model)
-        np.stack(h_cot_list,   axis=0),   # (N, d_model)
-        np.stack(q_true_list,  axis=0),   # (N, n_states, n_actions)
+        np.stack(h_think_list,   axis=0),   # (N, d_model)
+        np.stack(h_explain_list, axis=0),   # (N, d_model)
+        np.stack(q_true_list,    axis=0),   # (N, n_states, n_actions)
     )
 
 
@@ -636,7 +695,7 @@ def plot_ablation_accuracy(
     fig, ax = plt.subplots(figsize=(10, 5))
     ax.plot(steps, mean_coc, color='green',  linewidth=2, label='COCONUT (continuous thought)')
     ax.fill_between(steps, mean_coc - std_coc, mean_coc + std_coc, alpha=0.2, color='green')
-    ax.plot(steps, mean_noc, color='gray',   linewidth=2, label='No-COCONUT (static embeddings)',
+    ax.plot(steps, mean_noc, color='gray',   linewidth=2, label='No-COCONUT (all discrete)',
             linestyle='--')
     ax.fill_between(steps, mean_noc - std_noc, mean_noc + std_noc, alpha=0.2, color='gray')
 
@@ -684,7 +743,7 @@ def main():
                         help='Trajectories for probe evaluation')
     parser.add_argument('--probe_epochs',  type=int, default=10)
     parser.add_argument('--no_coconut', action='store_true',
-                        help='Override checkpoint use_coconut flag to False')
+                        help='Override to use n_continuous=0 (all discrete)')
     args = parser.parse_args()
 
     os.makedirs(args.figures_dir, exist_ok=True)
@@ -696,19 +755,22 @@ def main():
     model  = COCONUTTransformer(config)
     model.load_state_dict(ckpt['model_state_dict'])
 
-    # Auto-detect forward method from checkpoint; CLI flag overrides
+    # Determine n_continuous from checkpoint; CLI flag overrides
+    n_continuous = ckpt.get('n_continuous', 3)  # default 3 for old checkpoints
     use_coconut = ckpt.get('use_coconut', True)
     if args.no_coconut:
+        n_continuous = 0
         use_coconut = False
     print(f"  Loaded (trained {ckpt.get('epoch', '?')} epochs, "
-          f"step {ckpt.get('step', '?')}, val_ce={ckpt.get('val_ce_loss', ckpt.get('val_loss', '?')):.4f})")
-    print(f"  use_coconut = {use_coconut}")
+          f"step {ckpt.get('step', '?')}, "
+          f"val_ce={ckpt.get('val_ce_loss', ckpt.get('val_loss', '?')):.4f})")
+    print(f"  n_continuous = {n_continuous}, use_coconut = {use_coconut}")
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model  = model.to(device)
     model.eval()
 
-    vocab     = build_vocab(config.n_states, config.n_actions)
+    vocab     = build_vocab(config.n_states, config.n_actions, config.n_q_bins)
     n_states  = config.n_states
     n_actions = config.n_actions
 
@@ -740,7 +802,8 @@ def main():
             seed     = seed,
         )
 
-        preds   = run_action_inference(model, trajectory, vocab, n_actions, device, use_coconut)
+        preds   = run_action_inference(model, trajectory, vocab, n_actions,
+                                       n_continuous, config, device)
         targets = np.array([step['a_next'] for step in trajectory], dtype=np.int32)
         agree   = (preds == targets).astype(np.float32)
 
@@ -751,7 +814,7 @@ def main():
     aa_mean = aa_arr.mean(axis=0)
     aa_std  = aa_arr.std(axis=0)
 
-    label = "COCONUT" if use_coconut else "No-COCONUT"
+    label = f"COCONUT (n_cont={n_continuous})" if use_coconut else "No-COCONUT"
     print(f"\n  Mean action agreement ({label}): {aa_mean.mean():.2%} ± {aa_arr.mean(axis=1).std():.4f}")
 
     aa_path = os.path.join(args.figures_dir, 'action_agreement.png')
@@ -759,17 +822,18 @@ def main():
                           title=f'Per-Step Action Agreement ({label}, mean ± std, {args.n_eval_mdps} MDPs)')
 
     # -----------------------------------------------------------------------
-    # Ablation: run no-COCONUT on same MDPs if we used COCONUT above
+    # Ablation: run no-COCONUT (n_continuous=0) on same MDPs if we used COCONUT
     # -----------------------------------------------------------------------
     ablation_path = os.path.join(args.figures_dir, 'ablation_accuracy.png')
-    if use_coconut:
+    if use_coconut and n_continuous > 0:
         print(f"\n{'='*60}")
-        print("Ablation: running no-COCONUT on same MDPs for comparison ...")
+        print("Ablation: running n_continuous=0 on same MDPs for comparison ...")
         print(f"{'='*60}")
 
         all_agreements_noc = []
         for seed_i, seed in enumerate(eval_seeds):
-            print(f"  MDP {seed_i+1}/{args.n_eval_mdps} (seed={seed}, no-coconut) ...", end=' ', flush=True)
+            print(f"  MDP {seed_i+1}/{args.n_eval_mdps} (seed={seed}, n_continuous=0) ...",
+                  end=' ', flush=True)
 
             P, R = generate_eval_mdp(n_states, n_actions, seed=seed)
             trajectory, _ = run_tabular_q_learning(
@@ -781,7 +845,8 @@ def main():
                 seed     = seed,
             )
 
-            preds   = run_action_inference(model, trajectory, vocab, n_actions, device, use_coconut=False)
+            preds   = run_action_inference(model, trajectory, vocab, n_actions,
+                                           0, config, device)  # n_continuous=0
             targets = np.array([step['a_next'] for step in trajectory], dtype=np.int32)
             agree   = (preds == targets).astype(np.float32)
             all_agreements_noc.append(agree)
@@ -794,12 +859,12 @@ def main():
 
         plot_ablation_accuracy(aa_arr, aa_noc_arr, ablation_path)
     else:
-        print(f"\n  (Skipping ablation plot — current run already uses no-COCONUT)")
+        print(f"\n  (Skipping ablation plot — current run already uses n_continuous=0)")
 
     # -----------------------------------------------------------------------
     # Part 2: Q-value probing (only makes sense for COCONUT model)
     # -----------------------------------------------------------------------
-    if use_coconut:
+    if use_coconut and n_continuous > 0:
         print(f"\n{'='*60}")
         print("Part 2: Q-value probing")
         print(f"{'='*60}")
@@ -810,24 +875,26 @@ def main():
 
         # Collect probe training data (1000 trajectories, 1 forward pass each)
         print(f"\nCollecting probe training data ({args.n_probe_train} trajectories) ...")
-        h_think_train, h_cot_train, q_true_train = collect_probe_data(
-            model, args.n_probe_train, n_states, n_actions, vocab, device,
+        h_think_train, h_explain_train, q_true_train = collect_probe_data(
+            model, args.n_probe_train, n_states, n_actions, vocab,
+            n_continuous, config, device,
             n_steps=args.n_steps, seed_offset=20000,
         )
         print(f"  h_think_train: {h_think_train.shape},  q_true_train: {q_true_train.shape}")
 
         # Collect probe eval data (100 held-out trajectories)
         print(f"\nCollecting probe eval data ({args.n_probe_eval} trajectories) ...")
-        h_think_eval, h_cot_eval, q_true_eval = collect_probe_data(
-            model, args.n_probe_eval, n_states, n_actions, vocab, device,
+        h_think_eval, h_explain_eval, q_true_eval = collect_probe_data(
+            model, args.n_probe_eval, n_states, n_actions, vocab,
+            n_continuous, config, device,
             n_steps=args.n_steps, seed_offset=30000,
         )
 
         # Train and evaluate both probes
         results = {}
         for probe_name, h_train, h_eval in [
-            ('think', h_think_train, h_think_eval),
-            ('cot',   h_cot_train,   h_cot_eval),
+            ('think',   h_think_train,   h_think_eval),
+            ('explain', h_explain_train, h_explain_eval),
         ]:
             print(f"\nTraining probe_{probe_name} ...")
             probe = QProbe(config.d_model, n_states, n_actions).to(device)
@@ -840,11 +907,11 @@ def main():
             results[probe_name] = {'r2': r2, 'frob': frob_mean, 'q_pred': q_pred}
 
         # Determine primary probe (higher R²)
-        primary = 'think' if results['think']['r2'] >= results['cot']['r2'] else 'cot'
+        primary = 'think' if results['think']['r2'] >= results['explain']['r2'] else 'explain'
         print(f"\n  Primary probe: probe_{primary}  (R²={results[primary]['r2']:.4f})")
         if primary == 'think':
             print("  Interpretation: model computes Q-values at the THINK step; "
-                  "COCONUT copies them forward via COT injection.")
+                  "COCONUT copies them forward via continuous thought injection.")
         else:
             print("  Interpretation: model refines Q-values during the final transformer pass "
                   "after COCONUT injection.")
@@ -870,7 +937,7 @@ def main():
             save_path=frob_path,
         )
     else:
-        print("\n  (Skipping Q-value probing — not applicable without COCONUT)")
+        print("\n  (Skipping Q-value probing — not applicable without continuous thoughts)")
 
     # -----------------------------------------------------------------------
     # Training curves
