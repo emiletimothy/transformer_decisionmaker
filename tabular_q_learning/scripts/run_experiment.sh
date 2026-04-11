@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=coconut_ql
-#SBATCH --partition=yss
+#SBATCH --partition=yss,jsteinhardt
 #SBATCH --gpus=A100:1
 #SBATCH --cpus-per-task=8
 #SBATCH --time=12:00:00
-#SBATCH --output=coconut_experiment.out
-#SBATCH --error=coconut_experiment.err
+#SBATCH --output=coconut_experiment%j.out
+#SBATCH --error=coconut_experiment%j.err
 #
 # Run from: tabular_q_learning/
 #   sbatch scripts/run_experiment.sh
@@ -16,18 +16,18 @@ export WANDB_API_KEY=wandb_v1_I3I8IPHLFZ77VAmGl7J58ZVRQKl_OKlRNU9j38Hncxd9XzPG3V
 
 # Parse optional overrides
 N_SEQUENCES=50000
-EPOCHS=20
+EPOCHS=28
 BATCH_SIZE=64
-MSE_WEIGHT=10.0
-RUN_NAME="coconut-v2-$(date +%Y%m%d-%H%M)"
+RUN_NAME="coconut-v3-$(date +%Y%m%d-%H%M)"
+NO_COCONUT=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --n_sequences) N_SEQUENCES="$2"; shift 2 ;;
     --epochs)      EPOCHS="$2";      shift 2 ;;
     --batch_size)  BATCH_SIZE="$2";  shift 2 ;;
-    --mse_weight)  MSE_WEIGHT="$2";  shift 2 ;;
     --run_name)    RUN_NAME="$2";    shift 2 ;;
+    --no_coconut)  NO_COCONUT="--no_coconut"; shift 1 ;;
     *) echo "Unknown argument: $1"; exit 1 ;;
   esac
 done
@@ -53,7 +53,7 @@ print(f' PyTorch:     {torch.__version__}')
 echo " n_sequences : $N_SEQUENCES"
 echo " epochs      : $EPOCHS"
 echo " batch_size  : $BATCH_SIZE"
-echo " mse_weight  : $MSE_WEIGHT"
+echo " no_coconut  : ${NO_COCONUT:-false}"
 echo " run_name    : $RUN_NAME"
 echo "============================================================"
 echo ""
@@ -89,20 +89,19 @@ python3 scripts/3_train.py \
   --data_path data/coconut_dataset.pt \
   --checkpoint_dir checkpoints \
   --n_layers 4 \
-  --n_heads 4 \
-  --d_model 128 \
-  --d_ff 512 \
+  --n_heads 8 \
+  --d_model 256 \
+  --d_ff 1024 \
   --dropout 0.1 \
   --max_seq_len 1024 \
   --epochs "$EPOCHS" \
   --batch_size "$BATCH_SIZE" \
   --lr 1e-4 \
   --weight_decay 1e-2 \
-  --warmup_steps 500 \
   --eval_every 500 \
-  --mse_weight "$MSE_WEIGHT" \
   --run_name "$RUN_NAME" \
-  --use_wandb
+  --use_wandb \
+  ${NO_COCONUT}
 echo "Done: $(date)"
 echo ""
 
@@ -117,17 +116,20 @@ python3 scripts/4_evaluate.py \
   --gamma 0.9 \
   --epsilon 0.2 \
   --eval_seed 9999 \
-  --n_eval_mdps 10
+  --n_eval_mdps 10 \
+  --n_probe_train 1000 \
+  --n_probe_eval 100 \
+  --probe_epochs 10 \
+  ${NO_COCONUT}
 echo "Done: $(date)"
 echo ""
 
 echo "============================================================"
 echo " Pipeline complete."
 echo " Checkpoint : checkpoints/coconut_transformer.pt"
-echo " Figures    : figures/frobenius_norm.png"
-echo "              figures/qtable_comparison.png"
-echo "              figures/per_state_error.png"
-echo "              figures/relative_error.png"
-echo "              figures/q_scatter.png"
-echo "              figures/action_agreement.png"
+echo " Figures    : figures/action_agreement.png"
+echo "              figures/probe_scatter.png"
+echo "              figures/probe_frobenius.png"
+echo "              figures/training_curves.png"
+echo "              figures/ablation_accuracy.png"
 echo "============================================================"
