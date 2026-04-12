@@ -59,57 +59,57 @@ echo "============================================================"
 echo ""
 
 # ---- Step 1: Data Generation ----
-echo "=== Step 1/4: Generating training data ==="
-echo "Start: $(date)"
-python3 scripts/1_generate_data.py \
-  --n_sequences "$N_SEQUENCES" \
-  --n_states 4 \
-  --n_actions 2 \
-  --min_steps 10 \
-  --max_steps 50 \
-  --alpha 0.1 \
-  --gamma 0.9 \
-  --epsilon 0.2 \
-  --trap_prob 0.2 \
-  --random_walk_frac 0.3 \
-  --seed 42 \
-  --output data/coconut_dataset.pt
-echo "Done: $(date)"
-echo ""
+# echo "=== Step 1/4: Generating training data ==="
+# echo "Start: $(date)"
+# python3 scripts/1_generate_data.py \
+#   --n_sequences "$N_SEQUENCES" \
+#   --n_states 4 \
+#   --n_actions 2 \
+#   --min_steps 10 \
+#   --max_steps 50 \
+#   --alpha 0.1 \
+#   --gamma 0.9 \
+#   --epsilon 0.2 \
+#   --trap_prob 0.2 \
+#   --random_walk_frac 0.3 \
+#   --seed 42 \
+#   --output data/coconut_dataset.pt
+# echo "Done: $(date)"
+# echo ""
 
-# ---- Step 2: Model Summary ----
-echo "=== Step 2/4: Model architecture summary ==="
-python3 scripts/2_model.py
-echo ""
+# # ---- Step 2: Model Summary ----
+# echo "=== Step 2/4: Model architecture summary ==="
+# python3 scripts/2_model.py
+# echo ""
 
-# ---- Step 3: Training ----
-echo "=== Step 3/4: Training ==="
-echo "Start: $(date)"
-python3 scripts/3_train.py \
-  --data_path data/coconut_dataset.pt \
-  --checkpoint_dir checkpoints \
-  --n_layers 4 \
-  --n_heads 8 \
-  --d_model 256 \
-  --d_ff 1024 \
-  --dropout 0.1 \
-  --max_seq_len 1024 \
-  --epochs "$EPOCHS" \
-  --batch_size "$BATCH_SIZE" \
-  --lr 1e-4 \
-  --weight_decay 1e-2 \
-  --eval_every 500 \
-  --run_name "$RUN_NAME" \
-  --use_wandb \
-  ${NO_COCONUT}
-echo "Done: $(date)"
-echo ""
+# # ---- Step 3: Training ----
+# echo "=== Step 3/4: Training ==="
+# echo "Start: $(date)"
+# python3 scripts/3_train.py \
+#   --data_path data/coconut_dataset.pt \
+#   --checkpoint_dir checkpoints \
+#   --n_layers 4 \
+#   --n_heads 8 \
+#   --d_model 256 \
+#   --d_ff 1024 \
+#   --dropout 0.1 \
+#   --max_seq_len 1024 \
+#   --epochs "$EPOCHS" \
+#   --batch_size "$BATCH_SIZE" \
+#   --lr 1e-4 \
+#   --weight_decay 1e-2 \
+#   --eval_every 500 \
+#   --run_name "$RUN_NAME" \
+#   --use_wandb \
+#   ${NO_COCONUT}
+# echo "Done: $(date)"
+# echo ""
 
 # ---- Step 4: Evaluation ----
 echo "=== Step 4/4: Evaluation ==="
 echo "Start: $(date)"
 python3 scripts/4_evaluate.py \
-  --checkpoint checkpoints/coconut_transformer.pt \
+  --checkpoint checkpoints/coconut_transformer_coconut-v3-20260411-1601.pt \
   --figures_dir figures \
   --n_steps 50 \
   --alpha 0.1 \

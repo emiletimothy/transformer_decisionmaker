@@ -742,14 +742,15 @@ class COCONUTTransformer(nn.Module):
             # --- Chain continuous thoughts ---
             for j in range(n_continuous):
                 exp_idx = n_discrete + j
-                # Inject source hidden into target continuous-thought position
-                for b in range(B):
-                    if valid[b]:
-                        tgt = int(exp_pos_r[b, exp_idx].item())
-                        if detach:
-                            x[b, tgt, :] = h_last[b].detach()
-                        else:
-                            x[b, tgt, :] = h_last[b]
+                # Inject source hidden into target continuous-thought position.
+                # Use non-inplace index_put to avoid corrupting the autograd
+                # version counter on x, which would break backward().
+                valid_bs  = valid.nonzero(as_tuple=True)[0]          # [n_valid]
+                tgt_pos   = exp_pos_r[valid_bs, exp_idx].long()       # [n_valid]
+                src_vals  = h_last[valid_bs]                          # [n_valid, d]
+                if detach:
+                    src_vals = src_vals.detach()
+                x = torch.index_put(x, (valid_bs, tgt_pos), src_vals)
 
                 # Feed the (now-injected) continuous thought token
                 max_tgt = int(exp_pos_r[valid, exp_idx].max().item()) + 1
