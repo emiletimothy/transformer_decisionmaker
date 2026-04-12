@@ -4,12 +4,23 @@
 
 Tests the trained COCONUTTransformer on two complementary metrics:
 
-Part 1 — Action prediction evaluation
---------------------------------------
-For each of 10 eval MDPs, run a 50-step Q-learning trajectory and feed it
-to the model step-by-step using forward_hao. At each SELECT position,
-record model's argmax action vs Q-learning's greedy action. Report per-step
-action agreement mean ± std over 10 MDPs.
+Part 1 — Action prediction evaluation (in-distribution + OOD)
+--------------------------------------------------------------
+Runs action agreement evaluation on two MDP regimes:
+
+  In-distribution (ID): same Dirichlet(1) transitions + Beta(2,2) rewards
+    as training — no trap states.
+
+  Out-of-distribution (OOD): altered reward and transition distributions
+    not seen during training:
+      • Transitions ~ Dirichlet(alpha=0.1) — sparse/peaked (nearly deterministic)
+      • Rewards     ~ Beta(0.5, 0.5)       — bimodal (near 0 or 1, rarely 0.5)
+
+For each regime, run a 50-step Q-learning trajectory and feed it to the
+model step-by-step using forward_hao (teacher-forced: model sees the
+reference agent's exact trajectory). At each SELECT position, record
+model's argmax action vs Q-learning's greedy action. Report per-step
+action agreement mean ± std over n_eval_mdps MDPs.
 
 Part 2 — Q-value probing (emergence evidence)
 -----------------------------------------------
@@ -19,8 +30,8 @@ state at THINK and last-explain positions to the full Q-table:
     probe_explain : hidden_at_last_explain -> Q(n_states, n_actions)
 
 High probe R² means the model has learned to represent Q-values internally
-without ever being told to — the analogous result to the MWU model's implicit
-weight tracking. Report both probes; use the better-R² probe as primary result.
+without ever being told to. Report both probes; use the better-R² probe as
+primary result.
 
 Training procedure: 1000 trajectories (one full forward_hao per trajectory,
 NOT per step), extract hidden states at all rounds, train probe with MSE.
@@ -28,19 +39,12 @@ NOT per step), extract hidden states at all rounds, train probe with MSE.
 The Frobenius plot includes a zero baseline (||Q_tabular(t)||_F) to guard
 against trivially low early errors when Q-values are near zero.
 
-Ablation (--no_coconut)
-------------------------
-Re-run Part 1 using forward_hao with n_continuous=0 (all discrete) on the
-SAME 10 eval MDP seeds and trajectories. Compare action accuracy with paired
-statistics.
-
 Output files
 ------------
-    figures/action_agreement.png   — per-step agreement mean ± std
+    figures/action_agreement.png   — per-step agreement mean ± std (ID vs OOD)
     figures/probe_scatter.png      — probed vs true Q-values scatter
     figures/probe_frobenius.png    — probe Frobenius error + zero baseline
     figures/training_curves.png    — train/val CE + accuracy over training
-    figures/ablation_accuracy.png  — COCONUT vs no-COCONUT action agreement
 """
 
 import argparse
@@ -79,21 +83,37 @@ discretize_q_value = _mod.discretize_q_value
 def generate_eval_mdp(
     n_states: int,
     n_actions: int,
-    trap_prob: float = 0.2,
     seed: int = 9999,
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """Generate a fresh MDP with a fixed seed (different from training seed 42)."""
+    """Generate a fresh MDP with a fixed seed, matching the training distribution exactly.
+
+    Uses the same Dirichlet(1) transitions and Beta(2,2) rewards as generate_random_mdp
+    in 1_generate_data.py — no trap states.
+    """
     rng = np.random.default_rng(seed)
     P = rng.dirichlet(alpha=np.ones(n_states), size=(n_states, n_actions)).astype(np.float32)
     R = rng.beta(2.0, 2.0, size=(n_states, n_actions)).astype(np.float32)
     R = np.clip(R, 0.0, 1.0)
+    return P, R
 
-    trap = rng.random(n_states) < trap_prob
-    for s in np.where(trap)[0]:
-        P[s, :, :] = 0.0
-        P[s, :, s] = 1.0
-        R[s, :] = 0.0
 
+def generate_ood_mdp(
+    n_states: int,
+    n_actions: int,
+    seed: int = 9999,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Generate an out-of-distribution MDP not seen during training.
+
+    Uses distributions that differ structurally from training:
+      - Transitions ~ Dirichlet(alpha=0.1): sparse/peaked, nearly deterministic
+        (very different from Dirichlet(1) uniform-over-simplex used in training).
+      - Rewards ~ Beta(0.5, 0.5): bimodal U-shape, rewards concentrate near 0 or 1
+        (very different from Beta(2,2) peaked near 0.5 used in training).
+    """
+    rng = np.random.default_rng(seed)
+    P = rng.dirichlet(alpha=np.full(n_states, 0.1), size=(n_states, n_actions)).astype(np.float32)
+    R = rng.beta(0.5, 0.5, size=(n_states, n_actions)).astype(np.float32)
+    R = np.clip(R, 0.0, 1.0)
     return P, R
 
 
@@ -235,13 +255,16 @@ def trajectory_to_tensors(
         # 3 explanation tokens in place of single COT
         # Compute Q-bin target for this round
         if q_snapshots is not None:
-            # Q-value AFTER this step's update, at (s_next, greedy_action)
-            q_val = float(q_snapshots[t, s_p, a_next])
+            # Q-value AFTER this step's TD update, at (s_t, a_t) — matches
+            # q_values_for_cot in 1_generate_data.py and expand_sequence in 3_train.py.
+            q_val = float(q_snapshots[t, s, a])
             q_bin = discretize_q_value(q_val, n_q_bins, q_bin_min, q_bin_max)
         else:
-            q_bin = 0  # placeholder — doesn't matter for inference
+            q_bin = 0  # placeholder — doesn't matter for Stage 3 inference
 
-        discrete_tokens = [TOK_S[s_p], TOK_A[a_next], TOK_QBIN[q_bin]]
+        # Explain tokens are [s_t, a_t, Q_bin(s_t,a_t)] — matches 3_train.py expand_sequence.
+        # NOT s_{t+1}/a_next: those are the *next* step and were never the training targets.
+        discrete_tokens = [TOK_S[s], TOK_A[a], TOK_QBIN[q_bin]]
 
         exp_pos = []
         for j in range(3):
@@ -279,6 +302,7 @@ def run_action_inference(
     n_continuous: int,
     config: 'COCONUTConfig',
     device: torch.device,
+    q_snapshots: Optional[np.ndarray] = None,
 ) -> np.ndarray:
     """Feed trajectory to model step-by-step and collect predicted actions.
 
@@ -342,10 +366,15 @@ def run_action_inference(
             think_positions.append(len(ids))
             ids.append(TOK_THINK)
 
-            # 3 explanation tokens — use placeholder Q-bin (0) since we don't
-            # have ground-truth Q-values during inference; the discrete token
-            # content doesn't matter when n_continuous > 0 for those positions.
-            discrete_tokens = [TOK_S[s_p], TOK_A[a_next], TOK_QBIN[0]]
+            # 3 explanation tokens: [s_t, a_t, Q_bin(s_t,a_t)] — matches training.
+            # Use real Q-bin when q_snapshots is available (needed for the
+            # no-COCONUT ablation where n_discrete=3 and all tokens go in the sequence).
+            if q_snapshots is not None:
+                q_val = float(q_snapshots[step_idx, s, a])
+                q_bin = discretize_q_value(q_val, n_q_bins, q_bin_min, q_bin_max)
+            else:
+                q_bin = 0
+            discrete_tokens = [TOK_S[s], TOK_A[a], TOK_QBIN[q_bin]]
 
             exp_pos = []
             for j in range(3):
@@ -550,20 +579,36 @@ def evaluate_probe(
 # ---------------------------------------------------------------------------
 
 def plot_action_agreement(
-    aa_mean: np.ndarray,  # (n_steps,)
-    aa_std:  np.ndarray,  # (n_steps,)
+    aa_mean_id:  np.ndarray,  # (n_steps,)
+    aa_std_id:   np.ndarray,
+    aa_mean_ood: np.ndarray,  # (n_steps,)
+    aa_std_ood:  np.ndarray,
     save_path: str,
-    title: str = 'Per-Step Action Agreement: Model vs Tabular (mean ± std, 10 MDPs)',
+    n_mdps: int = 10,
+    label_suffix: str = '',
 ) -> None:
-    steps = np.arange(1, len(aa_mean) + 1)
-    fig, ax = plt.subplots(figsize=(9, 5))
-    ax.plot(steps, aa_mean, color='green', linewidth=2, label='Action agreement')
-    ax.fill_between(steps, aa_mean - aa_std, aa_mean + aa_std, alpha=0.25, color='green')
-    ax.axhline(y=1.0, color='gray', linestyle='--', alpha=0.5, label='Perfect agreement')
+    """Plot per-step action agreement for in-distribution and OOD MDPs."""
+    steps = np.arange(1, len(aa_mean_id) + 1)
+    fig, ax = plt.subplots(figsize=(10, 5))
+
+    ax.plot(steps, aa_mean_id, color='steelblue', linewidth=2, label='In-distribution (ID)')
+    ax.fill_between(steps, aa_mean_id - aa_std_id, aa_mean_id + aa_std_id,
+                    alpha=0.25, color='steelblue')
+
+    ax.plot(steps, aa_mean_ood, color='darkorange', linewidth=2,
+            label='Out-of-distribution (OOD)', linestyle='--')
+    ax.fill_between(steps, aa_mean_ood - aa_std_ood, aa_mean_ood + aa_std_ood,
+                    alpha=0.2, color='darkorange')
+
+    ax.axhline(y=1.0, color='gray', linestyle=':', alpha=0.5, label='Perfect agreement')
     ax.set_xlabel('Timestep')
     ax.set_ylabel('Greedy Action Agreement')
     ax.set_ylim(-0.05, 1.1)
-    ax.set_title(title)
+    suffix = f' ({label_suffix})' if label_suffix else ''
+    ax.set_title(
+        f'Per-Step Action Agreement: ID vs OOD{suffix}\n'
+        f'(mean ± std, {n_mdps} MDPs each)'
+    )
     ax.legend()
     ax.grid(True, alpha=0.3)
     plt.tight_layout()
@@ -678,47 +723,6 @@ def plot_training_curves(log_path: str, save_path: str) -> None:
     print(f"  Saved: {save_path}")
 
 
-def plot_ablation_accuracy(
-    aa_coconut: np.ndarray,   # (n_mdps, n_steps)
-    aa_nococonut: np.ndarray, # (n_mdps, n_steps)
-    save_path: str,
-) -> None:
-    """Compare COCONUT vs no-COCONUT action agreement over time."""
-    mean_coc  = aa_coconut.mean(axis=0)
-    std_coc   = aa_coconut.std(axis=0)
-    mean_noc  = aa_nococonut.mean(axis=0)
-    std_noc   = aa_nococonut.std(axis=0)
-
-    n_steps = len(mean_coc)
-    steps   = np.arange(1, n_steps + 1)
-
-    fig, ax = plt.subplots(figsize=(10, 5))
-    ax.plot(steps, mean_coc, color='green',  linewidth=2, label='COCONUT (continuous thought)')
-    ax.fill_between(steps, mean_coc - std_coc, mean_coc + std_coc, alpha=0.2, color='green')
-    ax.plot(steps, mean_noc, color='gray',   linewidth=2, label='No-COCONUT (all discrete)',
-            linestyle='--')
-    ax.fill_between(steps, mean_noc - std_noc, mean_noc + std_noc, alpha=0.2, color='gray')
-
-    # Paired mean improvement per MDP
-    per_mdp_improve = (aa_coconut - aa_nococonut).mean(axis=1)
-    mean_improve    = per_mdp_improve.mean()
-    ax.set_title(
-        f'Ablation: COCONUT vs No-COCONUT Action Agreement\n'
-        f'(mean ± std, {aa_coconut.shape[0]} MDPs; '
-        f'mean paired improvement = {mean_improve:+.3f})'
-    )
-    ax.set_xlabel('Timestep')
-    ax.set_ylabel('Greedy Action Agreement')
-    ax.set_ylim(-0.05, 1.1)
-    ax.axhline(y=1.0, color='black', linestyle=':', alpha=0.4)
-    ax.legend()
-    ax.grid(True, alpha=0.3)
-    plt.tight_layout()
-    plt.savefig(save_path, dpi=150, bbox_inches='tight')
-    plt.close()
-    print(f"  Saved: {save_path}")
-
-
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -742,8 +746,6 @@ def main():
     parser.add_argument('--n_probe_eval',  type=int, default=100,
                         help='Trajectories for probe evaluation')
     parser.add_argument('--probe_epochs',  type=int, default=10)
-    parser.add_argument('--no_coconut', action='store_true',
-                        help='Override to use n_continuous=0 (all discrete)')
     args = parser.parse_args()
 
     os.makedirs(args.figures_dir, exist_ok=True)
@@ -755,12 +757,9 @@ def main():
     model  = COCONUTTransformer(config)
     model.load_state_dict(ckpt['model_state_dict'])
 
-    # Determine n_continuous from checkpoint; CLI flag overrides
+    # Determine n_continuous from checkpoint
     n_continuous = ckpt.get('n_continuous', 3)  # default 3 for old checkpoints
     use_coconut = ckpt.get('use_coconut', True)
-    if args.no_coconut:
-        n_continuous = 0
-        use_coconut = False
     print(f"  Loaded (trained {ckpt.get('epoch', '?')} epochs, "
           f"step {ckpt.get('step', '?')}, "
           f"val_ce={ckpt.get('val_ce_loss', ckpt.get('val_loss', '?')):.4f})")
@@ -778,22 +777,26 @@ def main():
     print(f"MDP:   n_states={n_states}, n_actions={n_actions}")
 
     eval_seeds = list(range(args.eval_seed, args.eval_seed + args.n_eval_mdps))
+    # OOD seeds are offset so they don't overlap with ID seeds
+    ood_seeds  = list(range(args.eval_seed + 50000, args.eval_seed + 50000 + args.n_eval_mdps))
+
+    label = f"COCONUT (n_cont={n_continuous})" if use_coconut else "No-COCONUT"
 
     # -----------------------------------------------------------------------
-    # Part 1: Action prediction evaluation
+    # Part 1a: Action prediction — in-distribution MDPs
     # -----------------------------------------------------------------------
     print(f"\n{'='*60}")
-    print(f"Part 1: Action prediction on {args.n_eval_mdps} MDPs "
+    print(f"Part 1a: In-distribution action prediction on {args.n_eval_mdps} MDPs "
           f"(seeds {eval_seeds[0]}–{eval_seeds[-1]})")
+    print(f"  Dirichlet(1) transitions, Beta(2,2) rewards  [training distribution]")
     print(f"{'='*60}")
 
-    all_agreements_coconut = []
-
+    all_agreements_id = []
     for seed_i, seed in enumerate(eval_seeds):
-        print(f"  MDP {seed_i+1}/{args.n_eval_mdps} (seed={seed}) ...", end=' ', flush=True)
+        print(f"  ID MDP {seed_i+1}/{args.n_eval_mdps} (seed={seed}) ...", end=' ', flush=True)
 
         P, R = generate_eval_mdp(n_states, n_actions, seed=seed)
-        trajectory, _ = run_tabular_q_learning(
+        trajectory, q_snapshots_eval = run_tabular_q_learning(
             P, R, n_states, n_actions,
             n_steps  = args.n_steps,
             alpha    = args.alpha,
@@ -803,63 +806,70 @@ def main():
         )
 
         preds   = run_action_inference(model, trajectory, vocab, n_actions,
-                                       n_continuous, config, device)
+                                       n_continuous, config, device,
+                                       q_snapshots=q_snapshots_eval)
         targets = np.array([step['a_next'] for step in trajectory], dtype=np.int32)
         agree   = (preds == targets).astype(np.float32)
-
-        all_agreements_coconut.append(agree)
+        all_agreements_id.append(agree)
         print(f"agree={agree.mean():.2%}")
 
-    aa_arr  = np.stack(all_agreements_coconut, axis=0)   # (n_mdps, n_steps)
-    aa_mean = aa_arr.mean(axis=0)
-    aa_std  = aa_arr.std(axis=0)
+    aa_id_arr  = np.stack(all_agreements_id, axis=0)   # (n_mdps, n_steps)
+    aa_id_mean = aa_id_arr.mean(axis=0)
+    aa_id_std  = aa_id_arr.std(axis=0)
+    print(f"\n  Mean ID action agreement ({label}): "
+          f"{aa_id_mean.mean():.2%} ± {aa_id_arr.mean(axis=1).std():.4f}")
 
-    label = f"COCONUT (n_cont={n_continuous})" if use_coconut else "No-COCONUT"
-    print(f"\n  Mean action agreement ({label}): {aa_mean.mean():.2%} ± {aa_arr.mean(axis=1).std():.4f}")
+    # -----------------------------------------------------------------------
+    # Part 1b: Action prediction — out-of-distribution MDPs
+    # -----------------------------------------------------------------------
+    print(f"\n{'='*60}")
+    print(f"Part 1b: Out-of-distribution action prediction on {args.n_eval_mdps} MDPs "
+          f"(seeds {ood_seeds[0]}–{ood_seeds[-1]})")
+    print(f"  Dirichlet(0.1) transitions (sparse/peaked), Beta(0.5,0.5) rewards (bimodal)")
+    print(f"{'='*60}")
+
+    all_agreements_ood = []
+    for seed_i, seed in enumerate(ood_seeds):
+        print(f"  OOD MDP {seed_i+1}/{args.n_eval_mdps} (seed={seed}) ...", end=' ', flush=True)
+
+        P, R = generate_ood_mdp(n_states, n_actions, seed=seed)
+        trajectory, q_snapshots_ood = run_tabular_q_learning(
+            P, R, n_states, n_actions,
+            n_steps  = args.n_steps,
+            alpha    = args.alpha,
+            gamma    = args.gamma,
+            epsilon  = args.epsilon,
+            seed     = seed,
+        )
+
+        preds   = run_action_inference(model, trajectory, vocab, n_actions,
+                                       n_continuous, config, device,
+                                       q_snapshots=q_snapshots_ood)
+        targets = np.array([step['a_next'] for step in trajectory], dtype=np.int32)
+        agree   = (preds == targets).astype(np.float32)
+        all_agreements_ood.append(agree)
+        print(f"agree={agree.mean():.2%}")
+
+    aa_ood_arr  = np.stack(all_agreements_ood, axis=0)  # (n_mdps, n_steps)
+    aa_ood_mean = aa_ood_arr.mean(axis=0)
+    aa_ood_std  = aa_ood_arr.std(axis=0)
+    print(f"\n  Mean OOD action agreement ({label}): "
+          f"{aa_ood_mean.mean():.2%} ± {aa_ood_arr.mean(axis=1).std():.4f}")
+
+    gap = aa_id_mean.mean() - aa_ood_mean.mean()
+    print(f"  ID - OOD gap: {gap:+.4f}")
 
     aa_path = os.path.join(args.figures_dir, 'action_agreement.png')
-    plot_action_agreement(aa_mean, aa_std, aa_path,
-                          title=f'Per-Step Action Agreement ({label}, mean ± std, {args.n_eval_mdps} MDPs)')
+    plot_action_agreement(
+        aa_id_mean, aa_id_std,
+        aa_ood_mean, aa_ood_std,
+        save_path=aa_path,
+        n_mdps=args.n_eval_mdps,
+        label_suffix=label,
+    )
 
-    # -----------------------------------------------------------------------
-    # Ablation: run no-COCONUT (n_continuous=0) on same MDPs if we used COCONUT
-    # -----------------------------------------------------------------------
-    ablation_path = os.path.join(args.figures_dir, 'ablation_accuracy.png')
-    if use_coconut and n_continuous > 0:
-        print(f"\n{'='*60}")
-        print("Ablation: running n_continuous=0 on same MDPs for comparison ...")
-        print(f"{'='*60}")
-
-        all_agreements_noc = []
-        for seed_i, seed in enumerate(eval_seeds):
-            print(f"  MDP {seed_i+1}/{args.n_eval_mdps} (seed={seed}, n_continuous=0) ...",
-                  end=' ', flush=True)
-
-            P, R = generate_eval_mdp(n_states, n_actions, seed=seed)
-            trajectory, _ = run_tabular_q_learning(
-                P, R, n_states, n_actions,
-                n_steps  = args.n_steps,
-                alpha    = args.alpha,
-                gamma    = args.gamma,
-                epsilon  = args.epsilon,
-                seed     = seed,
-            )
-
-            preds   = run_action_inference(model, trajectory, vocab, n_actions,
-                                           0, config, device)  # n_continuous=0
-            targets = np.array([step['a_next'] for step in trajectory], dtype=np.int32)
-            agree   = (preds == targets).astype(np.float32)
-            all_agreements_noc.append(agree)
-            print(f"agree={agree.mean():.2%}")
-
-        aa_noc_arr = np.stack(all_agreements_noc, axis=0)
-        print(f"\n  Mean action agreement (No-COCONUT): {aa_noc_arr.mean():.2%}")
-        per_mdp_improve = (aa_arr - aa_noc_arr).mean(axis=1)
-        print(f"  Mean paired improvement (COCONUT - No-COCONUT): {per_mdp_improve.mean():+.3f}")
-
-        plot_ablation_accuracy(aa_arr, aa_noc_arr, ablation_path)
-    else:
-        print(f"\n  (Skipping ablation plot — current run already uses n_continuous=0)")
+    # Keep aa_arr pointing to ID results for probe collection below
+    aa_arr = aa_id_arr
 
     # -----------------------------------------------------------------------
     # Part 2: Q-value probing (only makes sense for COCONUT model)

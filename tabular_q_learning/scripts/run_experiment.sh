@@ -6,7 +6,9 @@
 #SBATCH --time=12:00:00
 #SBATCH --output=coconut_experiment%j.out
 #SBATCH --error=coconut_experiment%j.err
-#
+#SBATCH --mail-user=abdullah_ateyeh@berkeley.edu
+#SBATCH --mail-type=END,FAIL
+# 
 # Run from: tabular_q_learning/
 #   sbatch scripts/run_experiment.sh
 
@@ -58,7 +60,7 @@ echo " run_name    : $RUN_NAME"
 echo "============================================================"
 echo ""
 
-# ---- Step 1: Data Generation ----
+# # ---- Step 1: Data Generation ----
 # echo "=== Step 1/4: Generating training data ==="
 # echo "Start: $(date)"
 # python3 scripts/1_generate_data.py \
@@ -69,9 +71,6 @@ echo ""
 #   --max_steps 50 \
 #   --alpha 0.1 \
 #   --gamma 0.9 \
-#   --epsilon 0.2 \
-#   --trap_prob 0.2 \
-#   --random_walk_frac 0.3 \
 #   --seed 42 \
 #   --output data/coconut_dataset.pt
 # echo "Done: $(date)"
@@ -109,7 +108,7 @@ echo ""
 echo "=== Step 4/4: Evaluation ==="
 echo "Start: $(date)"
 python3 scripts/4_evaluate.py \
-  --checkpoint checkpoints/coconut_transformer_coconut-v3-20260411-1601.pt \
+  --checkpoint checkpoints/coconut_transformer_coconut-v3-20260412-0040.pt \
   --figures_dir figures \
   --n_steps 50 \
   --alpha 0.1 \
@@ -124,12 +123,12 @@ python3 scripts/4_evaluate.py \
 echo "Done: $(date)"
 echo ""
 
-echo "============================================================"
-echo " Pipeline complete."
-echo " Checkpoint : checkpoints/coconut_transformer.pt"
-echo " Figures    : figures/action_agreement.png"
-echo "              figures/probe_scatter.png"
-echo "              figures/probe_frobenius.png"
-echo "              figures/training_curves.png"
-echo "              figures/ablation_accuracy.png"
-echo "============================================================"
+# echo "============================================================"
+# echo " Pipeline complete."
+# echo " Checkpoint : checkpoints/coconut_transformer.pt"
+# echo " Figures    : figures/action_agreement.png"
+# echo "              figures/probe_scatter.png"
+# echo "              figures/probe_frobenius.png"
+# echo "              figures/training_curves.png"
+# echo "              figures/ablation_accuracy.png"
+# echo "============================================================"

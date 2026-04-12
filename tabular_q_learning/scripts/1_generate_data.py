@@ -83,25 +83,19 @@ def build_vocab(n_states: int, n_actions: int) -> Dict[str, object]:
 def generate_random_mdp(
     n_states: int,
     n_actions: int,
-    trap_prob: float = 0.2,
     rng: np.random.Generator = None,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Generate a random directed-graph MDP with trap states.
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Generate a fully random MDP.
 
     Transitions P[s, a, s'] are sampled row-wise from Dirichlet(1) (i.e. uniform
     over simplices), giving a valid stochastic transition matrix.
 
     Rewards R[s, a] ~ Beta(2, 2) clamped to [0, 1], peaked near 0.5.
 
-    Trap states (≈ trap_prob fraction of states) have:
-        - deterministic self-loop: P[s, a, s] = 1 for all a
-        - zero reward: R[s, a] = 0 for all a
-
     Returns
     -------
-    P    : np.ndarray, shape (n_states, n_actions, n_states)
-    R    : np.ndarray, shape (n_states, n_actions)
-    trap : np.ndarray, shape (n_states,) bool — True for trap states
+    P : np.ndarray, shape (n_states, n_actions, n_states)
+    R : np.ndarray, shape (n_states, n_actions)
     """
     if rng is None:
         rng = np.random.default_rng()
@@ -113,16 +107,8 @@ def generate_random_mdp(
     R = rng.beta(2.0, 2.0, size=(n_states, n_actions)).astype(np.float32)
     R = np.clip(R, 0.0, 1.0)
 
-    # Designate trap states
-    trap = rng.random(n_states) < trap_prob
-    for s in np.where(trap)[0]:
-        # Self-loop for every action
-        P[s, :, :] = 0.0
-        P[s, :, s] = 1.0
-        R[s, :] = 0.0
-
     P = P.astype(np.float32)
-    return P, R, trap
+    return P, R
 
 
 # ---------------------------------------------------------------------------
@@ -135,13 +121,13 @@ def generate_episode(
     n_states: int,
     n_actions: int,
     n_steps: int,
-    use_random_walk: bool = False,
     alpha: float = 0.1,
     gamma: float = 0.9,
     epsilon: float = 0.2,
+    q_init: float = 0.0,
     rng: np.random.Generator = None,
 ) -> Dict:
-    """Run one Q-learning (or random-walk) episode and return raw trajectory data.
+    """Run one Q-learning episode and return raw trajectory data.
 
     Parameters
     ----------
@@ -150,8 +136,10 @@ def generate_episode(
     n_states      : number of states
     n_actions     : number of actions
     n_steps       : episode length (number of Bellman updates)
-    use_random_walk : if True, actions chosen uniformly at random (off-policy)
-    alpha, gamma, epsilon : Q-learning hyperparameters (only alpha/gamma affect Q-table)
+    alpha, gamma  : Q-learning hyperparameters
+    epsilon       : exploration rate for ε-greedy behavior policy
+    q_init        : initial value for all Q-table entries (0 = neutral, >0 = optimistic,
+                    <0 = pessimistic); sampled per trajectory by the caller
     rng           : numpy random Generator
 
     Returns
@@ -164,8 +152,8 @@ def generate_episode(
     if rng is None:
         rng = np.random.default_rng()
 
-    Q = np.zeros((n_states, n_actions), dtype=np.float32)
-    s = int(rng.integers(n_states))
+    Q = np.full((n_states, n_actions), q_init, dtype=np.float32)
+    s = int(rng.integers(n_states))  # random start state
 
     states           = []
     actions          = []
@@ -177,16 +165,13 @@ def generate_episode(
     q_values_for_cot = []   # post-update Q(s_t, a_t) with (s_t, a_t) indices
 
     for _ in range(n_steps):
-        # Behavior policy: epsilon-greedy or pure random
-        if use_random_walk:
+        # ε-greedy behavior policy
+        if rng.random() < epsilon:
             a = int(rng.integers(n_actions))
         else:
-            if rng.random() < epsilon:
-                a = int(rng.integers(n_actions))
-            else:
-                best = float(np.max(Q[s]))
-                ties = [ac for ac in range(n_actions) if Q[s, ac] == best]
-                a = int(rng.choice(ties))
+            best = float(np.max(Q[s]))
+            ties = [ac for ac in range(n_actions) if Q[s, ac] == best]
+            a = int(rng.choice(ties))
 
         # Environment step: deterministic reward, stochastic transition
         r = float(R[s, a])
@@ -428,32 +413,43 @@ def generate_dataset(
     max_steps: int = 50,
     alpha: float = 0.1,
     gamma: float = 0.9,
-    epsilon: float = 0.2,
-    random_walk_frac: float = 0.3,
-    trap_prob: float = 0.2,
     seed: int = 42,
 ) -> List[Dict]:
     """Generate `n_sequences` COCONUT-formatted trajectories.
 
-    70% use epsilon-greedy Q-learning, 30% use pure random walk.
-    Each episode uses a freshly sampled random MDP with trap states.
-    State and action labels are randomly permuted per episode.
+    Per-trajectory randomization:
+      - ε ~ Uniform(0, 1): smooth spectrum from pure exploitation to pure exploration
+      - Q₀ sampled from one of three regimes with equal probability:
+          neutral:    Q₀ = 0
+          optimistic: Q₀ ~ Uniform(0.1, 0.5)   (encourages early exploration)
+          pessimistic: Q₀ ~ Uniform(-0.5, -0.1) (discourages early exploration)
+      - Fresh random MDP per trajectory
+      - Random start state
+      - Random state/action label permutation
     """
     rng = np.random.default_rng(seed)
     vocab = build_vocab(n_states, n_actions)
     sequences = []
 
-    n_random = int(n_sequences * random_walk_frac)
-    flags = ([True] * n_random + [False] * (n_sequences - n_random))
-    rng.shuffle(flags)
-
-    for i, use_rand in enumerate(flags):
+    for i in range(n_sequences):
         n_steps = int(rng.integers(min_steps, max_steps + 1))
-        P, R, _ = generate_random_mdp(n_states, n_actions, trap_prob=trap_prob, rng=rng)
+
+        # Sample ε uniformly — covers full exploration spectrum
+        epsilon = float(rng.uniform(0.0, 1.0))
+
+        # Sample Q initialisation regime
+        regime = int(rng.integers(3))
+        if regime == 0:
+            q_init = 0.0                              # neutral
+        elif regime == 1:
+            q_init = float(rng.uniform(0.1, 0.5))    # optimistic
+        else:
+            q_init = float(rng.uniform(-0.5, -0.1))  # pessimistic
+
+        P, R = generate_random_mdp(n_states, n_actions, rng=rng)
         ep = generate_episode(
             P, R, n_states, n_actions, n_steps,
-            use_random_walk=use_rand,
-            alpha=alpha, gamma=gamma, epsilon=epsilon,
+            alpha=alpha, gamma=gamma, epsilon=epsilon, q_init=q_init,
             rng=rng,
         )
         ep['n_steps'] = n_steps
@@ -529,9 +525,6 @@ def main():
     parser.add_argument('--max_steps',   type=int, default=50)
     parser.add_argument('--alpha',       type=float, default=0.1)
     parser.add_argument('--gamma',       type=float, default=0.9)
-    parser.add_argument('--epsilon',     type=float, default=0.2)
-    parser.add_argument('--trap_prob',   type=float, default=0.2)
-    parser.add_argument('--random_walk_frac', type=float, default=0.3)
     parser.add_argument('--seed',        type=int, default=42)
     parser.add_argument('--output',      type=str,
                         default=os.path.join(os.path.dirname(__file__),
@@ -543,8 +536,7 @@ def main():
     print(f"Generating {args.n_sequences:,} COCONUT sequences "
           f"({args.n_states} states, {args.n_actions} actions, "
           f"steps=[{args.min_steps},{args.max_steps}]) ...")
-    print(f"  70% epsilon-greedy (ε={args.epsilon}), "
-          f"30% random walk, trap_prob={args.trap_prob}")
+    print(f"  ε ~ Uniform(0,1) per trajectory, Q₀ ~ {{neutral/optimistic/pessimistic}}")
 
     vocab = build_vocab(args.n_states, args.n_actions)
     print(f"\nVocabulary (vocab_size={vocab['vocab_size']}):")
@@ -567,9 +559,6 @@ def main():
         max_steps=args.max_steps,
         alpha=args.alpha,
         gamma=args.gamma,
-        epsilon=args.epsilon,
-        random_walk_frac=args.random_walk_frac,
-        trap_prob=args.trap_prob,
         seed=args.seed,
     )
 
@@ -604,9 +593,8 @@ def main():
             'max_steps':         args.max_steps,
             'alpha':             args.alpha,
             'gamma':             args.gamma,
-            'epsilon':           args.epsilon,
-            'trap_prob':         args.trap_prob,
-            'random_walk_frac':  args.random_walk_frac,
+            'epsilon':           'uniform(0,1)',
+            'q_init':            'neutral/optimistic/pessimistic',
             'seed':              args.seed,
             'vocab_size':        vocab['vocab_size'],
             'round_len':         round_len,
