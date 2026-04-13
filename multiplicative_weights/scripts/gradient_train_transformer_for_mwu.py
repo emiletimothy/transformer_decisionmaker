@@ -59,34 +59,41 @@ def create_datasets(n_train: int = 5000, n_val: int = 1000,
     
     return train_dataset, val_dataset, tokenizer
 
+STAGE_LENGTH_MULTIPLIER = 5  # stage N trains on sequences of length N * 5
+
 def create_stage_datasets(all_sequences: List[Dict], stage: int, 
-                         tokenizer: MWTokenizer, mixing_prob: float = 0.1) -> List[Dict]:
-    """Create dataset for a specific training stage."""
+                         tokenizer: MWTokenizer, mixing_prob: float = 0.1,
+                         stage_length: int = None) -> List[Dict]:
+    """Create dataset for a specific training stage.
+    
+    Stage N uses sequences of length N * STAGE_LENGTH_MULTIPLIER,
+    unless an explicit stage_length is provided.
+    """
+    if stage_length is None:
+        stage_length = stage * STAGE_LENGTH_MULTIPLIER
     stage_sequences = []
     
     for seq in all_sequences:
-        # For stage i, we want sequences with at least i steps
-        if seq['n_steps'] >= stage:
-            # Truncate sequence to stage length for this stage
+        if seq['n_steps'] >= stage_length:
             truncated_seq = {
-                'expert_predictions': seq['expert_predictions'][:stage],
-                'losses': seq['losses'][:stage],
-                'true_labels': seq['true_labels'][:stage],
-                'n_steps': stage,
+                'expert_predictions': seq['expert_predictions'][:stage_length],
+                'losses': seq['losses'][:stage_length],
+                'true_labels': seq['true_labels'][:stage_length],
+                'n_steps': stage_length,
             }
             stage_sequences.append(truncated_seq)
             
             # Mix in data from previous stages
             if stage > 1 and np.random.random() < mixing_prob:
-                for prev_stage in range(1, stage):
-                    if seq['n_steps'] >= prev_stage:
-                        prev_seq = {
-                            'expert_predictions': seq['expert_predictions'][:prev_stage],
-                            'losses': seq['losses'][:prev_stage],
-                            'true_labels': seq['true_labels'][:prev_stage],
-                            'n_steps': prev_stage,
-                        }
-                        stage_sequences.append(prev_seq)
+                prev_length = (stage - 1) * STAGE_LENGTH_MULTIPLIER
+                if seq['n_steps'] >= prev_length:
+                    prev_seq = {
+                        'expert_predictions': seq['expert_predictions'][:prev_length],
+                        'losses': seq['losses'][:prev_length],
+                        'true_labels': seq['true_labels'][:prev_length],
+                        'n_steps': prev_length,
+                    }
+                    stage_sequences.append(prev_seq)
     
     return stage_sequences
 
@@ -633,6 +640,11 @@ def main():
     parser.add_argument('--wandb_project', type=str, default=None, help='Weights & Biases project name')
     parser.add_argument('--wandb_entity', type=str, default=None, help='Weights & Biases entity (user/team)')
     parser.add_argument('--wandb_run_name', type=str, default=None, help='Weights & Biases run name')
+    parser.add_argument('--resume_from', type=str, default=None,
+                        help='Path to a stage checkpoint (.pt) to resume training from')
+    parser.add_argument('--stage_lengths', type=int, nargs='+', default=None,
+                        help='Custom stage lengths (e.g., 65 80 95). '
+                             'Used instead of stage*5 for stages starting from resume point.')
     
     args = parser.parse_args()
     
@@ -676,7 +688,7 @@ def main():
     
     # Model configuration
     model_config = ModelConfig(
-        d_model=256,
+        d_model=64,
         n_heads=4,
         n_layers=2,
         n_experts=args.n_experts,
@@ -708,6 +720,21 @@ def main():
     n_params = sum(p.numel() for p in model.parameters())
     logger.info(f"Model has {n_params} parameters")
     
+    # Resume from checkpoint if requested
+    start_stage = 1
+    training_history = []
+    if args.resume_from:
+        logger.info(f"Resuming from checkpoint: {args.resume_from}")
+        ckpt = torch.load(args.resume_from, map_location=device, weights_only=False)
+        model.load_state_dict(ckpt['model_state_dict'])
+        if 'optimizer_state_dict' in ckpt:
+            trainer.optimizer.load_state_dict(ckpt['optimizer_state_dict'])
+        if 'step' in ckpt:
+            trainer.step = ckpt['step']
+        start_stage = ckpt['stage'] + 1
+        training_history = ckpt.get('training_history', [])
+        logger.info(f"Resumed from stage {ckpt['stage']}, continuing from stage {start_stage}")
+    
     if use_wandb:
         wandb.config.update({
             'd_model': model_config.d_model,
@@ -728,21 +755,37 @@ def main():
     save_dir = Path(args.save_dir)
     save_dir.mkdir(parents=True, exist_ok=True)
     
+    # Build list of (stage_number, stage_length) pairs for the training loop
+    if args.stage_lengths is not None:
+        # Custom stage lengths: create stages starting from start_stage
+        stage_schedule = [
+            (start_stage + i, sl)
+            for i, sl in enumerate(args.stage_lengths)
+        ]
+        logger.info(f"Custom stage schedule: {[(s, l) for s, l in stage_schedule]}")
+    else:
+        # Default: stage N → length N * 5
+        stage_schedule = [
+            (s, s * STAGE_LENGTH_MULTIPLIER)
+            for s in range(start_stage, train_config.max_stages + 1)
+        ]
+    
     # Multi-stage training
-    training_history = []
     stage_evaluations = {}
     
-    for stage in range(1, train_config.max_stages + 1):
+    for stage, stage_length in stage_schedule:
         logger.info(f"\n{'='*50}")
-        logger.info(f"TRAINING STAGE {stage}")
+        logger.info(f"TRAINING STAGE {stage} (seq_length={stage_length})")
         logger.info(f"{'='*50}")
         
         # Create stage-specific datasets
         stage_train_sequences = create_stage_datasets(
-            all_train_sequences, stage, tokenizer, train_config.stage_mixing_prob
+            all_train_sequences, stage, tokenizer, train_config.stage_mixing_prob,
+            stage_length=stage_length
         )
         stage_val_sequences = create_stage_datasets(
-            all_val_sequences, stage, tokenizer, 0.0  # No mixing for validation
+            all_val_sequences, stage, tokenizer, 0.0,  # No mixing for validation
+            stage_length=stage_length
         )
         
         logger.info(f"Stage {stage}: {len(stage_train_sequences)} train, {len(stage_val_sequences)} val sequences")
@@ -790,13 +833,11 @@ def main():
             'step': trainer.step,
         }, ckpt_path)
         logger.info(f"Checkpoint saved: {ckpt_path}")
-        
-        # Evaluate after each stage — truncate to current stage length
-        logger.info(f"Evaluating after stage {stage}...")
+        logger.info(f"Evaluating after stage {stage} (seq_length={stage_length})...")
         stage_eval_seqs = [
-            {k: (v[:stage] if isinstance(v, list) and k in ('expert_predictions', 'losses', 'true_labels') else (stage if k == 'n_steps' else v))
+            {k: (v[:stage_length] if isinstance(v, list) and k in ('expert_predictions', 'losses', 'true_labels') else (stage_length if k == 'n_steps' else v))
              for k, v in seq.items()}
-            for seq in all_val_sequences[:100] if seq['n_steps'] >= stage
+            for seq in all_val_sequences[:100] if seq['n_steps'] >= stage_length
         ]
         if args.cot_mode == 'continuous':
             eval_results = evaluate_with_continuous_cot(

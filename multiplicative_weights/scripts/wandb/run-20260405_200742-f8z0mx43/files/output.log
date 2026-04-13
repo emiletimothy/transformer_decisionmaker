@@ -1,0 +1,801 @@
+INFO:__main__:wandb initialized: https://wandb.ai/emiletimothyanand/transformers_online_decision_makers/runs/f8z0mx43
+INFO:__main__:Generating 10000 training sequences...
+INFO:__main__:Generating 1000 validation sequences...
+INFO:__main__:ContinuousCoTTransformer with 4 thought steps
+INFO:__main__:Model has 214587 parameters
+INFO:__main__:Resuming from checkpoint: ../figures/checkpoints/model_stage_3.pt
+INFO:__main__:Resumed from stage 3, continuing from stage 4
+INFO:__main__:
+==================================================
+INFO:__main__:TRAINING STAGE 4
+INFO:__main__:==================================================
+INFO:__main__:Stage 4: 7044 train, 641 val sequences
+INFO:learned_mw_transformer:Training stage 4 with 4 thought steps
+INFO:learned_mw_transformer:Step 25750: Val loss = 0.5780
+INFO:learned_mw_transformer:Step 25800: Val loss = 0.5707
+INFO:learned_mw_transformer:Step 25850: Val loss = 0.5664
+INFO:learned_mw_transformer:Step 25900: Val loss = 0.5648
+INFO:learned_mw_transformer:Stage 4, Epoch 0: Loss = 0.5729
+INFO:learned_mw_transformer:Step 25950: Val loss = 0.5720
+INFO:learned_mw_transformer:Step 26000: Val loss = 0.5606
+INFO:learned_mw_transformer:Step 26050: Val loss = 0.5587
+INFO:learned_mw_transformer:Step 26100: Val loss = 0.5577
+INFO:learned_mw_transformer:Step 26150: Val loss = 0.5561
+INFO:learned_mw_transformer:Stage 4, Epoch 1: Loss = 0.5572
+INFO:learned_mw_transformer:Step 26200: Val loss = 0.5582
+INFO:learned_mw_transformer:Step 26250: Val loss = 0.5530
+INFO:learned_mw_transformer:Step 26300: Val loss = 0.5496
+INFO:learned_mw_transformer:Step 26350: Val loss = 0.5475
+INFO:learned_mw_transformer:Stage 4, Epoch 2: Loss = 0.5509
+INFO:learned_mw_transformer:Step 26400: Val loss = 0.5531
+INFO:learned_mw_transformer:Step 26450: Val loss = 0.5437
+INFO:learned_mw_transformer:Step 26500: Val loss = 0.5418
+INFO:learned_mw_transformer:Step 26550: Val loss = 0.5417
+INFO:learned_mw_transformer:Stage 4, Epoch 3: Loss = 0.5403
+INFO:learned_mw_transformer:Step 26600: Val loss = 0.5404
+INFO:learned_mw_transformer:Step 26650: Val loss = 0.5382
+INFO:learned_mw_transformer:Step 26700: Val loss = 0.5372
+INFO:learned_mw_transformer:Step 26750: Val loss = 0.5358
+INFO:learned_mw_transformer:Step 26800: Val loss = 0.5347
+INFO:learned_mw_transformer:Stage 4, Epoch 4: Loss = 0.5307
+INFO:learned_mw_transformer:Step 26850: Val loss = 0.5398
+INFO:learned_mw_transformer:Step 26900: Val loss = 0.5337
+INFO:learned_mw_transformer:Step 26950: Val loss = 0.5315
+INFO:learned_mw_transformer:Step 27000: Val loss = 0.5314
+INFO:learned_mw_transformer:Stage 4, Epoch 5: Loss = 0.5310
+INFO:learned_mw_transformer:Step 27050: Val loss = 0.5370
+INFO:learned_mw_transformer:Step 27100: Val loss = 0.5294
+INFO:learned_mw_transformer:Step 27150: Val loss = 0.5299
+INFO:learned_mw_transformer:Step 27200: Val loss = 0.5292
+INFO:learned_mw_transformer:Step 27250: Val loss = 0.5286
+INFO:learned_mw_transformer:Stage 4, Epoch 6: Loss = 0.5254
+INFO:learned_mw_transformer:Step 27300: Val loss = 0.5306
+INFO:learned_mw_transformer:Step 27350: Val loss = 0.5301
+INFO:learned_mw_transformer:Step 27400: Val loss = 0.5275
+INFO:learned_mw_transformer:Step 27450: Val loss = 0.5266
+INFO:learned_mw_transformer:Stage 4, Epoch 7: Loss = 0.5269
+INFO:learned_mw_transformer:Step 27500: Val loss = 0.5327
+INFO:learned_mw_transformer:Step 27550: Val loss = 0.5274
+INFO:learned_mw_transformer:Step 27600: Val loss = 0.5262
+INFO:learned_mw_transformer:Step 27650: Val loss = 0.5250
+INFO:learned_mw_transformer:Stage 4, Epoch 8: Loss = 0.5233
+INFO:learned_mw_transformer:Step 27700: Val loss = 0.5259
+INFO:learned_mw_transformer:Step 27750: Val loss = 0.5260
+INFO:learned_mw_transformer:Step 27800: Val loss = 0.5262
+INFO:learned_mw_transformer:Step 27850: Val loss = 0.5245
+INFO:learned_mw_transformer:Step 27900: Val loss = 0.5246
+INFO:learned_mw_transformer:Stage 4, Epoch 9: Loss = 0.5183
+INFO:learned_mw_transformer:Step 27950: Val loss = 0.5318
+INFO:learned_mw_transformer:Step 28000: Val loss = 0.5249
+INFO:learned_mw_transformer:Step 28050: Val loss = 0.5255
+INFO:learned_mw_transformer:Step 28100: Val loss = 0.5244
+INFO:learned_mw_transformer:Stage 4, Epoch 10: Loss = 0.5225
+INFO:learned_mw_transformer:Step 28150: Val loss = 0.5277
+INFO:learned_mw_transformer:Step 28200: Val loss = 0.5232
+INFO:learned_mw_transformer:Step 28250: Val loss = 0.5246
+INFO:learned_mw_transformer:Step 28300: Val loss = 0.5249
+INFO:learned_mw_transformer:Step 28350: Val loss = 0.5235
+INFO:learned_mw_transformer:Stage 4, Epoch 11: Loss = 0.5173
+INFO:learned_mw_transformer:Step 28400: Val loss = 0.5278
+INFO:learned_mw_transformer:Step 28450: Val loss = 0.5257
+INFO:learned_mw_transformer:Step 28500: Val loss = 0.5233
+INFO:learned_mw_transformer:Step 28550: Val loss = 0.5244
+INFO:learned_mw_transformer:Stage 4, Epoch 12: Loss = 0.5214
+INFO:learned_mw_transformer:Step 28600: Val loss = 0.5282
+INFO:learned_mw_transformer:Step 28650: Val loss = 0.5236
+INFO:learned_mw_transformer:Step 28700: Val loss = 0.5230
+INFO:learned_mw_transformer:Step 28750: Val loss = 0.5226
+INFO:learned_mw_transformer:Step 28800: Val loss = 0.5235
+INFO:learned_mw_transformer:Stage 4, Epoch 13: Loss = 0.5178
+INFO:learned_mw_transformer:Step 28850: Val loss = 0.5306
+INFO:learned_mw_transformer:Step 28900: Val loss = 0.5222
+INFO:learned_mw_transformer:Step 28950: Val loss = 0.5223
+INFO:learned_mw_transformer:Step 29000: Val loss = 0.5208
+INFO:learned_mw_transformer:Stage 4, Epoch 14: Loss = 0.5205
+INFO:learned_mw_transformer:Step 29050: Val loss = 0.5275
+INFO:learned_mw_transformer:Step 29100: Val loss = 0.5220
+INFO:learned_mw_transformer:Step 29150: Val loss = 0.5213
+INFO:learned_mw_transformer:Step 29200: Val loss = 0.5208
+INFO:learned_mw_transformer:Stage 4, Epoch 15: Loss = 0.5178
+INFO:learned_mw_transformer:Step 29250: Val loss = 0.5228
+INFO:learned_mw_transformer:Step 29300: Val loss = 0.5211
+INFO:learned_mw_transformer:Step 29350: Val loss = 0.5212
+INFO:learned_mw_transformer:Step 29400: Val loss = 0.5236
+INFO:learned_mw_transformer:Step 29450: Val loss = 0.5218
+INFO:learned_mw_transformer:Stage 4, Epoch 16: Loss = 0.5146
+INFO:learned_mw_transformer:Step 29500: Val loss = 0.5297
+INFO:learned_mw_transformer:Step 29550: Val loss = 0.5212
+INFO:learned_mw_transformer:Step 29600: Val loss = 0.5213
+INFO:learned_mw_transformer:Step 29650: Val loss = 0.5208
+INFO:learned_mw_transformer:Stage 4, Epoch 17: Loss = 0.5173
+INFO:learned_mw_transformer:Step 29700: Val loss = 0.5237
+INFO:learned_mw_transformer:Step 29750: Val loss = 0.5209
+INFO:learned_mw_transformer:Step 29800: Val loss = 0.5207
+INFO:learned_mw_transformer:Step 29850: Val loss = 0.5204
+INFO:learned_mw_transformer:Step 29900: Val loss = 0.5206
+INFO:learned_mw_transformer:Stage 4, Epoch 18: Loss = 0.5140
+INFO:learned_mw_transformer:Step 29950: Val loss = 0.5236
+INFO:learned_mw_transformer:Step 30000: Val loss = 0.5209
+INFO:learned_mw_transformer:Step 30050: Val loss = 0.5209
+INFO:learned_mw_transformer:Step 30100: Val loss = 0.5209
+INFO:learned_mw_transformer:Stage 4, Epoch 19: Loss = 0.5177
+INFO:learned_mw_transformer:Step 30150: Val loss = 0.5275
+INFO:learned_mw_transformer:Step 30200: Val loss = 0.5197
+INFO:learned_mw_transformer:Step 30250: Val loss = 0.5210
+INFO:learned_mw_transformer:Step 30300: Val loss = 0.5214
+INFO:learned_mw_transformer:Step 30350: Val loss = 0.5205
+INFO:learned_mw_transformer:Stage 4, Epoch 20: Loss = 0.5146
+INFO:learned_mw_transformer:Step 30400: Val loss = 0.5263
+INFO:learned_mw_transformer:Step 30450: Val loss = 0.5192
+INFO:learned_mw_transformer:Step 30500: Val loss = 0.5197
+INFO:learned_mw_transformer:Step 30550: Val loss = 0.5202
+INFO:learned_mw_transformer:Stage 4, Epoch 21: Loss = 0.5183
+INFO:learned_mw_transformer:Step 30600: Val loss = 0.5271
+INFO:learned_mw_transformer:Step 30650: Val loss = 0.5210
+INFO:learned_mw_transformer:Step 30700: Val loss = 0.5198
+INFO:learned_mw_transformer:Step 30750: Val loss = 0.5196
+INFO:learned_mw_transformer:Stage 4, Epoch 22: Loss = 0.5147
+INFO:learned_mw_transformer:Step 30800: Val loss = 0.5204
+INFO:learned_mw_transformer:Step 30850: Val loss = 0.5204
+INFO:learned_mw_transformer:Step 30900: Val loss = 0.5199
+INFO:learned_mw_transformer:Step 30950: Val loss = 0.5195
+INFO:learned_mw_transformer:Step 31000: Val loss = 0.5196
+INFO:learned_mw_transformer:Stage 4, Epoch 23: Loss = 0.5111
+INFO:learned_mw_transformer:Step 31050: Val loss = 0.5258
+INFO:learned_mw_transformer:Step 31100: Val loss = 0.5192
+INFO:learned_mw_transformer:Step 31150: Val loss = 0.5202
+INFO:learned_mw_transformer:Step 31200: Val loss = 0.5189
+INFO:learned_mw_transformer:Stage 4, Epoch 24: Loss = 0.5156
+INFO:learned_mw_transformer:Step 31250: Val loss = 0.5216
+INFO:learned_mw_transformer:Step 31300: Val loss = 0.5198
+INFO:learned_mw_transformer:Step 31350: Val loss = 0.5196
+INFO:learned_mw_transformer:Step 31400: Val loss = 0.5192
+INFO:learned_mw_transformer:Step 31450: Val loss = 0.5187
+INFO:learned_mw_transformer:Stage 4, Epoch 25: Loss = 0.5124
+INFO:learned_mw_transformer:Step 31500: Val loss = 0.5249
+INFO:learned_mw_transformer:Step 31550: Val loss = 0.5200
+INFO:learned_mw_transformer:Step 31600: Val loss = 0.5189
+INFO:learned_mw_transformer:Step 31650: Val loss = 0.5220
+INFO:learned_mw_transformer:Stage 4, Epoch 26: Loss = 0.5163
+INFO:learned_mw_transformer:Step 31700: Val loss = 0.5260
+INFO:learned_mw_transformer:Step 31750: Val loss = 0.5201
+INFO:learned_mw_transformer:Step 31800: Val loss = 0.5193
+INFO:learned_mw_transformer:Step 31850: Val loss = 0.5188
+INFO:learned_mw_transformer:Stage 4, Epoch 27: Loss = 0.5131
+INFO:learned_mw_transformer:Step 31900: Val loss = 0.5181
+INFO:learned_mw_transformer:Step 31950: Val loss = 0.5181
+INFO:learned_mw_transformer:Step 32000: Val loss = 0.5192
+INFO:learned_mw_transformer:Step 32050: Val loss = 0.5182
+INFO:learned_mw_transformer:Step 32100: Val loss = 0.5171
+INFO:learned_mw_transformer:Stage 4, Epoch 28: Loss = 0.5090
+INFO:learned_mw_transformer:Step 32150: Val loss = 0.5277
+INFO:learned_mw_transformer:Step 32200: Val loss = 0.5183
+INFO:learned_mw_transformer:Step 32250: Val loss = 0.5172
+INFO:learned_mw_transformer:Step 32300: Val loss = 0.5188
+INFO:learned_mw_transformer:Stage 4, Epoch 29: Loss = 0.5134
+INFO:__main__:Checkpoint saved: ../figures/checkpoints/model_stage_4.pt
+INFO:__main__:Evaluating after stage 4 (seq_length=20)...
+INFO:__main__:Stage 4 Results:
+INFO:__main__:  prediction_accuracy: 0.7150 ± 0.1527
+INFO:__main__:  sequence_accuracy: 0.0000 ± 0.0000
+INFO:__main__:  learned_regret: 1.8000 ± 1.3565
+INFO:__main__:  optimal_regret: 1.9200 ± 1.2139
+INFO:__main__:  regret_ratio: 1.3977 ± 1.8960
+INFO:__main__:
+==================================================
+INFO:__main__:TRAINING STAGE 5
+INFO:__main__:==================================================
+INFO:__main__:Stage 5: 5924 train, 547 val sequences
+INFO:learned_mw_transformer:Training stage 5 with 4 thought steps
+INFO:learned_mw_transformer:Step 32350: Val loss = 0.5621
+INFO:learned_mw_transformer:Step 32400: Val loss = 0.5478
+INFO:learned_mw_transformer:Step 32450: Val loss = 0.5456
+INFO:learned_mw_transformer:Step 32500: Val loss = 0.5427
+INFO:learned_mw_transformer:Stage 5, Epoch 0: Loss = 0.5416
+INFO:learned_mw_transformer:Step 32550: Val loss = 0.5500
+INFO:learned_mw_transformer:Step 32600: Val loss = 0.5391
+INFO:learned_mw_transformer:Step 32650: Val loss = 0.5376
+INFO:learned_mw_transformer:Step 32700: Val loss = 0.5373
+INFO:learned_mw_transformer:Stage 5, Epoch 1: Loss = 0.5346
+INFO:learned_mw_transformer:Step 32750: Val loss = 0.5444
+INFO:learned_mw_transformer:Step 32800: Val loss = 0.5357
+INFO:learned_mw_transformer:Step 32850: Val loss = 0.5319
+INFO:learned_mw_transformer:Stage 5, Epoch 2: Loss = 0.5299
+INFO:learned_mw_transformer:Step 32900: Val loss = 0.5338
+INFO:learned_mw_transformer:Step 32950: Val loss = 0.5285
+INFO:learned_mw_transformer:Step 33000: Val loss = 0.5273
+INFO:learned_mw_transformer:Step 33050: Val loss = 0.5268
+INFO:learned_mw_transformer:Stage 5, Epoch 3: Loss = 0.5199
+INFO:learned_mw_transformer:Step 33100: Val loss = 0.5355
+INFO:learned_mw_transformer:Step 33150: Val loss = 0.5223
+INFO:learned_mw_transformer:Step 33200: Val loss = 0.5206
+INFO:learned_mw_transformer:Step 33250: Val loss = 0.5197
+INFO:learned_mw_transformer:Stage 5, Epoch 4: Loss = 0.5162
+INFO:learned_mw_transformer:Step 33300: Val loss = 0.5290
+INFO:learned_mw_transformer:Step 33350: Val loss = 0.5172
+INFO:learned_mw_transformer:Step 33400: Val loss = 0.5156
+INFO:learned_mw_transformer:Step 33450: Val loss = 0.5168
+INFO:learned_mw_transformer:Stage 5, Epoch 5: Loss = 0.5137
+INFO:learned_mw_transformer:Step 33500: Val loss = 0.5233
+INFO:learned_mw_transformer:Step 33550: Val loss = 0.5151
+INFO:learned_mw_transformer:Step 33600: Val loss = 0.5157
+INFO:learned_mw_transformer:Stage 5, Epoch 6: Loss = 0.5146
+INFO:learned_mw_transformer:Step 33650: Val loss = 0.5132
+INFO:learned_mw_transformer:Step 33700: Val loss = 0.5121
+INFO:learned_mw_transformer:Step 33750: Val loss = 0.5123
+INFO:learned_mw_transformer:Step 33800: Val loss = 0.5138
+INFO:learned_mw_transformer:Stage 5, Epoch 7: Loss = 0.5057
+INFO:learned_mw_transformer:Step 33850: Val loss = 0.5204
+INFO:learned_mw_transformer:Step 33900: Val loss = 0.5104
+INFO:learned_mw_transformer:Step 33950: Val loss = 0.5098
+INFO:learned_mw_transformer:Step 34000: Val loss = 0.5104
+INFO:learned_mw_transformer:Stage 5, Epoch 8: Loss = 0.5064
+INFO:learned_mw_transformer:Step 34050: Val loss = 0.5173
+INFO:learned_mw_transformer:Step 34100: Val loss = 0.5105
+INFO:learned_mw_transformer:Step 34150: Val loss = 0.5116
+INFO:learned_mw_transformer:Stage 5, Epoch 9: Loss = 0.5074
+INFO:learned_mw_transformer:Step 34200: Val loss = 0.5101
+INFO:learned_mw_transformer:Step 34250: Val loss = 0.5088
+INFO:learned_mw_transformer:Step 34300: Val loss = 0.5094
+INFO:learned_mw_transformer:Step 34350: Val loss = 0.5075
+INFO:learned_mw_transformer:Stage 5, Epoch 10: Loss = 0.4996
+INFO:learned_mw_transformer:Step 34400: Val loss = 0.5180
+INFO:learned_mw_transformer:Step 34450: Val loss = 0.5085
+INFO:learned_mw_transformer:Step 34500: Val loss = 0.5085
+INFO:learned_mw_transformer:Step 34550: Val loss = 0.5087
+INFO:learned_mw_transformer:Stage 5, Epoch 11: Loss = 0.5026
+INFO:learned_mw_transformer:Step 34600: Val loss = 0.5187
+INFO:learned_mw_transformer:Step 34650: Val loss = 0.5098
+INFO:learned_mw_transformer:Step 34700: Val loss = 0.5076
+INFO:learned_mw_transformer:Step 34750: Val loss = 0.5084
+INFO:learned_mw_transformer:Stage 5, Epoch 12: Loss = 0.5049
+INFO:learned_mw_transformer:Step 34800: Val loss = 0.5143
+INFO:learned_mw_transformer:Step 34850: Val loss = 0.5076
+INFO:learned_mw_transformer:Step 34900: Val loss = 0.5076
+INFO:learned_mw_transformer:Stage 5, Epoch 13: Loss = 0.5072
+INFO:learned_mw_transformer:Step 34950: Val loss = 0.5103
+INFO:learned_mw_transformer:Step 35000: Val loss = 0.5072
+INFO:learned_mw_transformer:Step 35050: Val loss = 0.5076
+INFO:learned_mw_transformer:Step 35100: Val loss = 0.5065
+INFO:learned_mw_transformer:Stage 5, Epoch 14: Loss = 0.4995
+INFO:learned_mw_transformer:Step 35150: Val loss = 0.5127
+INFO:learned_mw_transformer:Step 35200: Val loss = 0.5072
+INFO:learned_mw_transformer:Step 35250: Val loss = 0.5074
+INFO:learned_mw_transformer:Step 35300: Val loss = 0.5068
+INFO:learned_mw_transformer:Stage 5, Epoch 15: Loss = 0.5014
+INFO:learned_mw_transformer:Step 35350: Val loss = 0.5139
+INFO:learned_mw_transformer:Step 35400: Val loss = 0.5068
+INFO:learned_mw_transformer:Step 35450: Val loss = 0.5081
+INFO:learned_mw_transformer:Step 35500: Val loss = 0.5082
+INFO:learned_mw_transformer:Stage 5, Epoch 16: Loss = 0.5040
+INFO:learned_mw_transformer:Step 35550: Val loss = 0.5186
+INFO:learned_mw_transformer:Step 35600: Val loss = 0.5070
+INFO:learned_mw_transformer:Step 35650: Val loss = 0.5064
+INFO:learned_mw_transformer:Stage 5, Epoch 17: Loss = 0.5064
+INFO:learned_mw_transformer:Step 35700: Val loss = 0.5127
+INFO:learned_mw_transformer:Step 35750: Val loss = 0.5073
+INFO:learned_mw_transformer:Step 35800: Val loss = 0.5084
+INFO:learned_mw_transformer:Step 35850: Val loss = 0.5069
+INFO:learned_mw_transformer:Stage 5, Epoch 18: Loss = 0.4998
+INFO:learned_mw_transformer:Step 35900: Val loss = 0.5163
+INFO:learned_mw_transformer:Step 35950: Val loss = 0.5081
+INFO:learned_mw_transformer:Step 36000: Val loss = 0.5067
+INFO:learned_mw_transformer:Step 36050: Val loss = 0.5065
+INFO:learned_mw_transformer:Stage 5, Epoch 19: Loss = 0.5021
+INFO:learned_mw_transformer:Step 36100: Val loss = 0.5152
+INFO:learned_mw_transformer:Step 36150: Val loss = 0.5060
+INFO:learned_mw_transformer:Step 36200: Val loss = 0.5058
+INFO:learned_mw_transformer:Stage 5, Epoch 20: Loss = 0.5031
+INFO:learned_mw_transformer:Step 36250: Val loss = 0.5070
+INFO:learned_mw_transformer:Step 36300: Val loss = 0.5061
+INFO:learned_mw_transformer:Step 36350: Val loss = 0.5071
+INFO:learned_mw_transformer:Step 36400: Val loss = 0.5073
+INFO:learned_mw_transformer:Stage 5, Epoch 21: Loss = 0.4975
+INFO:learned_mw_transformer:Step 36450: Val loss = 0.5208
+INFO:learned_mw_transformer:Step 36500: Val loss = 0.5065
+INFO:learned_mw_transformer:Step 36550: Val loss = 0.5073
+INFO:learned_mw_transformer:Step 36600: Val loss = 0.5065
+INFO:learned_mw_transformer:Stage 5, Epoch 22: Loss = 0.5013
+INFO:learned_mw_transformer:Step 36650: Val loss = 0.5137
+INFO:learned_mw_transformer:Step 36700: Val loss = 0.5068
+INFO:learned_mw_transformer:Step 36750: Val loss = 0.5061
+INFO:learned_mw_transformer:Step 36800: Val loss = 0.5057
+INFO:learned_mw_transformer:Stage 5, Epoch 23: Loss = 0.5027
+INFO:learned_mw_transformer:Step 36850: Val loss = 0.5122
+INFO:learned_mw_transformer:Step 36900: Val loss = 0.5052
+INFO:learned_mw_transformer:Step 36950: Val loss = 0.5076
+INFO:learned_mw_transformer:Stage 5, Epoch 24: Loss = 0.5029
+INFO:learned_mw_transformer:Step 37000: Val loss = 0.5118
+INFO:learned_mw_transformer:Step 37050: Val loss = 0.5069
+INFO:learned_mw_transformer:Step 37100: Val loss = 0.5060
+INFO:learned_mw_transformer:Step 37150: Val loss = 0.5060
+INFO:learned_mw_transformer:Stage 5, Epoch 25: Loss = 0.4980
+INFO:learned_mw_transformer:Step 37200: Val loss = 0.5120
+INFO:learned_mw_transformer:Step 37250: Val loss = 0.5056
+INFO:learned_mw_transformer:Step 37300: Val loss = 0.5071
+INFO:learned_mw_transformer:Step 37350: Val loss = 0.5072
+INFO:learned_mw_transformer:Stage 5, Epoch 26: Loss = 0.4983
+INFO:learned_mw_transformer:Step 37400: Val loss = 0.5117
+INFO:learned_mw_transformer:Step 37450: Val loss = 0.5065
+INFO:learned_mw_transformer:Step 37500: Val loss = 0.5057
+INFO:learned_mw_transformer:Stage 5, Epoch 27: Loss = 0.5019
+INFO:learned_mw_transformer:Step 37550: Val loss = 0.5067
+INFO:learned_mw_transformer:Step 37600: Val loss = 0.5053
+INFO:learned_mw_transformer:Step 37650: Val loss = 0.5081
+INFO:learned_mw_transformer:Step 37700: Val loss = 0.5045
+INFO:learned_mw_transformer:Stage 5, Epoch 28: Loss = 0.4957
+INFO:learned_mw_transformer:Step 37750: Val loss = 0.5136
+INFO:learned_mw_transformer:Step 37800: Val loss = 0.5069
+INFO:learned_mw_transformer:Step 37850: Val loss = 0.5050
+INFO:learned_mw_transformer:Step 37900: Val loss = 0.5061
+INFO:learned_mw_transformer:Stage 5, Epoch 29: Loss = 0.4979
+INFO:__main__:Checkpoint saved: ../figures/checkpoints/model_stage_5.pt
+INFO:__main__:Evaluating after stage 5 (seq_length=25)...
+INFO:__main__:Stage 5 Results:
+INFO:__main__:  prediction_accuracy: 0.7510 ± 0.1299
+INFO:__main__:  sequence_accuracy: 0.0000 ± 0.0000
+INFO:__main__:  learned_regret: 1.6122 ± 1.3220
+INFO:__main__:  optimal_regret: 2.2653 ± 1.2252
+INFO:__main__:  regret_ratio: 1.1449 ± 1.9237
+INFO:__main__:
+==================================================
+INFO:__main__:TRAINING STAGE 6
+INFO:__main__:==================================================
+INFO:__main__:Stage 6: 4851 train, 419 val sequences
+INFO:learned_mw_transformer:Training stage 6 with 4 thought steps
+INFO:learned_mw_transformer:Step 37950: Val loss = 0.5528
+INFO:learned_mw_transformer:Step 38000: Val loss = 0.5312
+INFO:learned_mw_transformer:Step 38050: Val loss = 0.5278
+INFO:learned_mw_transformer:Stage 6, Epoch 0: Loss = 0.5312
+INFO:learned_mw_transformer:Step 38100: Val loss = 0.5351
+INFO:learned_mw_transformer:Step 38150: Val loss = 0.5244
+INFO:learned_mw_transformer:Step 38200: Val loss = 0.5234
+INFO:learned_mw_transformer:Stage 6, Epoch 1: Loss = 0.5213
+INFO:learned_mw_transformer:Step 38250: Val loss = 0.5282
+INFO:learned_mw_transformer:Step 38300: Val loss = 0.5179
+INFO:learned_mw_transformer:Step 38350: Val loss = 0.5151
+INFO:learned_mw_transformer:Stage 6, Epoch 2: Loss = 0.5147
+INFO:learned_mw_transformer:Step 38400: Val loss = 0.5237
+INFO:learned_mw_transformer:Step 38450: Val loss = 0.5100
+INFO:learned_mw_transformer:Step 38500: Val loss = 0.5082
+INFO:learned_mw_transformer:Stage 6, Epoch 3: Loss = 0.5095
+INFO:learned_mw_transformer:Step 38550: Val loss = 0.5180
+INFO:learned_mw_transformer:Step 38600: Val loss = 0.5065
+INFO:learned_mw_transformer:Step 38650: Val loss = 0.5045
+INFO:learned_mw_transformer:Stage 6, Epoch 4: Loss = 0.5053
+INFO:learned_mw_transformer:Step 38700: Val loss = 0.5125
+INFO:learned_mw_transformer:Step 38750: Val loss = 0.5040
+INFO:learned_mw_transformer:Step 38800: Val loss = 0.5039
+INFO:learned_mw_transformer:Stage 6, Epoch 5: Loss = 0.5019
+INFO:learned_mw_transformer:Step 38850: Val loss = 0.5090
+INFO:learned_mw_transformer:Step 38900: Val loss = 0.5023
+INFO:learned_mw_transformer:Step 38950: Val loss = 0.5010
+INFO:learned_mw_transformer:Stage 6, Epoch 6: Loss = 0.4985
+INFO:learned_mw_transformer:Step 39000: Val loss = 0.5135
+INFO:learned_mw_transformer:Step 39050: Val loss = 0.5008
+INFO:learned_mw_transformer:Step 39100: Val loss = 0.5024
+INFO:learned_mw_transformer:Stage 6, Epoch 7: Loss = 0.4980
+INFO:learned_mw_transformer:Step 39150: Val loss = 0.5057
+INFO:learned_mw_transformer:Step 39200: Val loss = 0.5004
+INFO:learned_mw_transformer:Step 39250: Val loss = 0.4994
+INFO:learned_mw_transformer:Stage 6, Epoch 8: Loss = 0.4954
+INFO:learned_mw_transformer:Step 39300: Val loss = 0.5120
+INFO:learned_mw_transformer:Step 39350: Val loss = 0.4991
+INFO:learned_mw_transformer:Step 39400: Val loss = 0.4996
+INFO:learned_mw_transformer:Stage 6, Epoch 9: Loss = 0.4953
+INFO:learned_mw_transformer:Step 39450: Val loss = 0.5044
+INFO:learned_mw_transformer:Step 39500: Val loss = 0.4992
+INFO:learned_mw_transformer:Step 39550: Val loss = 0.4985
+INFO:learned_mw_transformer:Stage 6, Epoch 10: Loss = 0.4936
+INFO:learned_mw_transformer:Step 39600: Val loss = 0.5010
+INFO:learned_mw_transformer:Step 39650: Val loss = 0.4979
+INFO:learned_mw_transformer:Step 39700: Val loss = 0.4991
+INFO:learned_mw_transformer:Stage 6, Epoch 11: Loss = 0.4923
+INFO:learned_mw_transformer:Step 39750: Val loss = 0.5006
+INFO:learned_mw_transformer:Step 39800: Val loss = 0.4992
+INFO:learned_mw_transformer:Step 39850: Val loss = 0.4996
+INFO:learned_mw_transformer:Stage 6, Epoch 12: Loss = 0.4910
+INFO:learned_mw_transformer:Step 39900: Val loss = 0.4996
+INFO:learned_mw_transformer:Step 39950: Val loss = 0.4981
+INFO:learned_mw_transformer:Step 40000: Val loss = 0.4974
+INFO:learned_mw_transformer:Stage 6, Epoch 13: Loss = 0.4901
+INFO:learned_mw_transformer:Step 40050: Val loss = 0.4986
+INFO:learned_mw_transformer:Step 40100: Val loss = 0.4984
+INFO:learned_mw_transformer:Step 40150: Val loss = 0.4979
+INFO:learned_mw_transformer:Stage 6, Epoch 14: Loss = 0.4894
+INFO:learned_mw_transformer:Step 40200: Val loss = 0.5006
+INFO:learned_mw_transformer:Step 40250: Val loss = 0.4982
+INFO:learned_mw_transformer:Step 40300: Val loss = 0.4985
+INFO:learned_mw_transformer:Step 40350: Val loss = 0.4978
+INFO:learned_mw_transformer:Stage 6, Epoch 15: Loss = 0.4889
+INFO:learned_mw_transformer:Step 40400: Val loss = 0.5082
+INFO:learned_mw_transformer:Step 40450: Val loss = 0.4982
+INFO:learned_mw_transformer:Step 40500: Val loss = 0.4973
+INFO:learned_mw_transformer:Stage 6, Epoch 16: Loss = 0.5008
+INFO:learned_mw_transformer:Step 40550: Val loss = 0.5059
+INFO:learned_mw_transformer:Step 40600: Val loss = 0.4973
+INFO:learned_mw_transformer:Step 40650: Val loss = 0.4982
+INFO:learned_mw_transformer:Stage 6, Epoch 17: Loss = 0.4992
+INFO:learned_mw_transformer:Step 40700: Val loss = 0.5042
+INFO:learned_mw_transformer:Step 40750: Val loss = 0.4977
+INFO:learned_mw_transformer:Step 40800: Val loss = 0.4976
+INFO:learned_mw_transformer:Stage 6, Epoch 18: Loss = 0.4981
+INFO:learned_mw_transformer:Step 40850: Val loss = 0.5062
+INFO:learned_mw_transformer:Step 40900: Val loss = 0.4987
+INFO:learned_mw_transformer:Step 40950: Val loss = 0.4973
+INFO:learned_mw_transformer:Stage 6, Epoch 19: Loss = 0.4977
+INFO:learned_mw_transformer:Step 41000: Val loss = 0.5066
+INFO:learned_mw_transformer:Step 41050: Val loss = 0.4983
+INFO:learned_mw_transformer:Step 41100: Val loss = 0.4991
+INFO:learned_mw_transformer:Stage 6, Epoch 20: Loss = 0.4964
+INFO:learned_mw_transformer:Step 41150: Val loss = 0.5083
+INFO:learned_mw_transformer:Step 41200: Val loss = 0.4973
+INFO:learned_mw_transformer:Step 41250: Val loss = 0.4976
+INFO:learned_mw_transformer:Stage 6, Epoch 21: Loss = 0.4963
+INFO:learned_mw_transformer:Step 41300: Val loss = 0.5064
+INFO:learned_mw_transformer:Step 41350: Val loss = 0.4976
+INFO:learned_mw_transformer:Step 41400: Val loss = 0.4986
+INFO:learned_mw_transformer:Stage 6, Epoch 22: Loss = 0.4957
+INFO:learned_mw_transformer:Step 41450: Val loss = 0.5104
+INFO:learned_mw_transformer:Step 41500: Val loss = 0.4979
+INFO:learned_mw_transformer:Step 41550: Val loss = 0.4975
+INFO:learned_mw_transformer:Stage 6, Epoch 23: Loss = 0.4946
+INFO:learned_mw_transformer:Step 41600: Val loss = 0.5049
+INFO:learned_mw_transformer:Step 41650: Val loss = 0.4977
+INFO:learned_mw_transformer:Step 41700: Val loss = 0.4979
+INFO:learned_mw_transformer:Stage 6, Epoch 24: Loss = 0.4938
+INFO:learned_mw_transformer:Step 41750: Val loss = 0.5064
+INFO:learned_mw_transformer:Step 41800: Val loss = 0.4984
+INFO:learned_mw_transformer:Step 41850: Val loss = 0.4976
+INFO:learned_mw_transformer:Stage 6, Epoch 25: Loss = 0.4937
+INFO:learned_mw_transformer:Step 41900: Val loss = 0.5019
+INFO:learned_mw_transformer:Step 41950: Val loss = 0.4987
+INFO:learned_mw_transformer:Step 42000: Val loss = 0.4978
+INFO:learned_mw_transformer:Stage 6, Epoch 26: Loss = 0.4926
+INFO:learned_mw_transformer:Step 42050: Val loss = 0.5058
+INFO:learned_mw_transformer:Step 42100: Val loss = 0.4974
+INFO:learned_mw_transformer:Step 42150: Val loss = 0.4993
+INFO:learned_mw_transformer:Stage 6, Epoch 27: Loss = 0.4922
+INFO:learned_mw_transformer:Step 42200: Val loss = 0.5072
+INFO:learned_mw_transformer:Step 42250: Val loss = 0.4985
+INFO:learned_mw_transformer:Step 42300: Val loss = 0.4982
+INFO:learned_mw_transformer:Stage 6, Epoch 28: Loss = 0.4912
+INFO:learned_mw_transformer:Step 42350: Val loss = 0.5054
+INFO:learned_mw_transformer:Step 42400: Val loss = 0.4993
+INFO:learned_mw_transformer:Step 42450: Val loss = 0.4981
+INFO:learned_mw_transformer:Stage 6, Epoch 29: Loss = 0.4913
+INFO:__main__:Checkpoint saved: ../figures/checkpoints/model_stage_6.pt
+INFO:__main__:Evaluating after stage 6 (seq_length=30)...
+INFO:__main__:Stage 6 Results:
+INFO:__main__:  prediction_accuracy: 0.7550 ± 0.1121
+INFO:__main__:  sequence_accuracy: 0.0000 ± 0.0000
+INFO:__main__:  learned_regret: 1.6486 ± 1.2350
+INFO:__main__:  optimal_regret: 2.2703 ± 1.4075
+INFO:__main__:  regret_ratio: 1.3901 ± 2.1586
+INFO:__main__:
+==================================================
+INFO:__main__:TRAINING STAGE 7
+INFO:__main__:==================================================
+INFO:__main__:Stage 7: 3709 train, 329 val sequences
+INFO:learned_mw_transformer:Training stage 7 with 4 thought steps
+INFO:learned_mw_transformer:Step 42500: Val loss = 0.5376
+INFO:learned_mw_transformer:Step 42550: Val loss = 0.5232
+INFO:learned_mw_transformer:Stage 7, Epoch 0: Loss = 0.5204
+INFO:learned_mw_transformer:Step 42600: Val loss = 0.5195
+INFO:learned_mw_transformer:Step 42650: Val loss = 0.5161
+INFO:learned_mw_transformer:Step 42700: Val loss = 0.5118
+INFO:learned_mw_transformer:Stage 7, Epoch 1: Loss = 0.5053
+INFO:learned_mw_transformer:Step 42750: Val loss = 0.5153
+INFO:learned_mw_transformer:Step 42800: Val loss = 0.5054
+INFO:learned_mw_transformer:Stage 7, Epoch 2: Loss = 0.5082
+INFO:learned_mw_transformer:Step 42850: Val loss = 0.5116
+INFO:learned_mw_transformer:Step 42900: Val loss = 0.5009
+INFO:learned_mw_transformer:Stage 7, Epoch 3: Loss = 0.4995
+INFO:learned_mw_transformer:Step 42950: Val loss = 0.5051
+INFO:learned_mw_transformer:Step 43000: Val loss = 0.5021
+INFO:learned_mw_transformer:Step 43050: Val loss = 0.4999
+INFO:learned_mw_transformer:Stage 7, Epoch 4: Loss = 0.4920
+INFO:learned_mw_transformer:Step 43100: Val loss = 0.5092
+INFO:learned_mw_transformer:Step 43150: Val loss = 0.4983
+INFO:learned_mw_transformer:Stage 7, Epoch 5: Loss = 0.5014
+INFO:learned_mw_transformer:Step 43200: Val loss = 0.5079
+INFO:learned_mw_transformer:Step 43250: Val loss = 0.4983
+INFO:learned_mw_transformer:Stage 7, Epoch 6: Loss = 0.4957
+INFO:learned_mw_transformer:Step 43300: Val loss = 0.5006
+INFO:learned_mw_transformer:Step 43350: Val loss = 0.4978
+INFO:learned_mw_transformer:Step 43400: Val loss = 0.4969
+INFO:learned_mw_transformer:Stage 7, Epoch 7: Loss = 0.4892
+INFO:learned_mw_transformer:Step 43450: Val loss = 0.5070
+INFO:learned_mw_transformer:Step 43500: Val loss = 0.4972
+INFO:learned_mw_transformer:Stage 7, Epoch 8: Loss = 0.4986
+INFO:learned_mw_transformer:Step 43550: Val loss = 0.5057
+INFO:learned_mw_transformer:Step 43600: Val loss = 0.4975
+INFO:learned_mw_transformer:Stage 7, Epoch 9: Loss = 0.4933
+INFO:learned_mw_transformer:Step 43650: Val loss = 0.5031
+INFO:learned_mw_transformer:Step 43700: Val loss = 0.4973
+INFO:learned_mw_transformer:Step 43750: Val loss = 0.4969
+INFO:learned_mw_transformer:Stage 7, Epoch 10: Loss = 0.4885
+INFO:learned_mw_transformer:Step 43800: Val loss = 0.5072
+INFO:learned_mw_transformer:Step 43850: Val loss = 0.4970
+INFO:learned_mw_transformer:Stage 7, Epoch 11: Loss = 0.4978
+INFO:learned_mw_transformer:Step 43900: Val loss = 0.5034
+INFO:learned_mw_transformer:Step 43950: Val loss = 0.4960
+INFO:learned_mw_transformer:Stage 7, Epoch 12: Loss = 0.4928
+INFO:learned_mw_transformer:Step 44000: Val loss = 0.5024
+INFO:learned_mw_transformer:Step 44050: Val loss = 0.4954
+INFO:learned_mw_transformer:Step 44100: Val loss = 0.4976
+INFO:learned_mw_transformer:Stage 7, Epoch 13: Loss = 0.4869
+INFO:learned_mw_transformer:Step 44150: Val loss = 0.5010
+INFO:learned_mw_transformer:Step 44200: Val loss = 0.4958
+INFO:learned_mw_transformer:Stage 7, Epoch 14: Loss = 0.4963
+INFO:learned_mw_transformer:Step 44250: Val loss = 0.5007
+INFO:learned_mw_transformer:Step 44300: Val loss = 0.4975
+INFO:learned_mw_transformer:Stage 7, Epoch 15: Loss = 0.4928
+INFO:learned_mw_transformer:Step 44350: Val loss = 0.5058
+INFO:learned_mw_transformer:Step 44400: Val loss = 0.4954
+INFO:learned_mw_transformer:Step 44450: Val loss = 0.4949
+INFO:learned_mw_transformer:Stage 7, Epoch 16: Loss = 0.4879
+INFO:learned_mw_transformer:Step 44500: Val loss = 0.5012
+INFO:learned_mw_transformer:Step 44550: Val loss = 0.4955
+INFO:learned_mw_transformer:Stage 7, Epoch 17: Loss = 0.4963
+INFO:learned_mw_transformer:Step 44600: Val loss = 0.5011
+INFO:learned_mw_transformer:Step 44650: Val loss = 0.4956
+INFO:learned_mw_transformer:Stage 7, Epoch 18: Loss = 0.4920
+INFO:learned_mw_transformer:Step 44700: Val loss = 0.5009
+INFO:learned_mw_transformer:Step 44750: Val loss = 0.4964
+INFO:learned_mw_transformer:Stage 7, Epoch 19: Loss = 0.4871
+INFO:learned_mw_transformer:Step 44800: Val loss = 0.4954
+INFO:learned_mw_transformer:Step 44850: Val loss = 0.4967
+INFO:learned_mw_transformer:Step 44900: Val loss = 0.4963
+INFO:learned_mw_transformer:Stage 7, Epoch 20: Loss = 0.4816
+INFO:learned_mw_transformer:Step 44950: Val loss = 0.5030
+INFO:learned_mw_transformer:Step 45000: Val loss = 0.4949
+INFO:learned_mw_transformer:Stage 7, Epoch 21: Loss = 0.4912
+INFO:learned_mw_transformer:Step 45050: Val loss = 0.5034
+INFO:learned_mw_transformer:Step 45100: Val loss = 0.4958
+INFO:learned_mw_transformer:Stage 7, Epoch 22: Loss = 0.4870
+INFO:learned_mw_transformer:Step 45150: Val loss = 0.4975
+INFO:learned_mw_transformer:Step 45200: Val loss = 0.4953
+INFO:learned_mw_transformer:Step 45250: Val loss = 0.4957
+INFO:learned_mw_transformer:Stage 7, Epoch 23: Loss = 0.4818
+INFO:learned_mw_transformer:Step 45300: Val loss = 0.5021
+INFO:learned_mw_transformer:Step 45350: Val loss = 0.4964
+INFO:learned_mw_transformer:Stage 7, Epoch 24: Loss = 0.4912
+INFO:learned_mw_transformer:Step 45400: Val loss = 0.5027
+INFO:learned_mw_transformer:Step 45450: Val loss = 0.4950
+INFO:learned_mw_transformer:Stage 7, Epoch 25: Loss = 0.4869
+INFO:learned_mw_transformer:Step 45500: Val loss = 0.4972
+INFO:learned_mw_transformer:Step 45550: Val loss = 0.4959
+INFO:learned_mw_transformer:Step 45600: Val loss = 0.4951
+INFO:learned_mw_transformer:Stage 7, Epoch 26: Loss = 0.4815
+INFO:learned_mw_transformer:Step 45650: Val loss = 0.5021
+INFO:learned_mw_transformer:Step 45700: Val loss = 0.4949
+INFO:learned_mw_transformer:Stage 7, Epoch 27: Loss = 0.4913
+INFO:learned_mw_transformer:Step 45750: Val loss = 0.5013
+INFO:learned_mw_transformer:Step 45800: Val loss = 0.4958
+INFO:learned_mw_transformer:Stage 7, Epoch 28: Loss = 0.4866
+INFO:learned_mw_transformer:Step 45850: Val loss = 0.5016
+INFO:learned_mw_transformer:Step 45900: Val loss = 0.4959
+INFO:learned_mw_transformer:Step 45950: Val loss = 0.4952
+INFO:learned_mw_transformer:Stage 7, Epoch 29: Loss = 0.4818
+INFO:__main__:Checkpoint saved: ../figures/checkpoints/model_stage_7.pt
+INFO:__main__:Evaluating after stage 7 (seq_length=35)...
+INFO:__main__:Stage 7 Results:
+INFO:__main__:  prediction_accuracy: 0.7626 ± 0.1136
+INFO:__main__:  sequence_accuracy: 0.0000 ± 0.0000
+INFO:__main__:  learned_regret: 1.6552 ± 1.5149
+INFO:__main__:  optimal_regret: 2.4138 ± 1.5204
+INFO:__main__:  regret_ratio: 1.2833 ± 2.1049
+INFO:__main__:
+==================================================
+INFO:__main__:TRAINING STAGE 8
+INFO:__main__:==================================================
+INFO:__main__:Stage 8: 2587 train, 237 val sequences
+INFO:learned_mw_transformer:Training stage 8 with 4 thought steps
+INFO:learned_mw_transformer:Step 46000: Val loss = 0.5339
+INFO:learned_mw_transformer:Stage 8, Epoch 0: Loss = 0.5164
+INFO:learned_mw_transformer:Step 46050: Val loss = 0.5250
+INFO:learned_mw_transformer:Step 46100: Val loss = 0.5160
+INFO:learned_mw_transformer:Stage 8, Epoch 1: Loss = 0.5003
+INFO:learned_mw_transformer:Step 46150: Val loss = 0.5251
+INFO:learned_mw_transformer:Step 46200: Val loss = 0.5122
+INFO:learned_mw_transformer:Stage 8, Epoch 2: Loss = 0.5051
+INFO:learned_mw_transformer:Step 46250: Val loss = 0.5196
+INFO:learned_mw_transformer:Stage 8, Epoch 3: Loss = 0.5082
+INFO:learned_mw_transformer:Step 46300: Val loss = 0.5167
+INFO:learned_mw_transformer:Step 46350: Val loss = 0.5098
+INFO:learned_mw_transformer:Stage 8, Epoch 4: Loss = 0.4957
+INFO:learned_mw_transformer:Step 46400: Val loss = 0.5201
+INFO:learned_mw_transformer:Stage 8, Epoch 5: Loss = 0.5002
+INFO:learned_mw_transformer:Step 46450: Val loss = 0.5106
+INFO:learned_mw_transformer:Step 46500: Val loss = 0.5083
+INFO:learned_mw_transformer:Stage 8, Epoch 6: Loss = 0.4871
+INFO:learned_mw_transformer:Step 46550: Val loss = 0.5108
+INFO:learned_mw_transformer:Step 46600: Val loss = 0.5027
+INFO:learned_mw_transformer:Stage 8, Epoch 7: Loss = 0.4924
+INFO:learned_mw_transformer:Step 46650: Val loss = 0.5111
+INFO:learned_mw_transformer:Stage 8, Epoch 8: Loss = 0.4975
+INFO:learned_mw_transformer:Step 46700: Val loss = 0.5094
+INFO:learned_mw_transformer:Step 46750: Val loss = 0.5022
+INFO:learned_mw_transformer:Stage 8, Epoch 9: Loss = 0.4841
+INFO:learned_mw_transformer:Step 46800: Val loss = 0.5063
+INFO:learned_mw_transformer:Step 46850: Val loss = 0.4995
+INFO:learned_mw_transformer:Stage 8, Epoch 10: Loss = 0.4908
+INFO:learned_mw_transformer:Step 46900: Val loss = 0.5059
+INFO:learned_mw_transformer:Stage 8, Epoch 11: Loss = 0.4961
+INFO:learned_mw_transformer:Step 46950: Val loss = 0.5079
+INFO:learned_mw_transformer:Step 47000: Val loss = 0.4991
+INFO:learned_mw_transformer:Stage 8, Epoch 12: Loss = 0.4846
+INFO:learned_mw_transformer:Step 47050: Val loss = 0.5075
+INFO:learned_mw_transformer:Stage 8, Epoch 13: Loss = 0.4908
+INFO:learned_mw_transformer:Step 47100: Val loss = 0.5014
+wandb: WARNING Fatal error while uploading data. Some run data will not be synced, but it will still be written to disk. Use `wandb sync` at the end of the run to try uploading.
+INFO:learned_mw_transformer:Step 47150: Val loss = 0.4966
+INFO:learned_mw_transformer:Stage 8, Epoch 14: Loss = 0.4779
+INFO:learned_mw_transformer:Step 47200: Val loss = 0.5050
+INFO:learned_mw_transformer:Step 47250: Val loss = 0.4996
+INFO:learned_mw_transformer:Stage 8, Epoch 15: Loss = 0.4852
+INFO:learned_mw_transformer:Step 47300: Val loss = 0.5049
+INFO:learned_mw_transformer:Stage 8, Epoch 16: Loss = 0.4920
+INFO:learned_mw_transformer:Step 47350: Val loss = 0.5027
+INFO:learned_mw_transformer:Step 47400: Val loss = 0.4969
+INFO:learned_mw_transformer:Stage 8, Epoch 17: Loss = 0.4795
+INFO:learned_mw_transformer:Step 47450: Val loss = 0.5035
+INFO:learned_mw_transformer:Stage 8, Epoch 18: Loss = 0.4868
+INFO:learned_mw_transformer:Step 47500: Val loss = 0.4993
+INFO:learned_mw_transformer:Step 47550: Val loss = 0.4972
+INFO:learned_mw_transformer:Stage 8, Epoch 19: Loss = 0.4737
+INFO:learned_mw_transformer:Step 47600: Val loss = 0.5077
+INFO:learned_mw_transformer:Step 47650: Val loss = 0.4971
+INFO:learned_mw_transformer:Stage 8, Epoch 20: Loss = 0.4815
+INFO:learned_mw_transformer:Step 47700: Val loss = 0.5052
+INFO:learned_mw_transformer:Stage 8, Epoch 21: Loss = 0.4887
+INFO:learned_mw_transformer:Step 47750: Val loss = 0.5045
+INFO:learned_mw_transformer:Step 47800: Val loss = 0.4963
+INFO:learned_mw_transformer:Stage 8, Epoch 22: Loss = 0.4759
+INFO:learned_mw_transformer:Step 47850: Val loss = 0.5033
+INFO:learned_mw_transformer:Step 47900: Val loss = 0.4959
+INFO:learned_mw_transformer:Stage 8, Epoch 23: Loss = 0.4830
+INFO:learned_mw_transformer:Step 47950: Val loss = 0.5052
+INFO:learned_mw_transformer:Stage 8, Epoch 24: Loss = 0.4888
+INFO:learned_mw_transformer:Step 48000: Val loss = 0.5056
+INFO:learned_mw_transformer:Step 48050: Val loss = 0.4960
+INFO:learned_mw_transformer:Stage 8, Epoch 25: Loss = 0.4777
+INFO:learned_mw_transformer:Step 48100: Val loss = 0.5056
+INFO:learned_mw_transformer:Stage 8, Epoch 26: Loss = 0.4855
+INFO:learned_mw_transformer:Step 48150: Val loss = 0.4977
+INFO:learned_mw_transformer:Step 48200: Val loss = 0.4965
+INFO:learned_mw_transformer:Stage 8, Epoch 27: Loss = 0.4726
+INFO:learned_mw_transformer:Step 48250: Val loss = 0.5025
+INFO:learned_mw_transformer:Step 48300: Val loss = 0.4979
+INFO:learned_mw_transformer:Stage 8, Epoch 28: Loss = 0.4786
+INFO:learned_mw_transformer:Step 48350: Val loss = 0.5017
+INFO:learned_mw_transformer:Stage 8, Epoch 29: Loss = 0.4856
+INFO:__main__:Checkpoint saved: ../figures/checkpoints/model_stage_8.pt
+INFO:__main__:Evaluating after stage 8 (seq_length=40)...
+INFO:__main__:Stage 8 Results:
+INFO:__main__:  prediction_accuracy: 0.7603 ± 0.1068
+INFO:__main__:  sequence_accuracy: 0.0000 ± 0.0000
+INFO:__main__:  learned_regret: 1.6471 ± 1.6066
+INFO:__main__:  optimal_regret: 2.4118 ± 1.8169
+INFO:__main__:  regret_ratio: 0.8804 ± 0.8704
+INFO:__main__:
+==================================================
+INFO:__main__:TRAINING STAGE 9
+INFO:__main__:==================================================
+INFO:__main__:Stage 9: 1436 train, 133 val sequences
+INFO:learned_mw_transformer:Training stage 9 with 4 thought steps
+INFO:learned_mw_transformer:Step 48400: Val loss = 0.5295
+INFO:learned_mw_transformer:Stage 9, Epoch 0: Loss = 0.5105
+INFO:learned_mw_transformer:Step 48450: Val loss = 0.5263
+INFO:learned_mw_transformer:Stage 9, Epoch 1: Loss = 0.5066
+INFO:learned_mw_transformer:Step 48500: Val loss = 0.5226
+INFO:learned_mw_transformer:Stage 9, Epoch 2: Loss = 0.5060
+INFO:learned_mw_transformer:Step 48550: Val loss = 0.5227
+INFO:learned_mw_transformer:Stage 9, Epoch 3: Loss = 0.5071
+INFO:learned_mw_transformer:Step 48600: Val loss = 0.5218
+INFO:learned_mw_transformer:Stage 9, Epoch 4: Loss = 0.5079
+INFO:learned_mw_transformer:Step 48650: Val loss = 0.5202
+INFO:learned_mw_transformer:Stage 9, Epoch 5: Loss = 0.5090
+INFO:learned_mw_transformer:Step 48700: Val loss = 0.5191
+INFO:learned_mw_transformer:Stage 9, Epoch 6: Loss = 0.5105
+INFO:learned_mw_transformer:Stage 9, Epoch 7: Loss = 0.5105
+INFO:learned_mw_transformer:Step 48750: Val loss = 0.5211
+INFO:learned_mw_transformer:Stage 9, Epoch 8: Loss = 0.4865
+INFO:learned_mw_transformer:Step 48800: Val loss = 0.5115
+INFO:learned_mw_transformer:Stage 9, Epoch 9: Loss = 0.4882
+INFO:learned_mw_transformer:Step 48850: Val loss = 0.5160
+INFO:learned_mw_transformer:Stage 9, Epoch 10: Loss = 0.4890
+INFO:learned_mw_transformer:Step 48900: Val loss = 0.5178
+INFO:learned_mw_transformer:Stage 9, Epoch 11: Loss = 0.4904
+INFO:learned_mw_transformer:Step 48950: Val loss = 0.5156
+INFO:learned_mw_transformer:Stage 9, Epoch 12: Loss = 0.4926
+INFO:learned_mw_transformer:Step 49000: Val loss = 0.5172
+INFO:learned_mw_transformer:Stage 9, Epoch 13: Loss = 0.4961
+INFO:learned_mw_transformer:Step 49050: Val loss = 0.5139
+INFO:learned_mw_transformer:Stage 9, Epoch 14: Loss = 0.4963
+INFO:learned_mw_transformer:Step 49100: Val loss = 0.5149
+INFO:learned_mw_transformer:Stage 9, Epoch 15: Loss = 0.4983
+INFO:learned_mw_transformer:Step 49150: Val loss = 0.5170
+INFO:learned_mw_transformer:Stage 9, Epoch 16: Loss = 0.4999
+INFO:learned_mw_transformer:Stage 9, Epoch 17: Loss = 0.5005
+INFO:learned_mw_transformer:Step 49200: Val loss = 0.5120
+INFO:learned_mw_transformer:Stage 9, Epoch 18: Loss = 0.4748
+INFO:learned_mw_transformer:Step 49250: Val loss = 0.5077
+INFO:learned_mw_transformer:Stage 9, Epoch 19: Loss = 0.4763
+INFO:learned_mw_transformer:Step 49300: Val loss = 0.5128
+INFO:learned_mw_transformer:Stage 9, Epoch 20: Loss = 0.4791
+INFO:learned_mw_transformer:Step 49350: Val loss = 0.5099
+INFO:learned_mw_transformer:Stage 9, Epoch 21: Loss = 0.4796
+INFO:learned_mw_transformer:Step 49400: Val loss = 0.5116
+INFO:learned_mw_transformer:Stage 9, Epoch 22: Loss = 0.4832
+INFO:learned_mw_transformer:Step 49450: Val loss = 0.5102
+INFO:learned_mw_transformer:Stage 9, Epoch 23: Loss = 0.4866
+INFO:learned_mw_transformer:Step 49500: Val loss = 0.5106
+INFO:learned_mw_transformer:Stage 9, Epoch 24: Loss = 0.4889
+INFO:learned_mw_transformer:Step 49550: Val loss = 0.5076
+INFO:learned_mw_transformer:Stage 9, Epoch 25: Loss = 0.4918
+INFO:learned_mw_transformer:Step 49600: Val loss = 0.5082
+INFO:learned_mw_transformer:Stage 9, Epoch 26: Loss = 0.4937
+INFO:learned_mw_transformer:Stage 9, Epoch 27: Loss = 0.4927
+INFO:learned_mw_transformer:Step 49650: Val loss = 0.5119
+INFO:learned_mw_transformer:Stage 9, Epoch 28: Loss = 0.4688
+INFO:learned_mw_transformer:Step 49700: Val loss = 0.5071
+INFO:learned_mw_transformer:Stage 9, Epoch 29: Loss = 0.4707
+INFO:__main__:Checkpoint saved: ../figures/checkpoints/model_stage_9.pt
+INFO:__main__:Evaluating after stage 9 (seq_length=45)...
+INFO:__main__:Stage 9 Results:
+INFO:__main__:  prediction_accuracy: 0.7526 ± 0.1184
+INFO:__main__:  sequence_accuracy: 0.0000 ± 0.0000
+INFO:__main__:  learned_regret: 2.2000 ± 1.8330
+INFO:__main__:  optimal_regret: 2.5333 ± 1.9276
+INFO:__main__:  regret_ratio: 1.5706 ± 2.4338
+INFO:__main__:
+==================================================
+INFO:__main__:TRAINING STAGE 10
+INFO:__main__:==================================================
+INFO:__main__:Stage 10: 273 train, 20 val sequences
+INFO:learned_mw_transformer:Training stage 10 with 4 thought steps
+INFO:learned_mw_transformer:Stage 10, Epoch 0: Loss = 0.5258
+INFO:learned_mw_transformer:Step 49750: Val loss = 0.4899
+INFO:learned_mw_transformer:Stage 10, Epoch 1: Loss = 0.4995
+INFO:learned_mw_transformer:Stage 10, Epoch 2: Loss = 0.5166
+INFO:learned_mw_transformer:Stage 10, Epoch 3: Loss = 0.5094
+INFO:learned_mw_transformer:Stage 10, Epoch 4: Loss = 0.5077
+INFO:learned_mw_transformer:Stage 10, Epoch 5: Loss = 0.5078
+INFO:learned_mw_transformer:Step 49800: Val loss = 0.4863
+INFO:learned_mw_transformer:Stage 10, Epoch 6: Loss = 0.5017
+INFO:learned_mw_transformer:Stage 10, Epoch 7: Loss = 0.5023
+INFO:learned_mw_transformer:Stage 10, Epoch 8: Loss = 0.5015
+INFO:learned_mw_transformer:Stage 10, Epoch 9: Loss = 0.4980
+INFO:learned_mw_transformer:Stage 10, Epoch 10: Loss = 0.5028
+INFO:learned_mw_transformer:Stage 10, Epoch 11: Loss = 0.4998
+INFO:learned_mw_transformer:Step 49850: Val loss = 0.4877
+INFO:learned_mw_transformer:Stage 10, Epoch 12: Loss = 0.4843
+INFO:learned_mw_transformer:Stage 10, Epoch 13: Loss = 0.4912
+INFO:learned_mw_transformer:Stage 10, Epoch 14: Loss = 0.4959
+INFO:learned_mw_transformer:Early stopping at epoch 14 (no improvement for 12 epochs)
+INFO:__main__:Checkpoint saved: ../figures/checkpoints/model_stage_10.pt
+INFO:__main__:Evaluating after stage 10 (seq_length=50)...
+INFO:__main__:Stage 10 Results:
+INFO:__main__:  prediction_accuracy: 0.7233 ± 0.1009
+INFO:__main__:  sequence_accuracy: 0.0000 ± 0.0000
+INFO:__main__:  learned_regret: 4.0000 ± 1.2910
+INFO:__main__:  optimal_regret: 2.6667 ± 1.4907
+INFO:__main__:  regret_ratio: 2.8611 ± 3.2065
+INFO:__main__:
+==================================================
+INFO:__main__:FINAL EVALUATION
+INFO:__main__:==================================================
+INFO:__main__:Evaluating with continuous chain-of-thought...
+INFO:__main__:Final Results (Continuous CoT):
+INFO:__main__:  prediction_accuracy: 0.7613 ± 0.1417 (n=100)
+INFO:__main__:  sequence_accuracy: 0.0500 ± 0.2179 (n=100)
+INFO:__main__:  learned_regret: 1.8300 ± 1.7553 (n=100)
+INFO:__main__:  optimal_regret: 1.5800 ± 1.4084 (n=100)
+INFO:__main__:  regret_ratio: 2.1238 ± 2.9077 (n=100)
+INFO:__main__:Generating regret trajectory plots...
+INFO:__main__:Regret trajectories saved to ../figures/learned_mw_regret_trajectories.png
+INFO:__main__:Model saved to ../figures/learned_mw_transformer.pt
+INFO:__main__:
+🎉 Training completed! Results saved to ../figures

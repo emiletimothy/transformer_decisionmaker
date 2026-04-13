@@ -57,7 +57,7 @@ coverage.xml
 *.pot
 
 # Django stuff:
-*.log
+
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
@@ -202,14 +202,11 @@ ehthumbs_vista.db
 
 # Model checkpoints and saved weights
 *.pth
-# *.pt
+*.pt
 *.h5
 *.pkl
 *.pickle
 
-# Log files
-*.log
-logs/
 
 # Temporary files
 tmp/

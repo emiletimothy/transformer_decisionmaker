@@ -1,0 +1,2194 @@
+INFO:__main__:wandb initialized: https://wandb.ai/emiletimothyanand/transformers_online_decision_makers/runs/evdx9keb
+INFO:__main__:Generating 10000 training sequences...
+INFO:__main__:Generating 1000 validation sequences...
+INFO:__main__:ContinuousCoTTransformer with 4 thought steps
+INFO:__main__:Model has 214587 parameters
+INFO:__main__:
+==================================================
+INFO:__main__:TRAINING STAGE 1
+INFO:__main__:==================================================
+INFO:__main__:Stage 1: 9604 train, 957 val sequences
+INFO:learned_mw_transformer:Training stage 1 with 4 thought steps
+INFO:learned_mw_transformer:Step 0: Val loss = 0.7136
+INFO:learned_mw_transformer:Step 50: Val loss = 0.6635
+INFO:learned_mw_transformer:Step 100: Val loss = 0.6661
+INFO:learned_mw_transformer:Step 150: Val loss = 0.6592
+INFO:learned_mw_transformer:Step 200: Val loss = 0.6498
+INFO:learned_mw_transformer:Step 250: Val loss = 0.6415
+INFO:learned_mw_transformer:Step 300: Val loss = 0.6454
+INFO:learned_mw_transformer:Stage 1, Epoch 0: Loss = 0.6583
+INFO:learned_mw_transformer:Step 350: Val loss = 0.6362
+INFO:learned_mw_transformer:Step 400: Val loss = 0.6270
+INFO:learned_mw_transformer:Step 450: Val loss = 0.6268
+INFO:learned_mw_transformer:Step 500: Val loss = 0.6271
+INFO:learned_mw_transformer:Step 550: Val loss = 0.6215
+INFO:learned_mw_transformer:Step 600: Val loss = 0.6165
+INFO:learned_mw_transformer:Stage 1, Epoch 1: Loss = 0.6309
+INFO:learned_mw_transformer:Step 650: Val loss = 0.6220
+INFO:learned_mw_transformer:Step 700: Val loss = 0.6172
+INFO:learned_mw_transformer:Step 750: Val loss = 0.6132
+INFO:learned_mw_transformer:Step 800: Val loss = 0.6167
+INFO:learned_mw_transformer:Step 850: Val loss = 0.6154
+INFO:learned_mw_transformer:Step 900: Val loss = 0.6127
+INFO:learned_mw_transformer:Stage 1, Epoch 2: Loss = 0.6217
+INFO:learned_mw_transformer:Step 950: Val loss = 0.6169
+INFO:learned_mw_transformer:Step 1000: Val loss = 0.6174
+INFO:learned_mw_transformer:Step 1050: Val loss = 0.6163
+INFO:learned_mw_transformer:Step 1100: Val loss = 0.6112
+INFO:learned_mw_transformer:Step 1150: Val loss = 0.6125
+INFO:learned_mw_transformer:Step 1200: Val loss = 0.6130
+INFO:learned_mw_transformer:Stage 1, Epoch 3: Loss = 0.6173
+INFO:learned_mw_transformer:Step 1250: Val loss = 0.6221
+INFO:learned_mw_transformer:Step 1300: Val loss = 0.6141
+INFO:learned_mw_transformer:Step 1350: Val loss = 0.6140
+INFO:learned_mw_transformer:Step 1400: Val loss = 0.6088
+INFO:learned_mw_transformer:Step 1450: Val loss = 0.6136
+INFO:learned_mw_transformer:Step 1500: Val loss = 0.6111
+INFO:learned_mw_transformer:Stage 1, Epoch 4: Loss = 0.6159
+INFO:learned_mw_transformer:Step 1550: Val loss = 0.6110
+INFO:learned_mw_transformer:Step 1600: Val loss = 0.6090
+INFO:learned_mw_transformer:Step 1650: Val loss = 0.6093
+INFO:learned_mw_transformer:Step 1700: Val loss = 0.6099
+INFO:learned_mw_transformer:Step 1750: Val loss = 0.6091
+INFO:learned_mw_transformer:Step 1800: Val loss = 0.6101
+INFO:learned_mw_transformer:Stage 1, Epoch 5: Loss = 0.6131
+INFO:learned_mw_transformer:Step 1850: Val loss = 0.6080
+INFO:learned_mw_transformer:Step 1900: Val loss = 0.6077
+INFO:learned_mw_transformer:Step 1950: Val loss = 0.6048
+INFO:learned_mw_transformer:Step 2000: Val loss = 0.6059
+INFO:learned_mw_transformer:Step 2050: Val loss = 0.6047
+INFO:learned_mw_transformer:Step 2100: Val loss = 0.6065
+INFO:learned_mw_transformer:Stage 1, Epoch 6: Loss = 0.6092
+INFO:learned_mw_transformer:Step 2150: Val loss = 0.6060
+INFO:learned_mw_transformer:Step 2200: Val loss = 0.6023
+INFO:learned_mw_transformer:Step 2250: Val loss = 0.6028
+INFO:learned_mw_transformer:Step 2300: Val loss = 0.6066
+INFO:learned_mw_transformer:Step 2350: Val loss = 0.6004
+INFO:learned_mw_transformer:Step 2400: Val loss = 0.6017
+INFO:learned_mw_transformer:Stage 1, Epoch 7: Loss = 0.6055
+INFO:learned_mw_transformer:Step 2450: Val loss = 0.6049
+INFO:learned_mw_transformer:Step 2500: Val loss = 0.6042
+INFO:learned_mw_transformer:Step 2550: Val loss = 0.5996
+INFO:learned_mw_transformer:Step 2600: Val loss = 0.6033
+INFO:learned_mw_transformer:Step 2650: Val loss = 0.6043
+INFO:learned_mw_transformer:Step 2700: Val loss = 0.6014
+INFO:learned_mw_transformer:Stage 1, Epoch 8: Loss = 0.6045
+INFO:learned_mw_transformer:Step 2750: Val loss = 0.6031
+INFO:learned_mw_transformer:Step 2800: Val loss = 0.6013
+INFO:learned_mw_transformer:Step 2850: Val loss = 0.6011
+INFO:learned_mw_transformer:Step 2900: Val loss = 0.6034
+INFO:learned_mw_transformer:Step 2950: Val loss = 0.5982
+INFO:learned_mw_transformer:Step 3000: Val loss = 0.6001
+INFO:learned_mw_transformer:Stage 1, Epoch 9: Loss = 0.6034
+INFO:learned_mw_transformer:Step 3050: Val loss = 0.6002
+INFO:learned_mw_transformer:Step 3100: Val loss = 0.5999
+INFO:learned_mw_transformer:Step 3150: Val loss = 0.6013
+INFO:learned_mw_transformer:Step 3200: Val loss = 0.5975
+INFO:learned_mw_transformer:Step 3250: Val loss = 0.5979
+INFO:learned_mw_transformer:Step 3300: Val loss = 0.5991
+INFO:learned_mw_transformer:Stage 1, Epoch 10: Loss = 0.6014
+INFO:learned_mw_transformer:Step 3350: Val loss = 0.5993
+INFO:learned_mw_transformer:Step 3400: Val loss = 0.5980
+INFO:learned_mw_transformer:Step 3450: Val loss = 0.5990
+INFO:learned_mw_transformer:Step 3500: Val loss = 0.5977
+INFO:learned_mw_transformer:Step 3550: Val loss = 0.6060
+INFO:learned_mw_transformer:Step 3600: Val loss = 0.5982
+INFO:learned_mw_transformer:Stage 1, Epoch 11: Loss = 0.6003
+INFO:learned_mw_transformer:Step 3650: Val loss = 0.6013
+INFO:learned_mw_transformer:Step 3700: Val loss = 0.5969
+INFO:learned_mw_transformer:Step 3750: Val loss = 0.5984
+INFO:learned_mw_transformer:Step 3800: Val loss = 0.5983
+INFO:learned_mw_transformer:Step 3850: Val loss = 0.5980
+INFO:learned_mw_transformer:Step 3900: Val loss = 0.5947
+INFO:learned_mw_transformer:Stage 1, Epoch 12: Loss = 0.5990
+INFO:learned_mw_transformer:Step 3950: Val loss = 0.5967
+INFO:learned_mw_transformer:Step 4000: Val loss = 0.5990
+INFO:learned_mw_transformer:Step 4050: Val loss = 0.5957
+INFO:learned_mw_transformer:Step 4100: Val loss = 0.5963
+INFO:learned_mw_transformer:Step 4150: Val loss = 0.5984
+INFO:learned_mw_transformer:Step 4200: Val loss = 0.5963
+INFO:learned_mw_transformer:Stage 1, Epoch 13: Loss = 0.5975
+INFO:learned_mw_transformer:Step 4250: Val loss = 0.5954
+INFO:learned_mw_transformer:Step 4300: Val loss = 0.5950
+INFO:learned_mw_transformer:Step 4350: Val loss = 0.5946
+INFO:learned_mw_transformer:Step 4400: Val loss = 0.5937
+INFO:learned_mw_transformer:Step 4450: Val loss = 0.5928
+INFO:learned_mw_transformer:Step 4500: Val loss = 0.5931
+INFO:learned_mw_transformer:Stage 1, Epoch 14: Loss = 0.5956
+INFO:learned_mw_transformer:Step 4550: Val loss = 0.5963
+INFO:learned_mw_transformer:Step 4600: Val loss = 0.5934
+INFO:learned_mw_transformer:Step 4650: Val loss = 0.5945
+INFO:learned_mw_transformer:Step 4700: Val loss = 0.5942
+INFO:learned_mw_transformer:Step 4750: Val loss = 0.5962
+INFO:learned_mw_transformer:Step 4800: Val loss = 0.5916
+INFO:learned_mw_transformer:Stage 1, Epoch 15: Loss = 0.5941
+INFO:learned_mw_transformer:Step 4850: Val loss = 0.5943
+INFO:learned_mw_transformer:Step 4900: Val loss = 0.5928
+INFO:learned_mw_transformer:Step 4950: Val loss = 0.5926
+INFO:learned_mw_transformer:Step 5000: Val loss = 0.5935
+INFO:learned_mw_transformer:Step 5050: Val loss = 0.5925
+INFO:learned_mw_transformer:Step 5100: Val loss = 0.5903
+INFO:learned_mw_transformer:Stage 1, Epoch 16: Loss = 0.5927
+INFO:learned_mw_transformer:Step 5150: Val loss = 0.5914
+INFO:learned_mw_transformer:Step 5200: Val loss = 0.5915
+INFO:learned_mw_transformer:Step 5250: Val loss = 0.5907
+INFO:learned_mw_transformer:Step 5300: Val loss = 0.5922
+INFO:learned_mw_transformer:Step 5350: Val loss = 0.5892
+INFO:learned_mw_transformer:Step 5400: Val loss = 0.5896
+INFO:learned_mw_transformer:Stage 1, Epoch 17: Loss = 0.5923
+INFO:learned_mw_transformer:Step 5450: Val loss = 0.5934
+INFO:learned_mw_transformer:Step 5500: Val loss = 0.5924
+INFO:learned_mw_transformer:Step 5550: Val loss = 0.5888
+INFO:learned_mw_transformer:Step 5600: Val loss = 0.5895
+INFO:learned_mw_transformer:Step 5650: Val loss = 0.5933
+INFO:learned_mw_transformer:Step 5700: Val loss = 0.5889
+INFO:learned_mw_transformer:Stage 1, Epoch 18: Loss = 0.5909
+INFO:learned_mw_transformer:Step 5750: Val loss = 0.5906
+INFO:learned_mw_transformer:Step 5800: Val loss = 0.5897
+INFO:learned_mw_transformer:Step 5850: Val loss = 0.5905
+INFO:learned_mw_transformer:Step 5900: Val loss = 0.5915
+INFO:learned_mw_transformer:Step 5950: Val loss = 0.5915
+INFO:learned_mw_transformer:Step 6000: Val loss = 0.5901
+INFO:learned_mw_transformer:Stage 1, Epoch 19: Loss = 0.5904
+INFO:learned_mw_transformer:Step 6050: Val loss = 0.5901
+INFO:learned_mw_transformer:Step 6100: Val loss = 0.5891
+INFO:learned_mw_transformer:Step 6150: Val loss = 0.5898
+INFO:learned_mw_transformer:Step 6200: Val loss = 0.5899
+INFO:learned_mw_transformer:Step 6250: Val loss = 0.5895
+INFO:learned_mw_transformer:Step 6300: Val loss = 0.5888
+INFO:learned_mw_transformer:Stage 1, Epoch 20: Loss = 0.5896
+INFO:learned_mw_transformer:Step 6350: Val loss = 0.5912
+INFO:learned_mw_transformer:Step 6400: Val loss = 0.5896
+INFO:learned_mw_transformer:Step 6450: Val loss = 0.5904
+INFO:learned_mw_transformer:Step 6500: Val loss = 0.5899
+INFO:learned_mw_transformer:Step 6550: Val loss = 0.5904
+INFO:learned_mw_transformer:Step 6600: Val loss = 0.5906
+INFO:learned_mw_transformer:Stage 1, Epoch 21: Loss = 0.5881
+INFO:learned_mw_transformer:Step 6650: Val loss = 0.5902
+INFO:learned_mw_transformer:Step 6700: Val loss = 0.5893
+INFO:learned_mw_transformer:Step 6750: Val loss = 0.5883
+INFO:learned_mw_transformer:Step 6800: Val loss = 0.5882
+INFO:learned_mw_transformer:Step 6850: Val loss = 0.5900
+INFO:learned_mw_transformer:Step 6900: Val loss = 0.5901
+INFO:learned_mw_transformer:Stage 1, Epoch 22: Loss = 0.5882
+INFO:learned_mw_transformer:Step 6950: Val loss = 0.5930
+INFO:learned_mw_transformer:Step 7000: Val loss = 0.5894
+INFO:learned_mw_transformer:Step 7050: Val loss = 0.5907
+INFO:learned_mw_transformer:Step 7100: Val loss = 0.5898
+INFO:learned_mw_transformer:Step 7150: Val loss = 0.5887
+INFO:learned_mw_transformer:Step 7200: Val loss = 0.5875
+INFO:learned_mw_transformer:Stage 1, Epoch 23: Loss = 0.5870
+INFO:learned_mw_transformer:Step 7250: Val loss = 0.5895
+INFO:learned_mw_transformer:Step 7300: Val loss = 0.5893
+INFO:learned_mw_transformer:Step 7350: Val loss = 0.5893
+INFO:learned_mw_transformer:Step 7400: Val loss = 0.5900
+INFO:learned_mw_transformer:Step 7450: Val loss = 0.5892
+INFO:learned_mw_transformer:Step 7500: Val loss = 0.5882
+INFO:learned_mw_transformer:Stage 1, Epoch 24: Loss = 0.5864
+INFO:learned_mw_transformer:Step 7550: Val loss = 0.5887
+INFO:learned_mw_transformer:Step 7600: Val loss = 0.5879
+INFO:learned_mw_transformer:Step 7650: Val loss = 0.5883
+INFO:learned_mw_transformer:Step 7700: Val loss = 0.5878
+INFO:learned_mw_transformer:Step 7750: Val loss = 0.5889
+INFO:learned_mw_transformer:Step 7800: Val loss = 0.5882
+INFO:learned_mw_transformer:Stage 1, Epoch 25: Loss = 0.5859
+INFO:learned_mw_transformer:Step 7850: Val loss = 0.5888
+INFO:learned_mw_transformer:Step 7900: Val loss = 0.5880
+INFO:learned_mw_transformer:Step 7950: Val loss = 0.5878
+INFO:learned_mw_transformer:Step 8000: Val loss = 0.5891
+INFO:learned_mw_transformer:Step 8050: Val loss = 0.5885
+INFO:learned_mw_transformer:Step 8100: Val loss = 0.5884
+INFO:learned_mw_transformer:Stage 1, Epoch 26: Loss = 0.5847
+INFO:learned_mw_transformer:Step 8150: Val loss = 0.5894
+INFO:learned_mw_transformer:Step 8200: Val loss = 0.5892
+INFO:learned_mw_transformer:Step 8250: Val loss = 0.5883
+INFO:learned_mw_transformer:Step 8300: Val loss = 0.5882
+INFO:learned_mw_transformer:Step 8350: Val loss = 0.5880
+INFO:learned_mw_transformer:Step 8400: Val loss = 0.5882
+INFO:learned_mw_transformer:Stage 1, Epoch 27: Loss = 0.5857
+INFO:learned_mw_transformer:Step 8450: Val loss = 0.5887
+INFO:learned_mw_transformer:Step 8500: Val loss = 0.5892
+INFO:learned_mw_transformer:Step 8550: Val loss = 0.5893
+INFO:learned_mw_transformer:Step 8600: Val loss = 0.5893
+INFO:learned_mw_transformer:Step 8650: Val loss = 0.5879
+INFO:learned_mw_transformer:Step 8700: Val loss = 0.5883
+INFO:learned_mw_transformer:Stage 1, Epoch 28: Loss = 0.5842
+INFO:learned_mw_transformer:Step 8750: Val loss = 0.5876
+INFO:learned_mw_transformer:Step 8800: Val loss = 0.5883
+INFO:learned_mw_transformer:Step 8850: Val loss = 0.5887
+INFO:learned_mw_transformer:Step 8900: Val loss = 0.5882
+INFO:learned_mw_transformer:Step 8950: Val loss = 0.5888
+INFO:learned_mw_transformer:Step 9000: Val loss = 0.5882
+INFO:learned_mw_transformer:Stage 1, Epoch 29: Loss = 0.5848
+INFO:__main__:Checkpoint saved: ../figures/checkpoints/model_stage_1.pt
+INFO:__main__:Evaluating after stage 1 (seq_length=5)...
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.6857
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.1445
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.8971
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.2547
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.0000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.6857
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.1445
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.4782
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.1287
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.6287
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.1287
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.5000
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.1762
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.4811
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.5839
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.1686
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.8070
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.4462
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.9349
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.5087
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.0000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.5285
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.8428
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.0559
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.3713
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.6466
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.3952
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.6737
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.8594
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.6930
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0332
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.5001
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.5001
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.4145
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.8173
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.2485
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.5578
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.9631
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.5918
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.2774
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.8070
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.2332
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.2332
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.2332
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9631
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.1965
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.4546
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.7955
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9631
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.5918
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.7774
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.8961
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.1762
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.7392
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.7392
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.9732
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.8070
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.8070
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.8070
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.0201
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.8143
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.3882
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.8143
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0274
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.1653
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.1653
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.6857
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.1445
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.4782
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.4782
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.8070
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0201
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.1580
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.6632
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.4145
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.5187
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.8948
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.1575
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.6857
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.8866
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.3866
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.5492
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.8713
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.1299
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.1299
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.4145
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.4145
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.8173
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.8909
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9631
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.3344
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.8683
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 2.2719
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.1379
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.1379
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.8905
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.0000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.6930
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.8117
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.2429
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.3713
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.6299
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.6857
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.0259
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.2593
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9715
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.7381
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.8567
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.2143
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.6857
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0259
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.1637
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.4974
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.4145
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.5187
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.2068
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.2596
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.0000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.8713
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.5006
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.7956
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.6857
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.3455
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.3455
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.4415
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9715
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.1094
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.6905
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.7574
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.8143
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.8143
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.6857
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0259
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.2593
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.6963
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.0855
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.3355
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.3355
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.3355
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.5285
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.2142
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.5191
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.5191
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.1857
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.5962
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.5962
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.2297
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9631
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.1010
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.8536
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.4960
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9715
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.3667
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.9237
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.3499
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.8713
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0006
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.3920
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.4881
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9631
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.1965
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.1965
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.5014
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9631
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.1010
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.1873
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.9308
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.0000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.5285
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.8998
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.1585
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.5285
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.8998
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.8998
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.0291
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.6930
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.8117
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.8853
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.9302
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.7666
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.1068
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.1068
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.4669
+INFO:__main__:Stage 1 Results:
+INFO:__main__:  prediction_accuracy: 0.7120 ± 0.2046
+INFO:__main__:  sequence_accuracy: 0.2200 ± 0.4142
+INFO:__main__:  learned_regret: 1.0200 ± 0.8364
+INFO:__main__:  optimal_regret: 0.6800 ± 0.6765
+INFO:__main__:  regret_ratio: 3.4700 ± 4.0993
+INFO:__main__:
+==================================================
+INFO:__main__:TRAINING STAGE 2
+INFO:__main__:==================================================
+INFO:__main__:Stage 2: 9463 train, 849 val sequences
+INFO:learned_mw_transformer:Training stage 2 with 4 thought steps
+INFO:learned_mw_transformer:Step 9050: Val loss = 0.6494
+INFO:learned_mw_transformer:Step 9100: Val loss = 0.6359
+INFO:learned_mw_transformer:Step 9150: Val loss = 0.6280
+INFO:learned_mw_transformer:Step 9200: Val loss = 0.6227
+INFO:learned_mw_transformer:Step 9250: Val loss = 0.6197
+INFO:learned_mw_transformer:Step 9300: Val loss = 0.6176
+INFO:learned_mw_transformer:Stage 2, Epoch 0: Loss = 0.6288
+INFO:learned_mw_transformer:Step 9350: Val loss = 0.6191
+INFO:learned_mw_transformer:Step 9400: Val loss = 0.6146
+INFO:learned_mw_transformer:Step 9450: Val loss = 0.6135
+INFO:learned_mw_transformer:Step 9500: Val loss = 0.6121
+INFO:learned_mw_transformer:Step 9550: Val loss = 0.6099
+INFO:learned_mw_transformer:Step 9600: Val loss = 0.6076
+INFO:learned_mw_transformer:Stage 2, Epoch 1: Loss = 0.6157
+INFO:learned_mw_transformer:Step 9650: Val loss = 0.6066
+INFO:learned_mw_transformer:Step 9700: Val loss = 0.6036
+INFO:learned_mw_transformer:Step 9750: Val loss = 0.6028
+INFO:learned_mw_transformer:Step 9800: Val loss = 0.6000
+INFO:learned_mw_transformer:Step 9850: Val loss = 0.5984
+INFO:learned_mw_transformer:Step 9900: Val loss = 0.5973
+INFO:learned_mw_transformer:Stage 2, Epoch 2: Loss = 0.6068
+INFO:learned_mw_transformer:Step 9950: Val loss = 0.5977
+INFO:learned_mw_transformer:Step 10000: Val loss = 0.5954
+INFO:learned_mw_transformer:Step 10050: Val loss = 0.5963
+INFO:learned_mw_transformer:Step 10100: Val loss = 0.5932
+INFO:learned_mw_transformer:Step 10150: Val loss = 0.5923
+INFO:learned_mw_transformer:Step 10200: Val loss = 0.5914
+INFO:learned_mw_transformer:Stage 2, Epoch 3: Loss = 0.5996
+INFO:learned_mw_transformer:Step 10250: Val loss = 0.5921
+INFO:learned_mw_transformer:Step 10300: Val loss = 0.5898
+INFO:learned_mw_transformer:Step 10350: Val loss = 0.5904
+INFO:learned_mw_transformer:Step 10400: Val loss = 0.5890
+INFO:learned_mw_transformer:Step 10450: Val loss = 0.5874
+INFO:learned_mw_transformer:Step 10500: Val loss = 0.5877
+INFO:learned_mw_transformer:Stage 2, Epoch 4: Loss = 0.5948
+INFO:learned_mw_transformer:Step 10550: Val loss = 0.5919
+INFO:learned_mw_transformer:Step 10600: Val loss = 0.5871
+INFO:learned_mw_transformer:Step 10650: Val loss = 0.5857
+INFO:learned_mw_transformer:Step 10700: Val loss = 0.5879
+INFO:learned_mw_transformer:Step 10750: Val loss = 0.5844
+INFO:learned_mw_transformer:Step 10800: Val loss = 0.5841
+INFO:learned_mw_transformer:Stage 2, Epoch 5: Loss = 0.5920
+INFO:learned_mw_transformer:Step 10850: Val loss = 0.5853
+INFO:learned_mw_transformer:Step 10900: Val loss = 0.5838
+INFO:learned_mw_transformer:Step 10950: Val loss = 0.5825
+INFO:learned_mw_transformer:Step 11000: Val loss = 0.5832
+INFO:learned_mw_transformer:Step 11050: Val loss = 0.5820
+INFO:learned_mw_transformer:Step 11100: Val loss = 0.5804
+INFO:learned_mw_transformer:Stage 2, Epoch 6: Loss = 0.5888
+INFO:learned_mw_transformer:Step 11150: Val loss = 0.5818
+INFO:learned_mw_transformer:Step 11200: Val loss = 0.5801
+INFO:learned_mw_transformer:Step 11250: Val loss = 0.5809
+INFO:learned_mw_transformer:Step 11300: Val loss = 0.5787
+INFO:learned_mw_transformer:Step 11350: Val loss = 0.5795
+INFO:learned_mw_transformer:Stage 2, Epoch 7: Loss = 0.5861
+INFO:learned_mw_transformer:Step 11400: Val loss = 0.5779
+INFO:learned_mw_transformer:Step 11450: Val loss = 0.5783
+INFO:learned_mw_transformer:Step 11500: Val loss = 0.5794
+INFO:learned_mw_transformer:Step 11550: Val loss = 0.5774
+INFO:learned_mw_transformer:Step 11600: Val loss = 0.5778
+INFO:learned_mw_transformer:Step 11650: Val loss = 0.5752
+INFO:learned_mw_transformer:Stage 2, Epoch 8: Loss = 0.5805
+INFO:learned_mw_transformer:Step 11700: Val loss = 0.5794
+INFO:learned_mw_transformer:Step 11750: Val loss = 0.5765
+INFO:learned_mw_transformer:Step 11800: Val loss = 0.5735
+INFO:learned_mw_transformer:Step 11850: Val loss = 0.5739
+INFO:learned_mw_transformer:Step 11900: Val loss = 0.5735
+INFO:learned_mw_transformer:Step 11950: Val loss = 0.5732
+INFO:learned_mw_transformer:Stage 2, Epoch 9: Loss = 0.5785
+INFO:learned_mw_transformer:Step 12000: Val loss = 0.5744
+INFO:learned_mw_transformer:Step 12050: Val loss = 0.5735
+INFO:learned_mw_transformer:Step 12100: Val loss = 0.5733
+INFO:learned_mw_transformer:Step 12150: Val loss = 0.5733
+INFO:learned_mw_transformer:Step 12200: Val loss = 0.5718
+INFO:learned_mw_transformer:Step 12250: Val loss = 0.5712
+INFO:learned_mw_transformer:Stage 2, Epoch 10: Loss = 0.5762
+INFO:learned_mw_transformer:Step 12300: Val loss = 0.5711
+INFO:learned_mw_transformer:Step 12350: Val loss = 0.5702
+INFO:learned_mw_transformer:Step 12400: Val loss = 0.5713
+INFO:learned_mw_transformer:Step 12450: Val loss = 0.5707
+INFO:learned_mw_transformer:Step 12500: Val loss = 0.5702
+INFO:learned_mw_transformer:Step 12550: Val loss = 0.5691
+INFO:learned_mw_transformer:Stage 2, Epoch 11: Loss = 0.5745
+INFO:learned_mw_transformer:Step 12600: Val loss = 0.5689
+INFO:learned_mw_transformer:Step 12650: Val loss = 0.5683
+INFO:learned_mw_transformer:Step 12700: Val loss = 0.5689
+INFO:learned_mw_transformer:Step 12750: Val loss = 0.5676
+INFO:learned_mw_transformer:Step 12800: Val loss = 0.5676
+INFO:learned_mw_transformer:Step 12850: Val loss = 0.5695
+INFO:learned_mw_transformer:Stage 2, Epoch 12: Loss = 0.5734
+INFO:learned_mw_transformer:Step 12900: Val loss = 0.5682
+INFO:learned_mw_transformer:Step 12950: Val loss = 0.5680
+INFO:learned_mw_transformer:Step 13000: Val loss = 0.5682
+INFO:learned_mw_transformer:Step 13050: Val loss = 0.5670
+INFO:learned_mw_transformer:Step 13100: Val loss = 0.5670
+INFO:learned_mw_transformer:Step 13150: Val loss = 0.5668
+INFO:learned_mw_transformer:Stage 2, Epoch 13: Loss = 0.5725
+INFO:learned_mw_transformer:Step 13200: Val loss = 0.5673
+INFO:learned_mw_transformer:Step 13250: Val loss = 0.5664
+INFO:learned_mw_transformer:Step 13300: Val loss = 0.5645
+INFO:learned_mw_transformer:Step 13350: Val loss = 0.5649
+INFO:learned_mw_transformer:Step 13400: Val loss = 0.5637
+INFO:learned_mw_transformer:Step 13450: Val loss = 0.5653
+INFO:learned_mw_transformer:Stage 2, Epoch 14: Loss = 0.5708
+INFO:learned_mw_transformer:Step 13500: Val loss = 0.5652
+INFO:learned_mw_transformer:Step 13550: Val loss = 0.5642
+INFO:learned_mw_transformer:Step 13600: Val loss = 0.5651
+INFO:learned_mw_transformer:Step 13650: Val loss = 0.5635
+INFO:learned_mw_transformer:Step 13700: Val loss = 0.5627
+INFO:learned_mw_transformer:Step 13750: Val loss = 0.5629
+INFO:learned_mw_transformer:Stage 2, Epoch 15: Loss = 0.5692
+INFO:learned_mw_transformer:Step 13800: Val loss = 0.5630
+INFO:learned_mw_transformer:Step 13850: Val loss = 0.5627
+INFO:learned_mw_transformer:Step 13900: Val loss = 0.5612
+INFO:learned_mw_transformer:Step 13950: Val loss = 0.5613
+INFO:learned_mw_transformer:Step 14000: Val loss = 0.5607
+INFO:learned_mw_transformer:Step 14050: Val loss = 0.5600
+INFO:learned_mw_transformer:Stage 2, Epoch 16: Loss = 0.5680
+INFO:learned_mw_transformer:Step 14100: Val loss = 0.5631
+INFO:learned_mw_transformer:Step 14150: Val loss = 0.5595
+INFO:learned_mw_transformer:Step 14200: Val loss = 0.5619
+INFO:learned_mw_transformer:Step 14250: Val loss = 0.5590
+INFO:learned_mw_transformer:Step 14300: Val loss = 0.5589
+INFO:learned_mw_transformer:Step 14350: Val loss = 0.5590
+INFO:learned_mw_transformer:Stage 2, Epoch 17: Loss = 0.5669
+INFO:learned_mw_transformer:Step 14400: Val loss = 0.5611
+INFO:learned_mw_transformer:Step 14450: Val loss = 0.5580
+INFO:learned_mw_transformer:Step 14500: Val loss = 0.5586
+INFO:learned_mw_transformer:Step 14550: Val loss = 0.5567
+INFO:learned_mw_transformer:Step 14600: Val loss = 0.5570
+INFO:learned_mw_transformer:Step 14650: Val loss = 0.5572
+INFO:learned_mw_transformer:Stage 2, Epoch 18: Loss = 0.5652
+INFO:learned_mw_transformer:Step 14700: Val loss = 0.5585
+INFO:learned_mw_transformer:Step 14750: Val loss = 0.5568
+INFO:learned_mw_transformer:Step 14800: Val loss = 0.5575
+INFO:learned_mw_transformer:Step 14850: Val loss = 0.5561
+INFO:learned_mw_transformer:Step 14900: Val loss = 0.5556
+INFO:learned_mw_transformer:Stage 2, Epoch 19: Loss = 0.5649
+INFO:learned_mw_transformer:Step 14950: Val loss = 0.5556
+INFO:learned_mw_transformer:Step 15000: Val loss = 0.5554
+INFO:learned_mw_transformer:Step 15050: Val loss = 0.5568
+INFO:learned_mw_transformer:Step 15100: Val loss = 0.5585
+INFO:learned_mw_transformer:Step 15150: Val loss = 0.5556
+INFO:learned_mw_transformer:Step 15200: Val loss = 0.5559
+INFO:learned_mw_transformer:Stage 2, Epoch 20: Loss = 0.5599
+INFO:learned_mw_transformer:Step 15250: Val loss = 0.5545
+INFO:learned_mw_transformer:Step 15300: Val loss = 0.5548
+INFO:learned_mw_transformer:Step 15350: Val loss = 0.5540
+INFO:learned_mw_transformer:Step 15400: Val loss = 0.5558
+INFO:learned_mw_transformer:Step 15450: Val loss = 0.5549
+INFO:learned_mw_transformer:Step 15500: Val loss = 0.5550
+INFO:learned_mw_transformer:Stage 2, Epoch 21: Loss = 0.5593
+INFO:learned_mw_transformer:Step 15550: Val loss = 0.5540
+INFO:learned_mw_transformer:Step 15600: Val loss = 0.5544
+INFO:learned_mw_transformer:Step 15650: Val loss = 0.5532
+INFO:learned_mw_transformer:Step 15700: Val loss = 0.5533
+INFO:learned_mw_transformer:Step 15750: Val loss = 0.5541
+INFO:learned_mw_transformer:Step 15800: Val loss = 0.5537
+INFO:learned_mw_transformer:Stage 2, Epoch 22: Loss = 0.5584
+INFO:learned_mw_transformer:Step 15850: Val loss = 0.5548
+INFO:learned_mw_transformer:Step 15900: Val loss = 0.5533
+INFO:learned_mw_transformer:Step 15950: Val loss = 0.5533
+INFO:learned_mw_transformer:Step 16000: Val loss = 0.5530
+INFO:learned_mw_transformer:Step 16050: Val loss = 0.5545
+INFO:learned_mw_transformer:Step 16100: Val loss = 0.5549
+INFO:learned_mw_transformer:Stage 2, Epoch 23: Loss = 0.5582
+INFO:learned_mw_transformer:Step 16150: Val loss = 0.5530
+INFO:learned_mw_transformer:Step 16200: Val loss = 0.5551
+INFO:learned_mw_transformer:Step 16250: Val loss = 0.5547
+INFO:learned_mw_transformer:Step 16300: Val loss = 0.5521
+INFO:learned_mw_transformer:Step 16350: Val loss = 0.5533
+INFO:learned_mw_transformer:Step 16400: Val loss = 0.5525
+INFO:learned_mw_transformer:Stage 2, Epoch 24: Loss = 0.5583
+INFO:learned_mw_transformer:Step 16450: Val loss = 0.5541
+INFO:learned_mw_transformer:Step 16500: Val loss = 0.5525
+INFO:learned_mw_transformer:Step 16550: Val loss = 0.5527
+INFO:learned_mw_transformer:Step 16600: Val loss = 0.5530
+INFO:learned_mw_transformer:Step 16650: Val loss = 0.5521
+INFO:learned_mw_transformer:Step 16700: Val loss = 0.5522
+INFO:learned_mw_transformer:Stage 2, Epoch 25: Loss = 0.5582
+INFO:learned_mw_transformer:Step 16750: Val loss = 0.5532
+INFO:learned_mw_transformer:Step 16800: Val loss = 0.5532
+INFO:learned_mw_transformer:Step 16850: Val loss = 0.5519
+INFO:learned_mw_transformer:Step 16900: Val loss = 0.5524
+INFO:learned_mw_transformer:Step 16950: Val loss = 0.5522
+INFO:learned_mw_transformer:Step 17000: Val loss = 0.5529
+INFO:learned_mw_transformer:Stage 2, Epoch 26: Loss = 0.5575
+INFO:learned_mw_transformer:Step 17050: Val loss = 0.5564
+INFO:learned_mw_transformer:Step 17100: Val loss = 0.5524
+INFO:learned_mw_transformer:Step 17150: Val loss = 0.5533
+INFO:learned_mw_transformer:Step 17200: Val loss = 0.5511
+INFO:learned_mw_transformer:Step 17250: Val loss = 0.5513
+INFO:learned_mw_transformer:Step 17300: Val loss = 0.5513
+INFO:learned_mw_transformer:Stage 2, Epoch 27: Loss = 0.5577
+INFO:learned_mw_transformer:Step 17350: Val loss = 0.5523
+INFO:learned_mw_transformer:Step 17400: Val loss = 0.5525
+INFO:learned_mw_transformer:Step 17450: Val loss = 0.5520
+INFO:learned_mw_transformer:Step 17500: Val loss = 0.5526
+INFO:learned_mw_transformer:Step 17550: Val loss = 0.5527
+INFO:learned_mw_transformer:Step 17600: Val loss = 0.5513
+INFO:learned_mw_transformer:Stage 2, Epoch 28: Loss = 0.5575
+INFO:learned_mw_transformer:Step 17650: Val loss = 0.5524
+INFO:learned_mw_transformer:Step 17700: Val loss = 0.5537
+INFO:learned_mw_transformer:Step 17750: Val loss = 0.5508
+INFO:learned_mw_transformer:Step 17800: Val loss = 0.5506
+INFO:learned_mw_transformer:Step 17850: Val loss = 0.5509
+INFO:learned_mw_transformer:Step 17900: Val loss = 0.5514
+INFO:learned_mw_transformer:Stage 2, Epoch 29: Loss = 0.5578
+INFO:__main__:Checkpoint saved: ../figures/checkpoints/model_stage_2.pt
+INFO:__main__:Evaluating after stage 2 (seq_length=10)...
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7040
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.1701
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.9154
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.2469
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 0.7375
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.0381
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.5981
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.8747
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.7309
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.0000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.7040
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.1701
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.5458
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.8389
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 2.0612
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.5666
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.9797
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 3.2343
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.0920
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.5920
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.0920
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.5000
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.0328
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 0.8043
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.5038
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.1197
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.5947
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.1993
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.5592
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.6989
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.2455
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.6158
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.3274
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.4110
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.0308
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.2353
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7921
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.4661
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.8785
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.4292
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.1582
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.5661
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.8427
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.1950
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.8496
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.0000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.5211
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.8171
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.0417
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.2833
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.5444
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.7403
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.0926
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.0926
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.4080
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.6846
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.8932
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.6701
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.6701
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.6701
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.8098
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.3505
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.6216
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.8255
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.3594
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.5394
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.9473
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.2693
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.3487
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7079
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0239
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.5070
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.5070
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.7028
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 2.1200
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.2851
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.5791
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.8021
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.4368
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.8612
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.3013
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.6525
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.7195
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.7195
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.7667
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.9789
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.1708
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.9747
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.5667
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.2707
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.4506
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.5820
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.1635
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.1635
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.5733
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9747
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.2162
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.4773
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.8691
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.8691
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.8691
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.2458
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.7777
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.1299
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9747
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.5667
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.7707
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.9208
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.5892
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.8776
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.9813
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.9813
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.2069
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.1993
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.8204
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.8204
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 2.1278
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 2.2449
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 2.3664
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.5404
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.6038
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.9999
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7921
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.7921
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.7921
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.0168
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.0168
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.0168
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.1832
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.1832
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 0.5529
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.7960
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.3467
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 0.3467
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 0.3467
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.0756
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.3172
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.4971
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7960
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0207
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.1871
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.1871
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.3081
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 0.6921
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 0.7905
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.1704
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.5766
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7921
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0168
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.1832
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.6738
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 0.7722
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 0.8421
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.2083
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 0.9618
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.3181
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.4368
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.5735
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.9724
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.2862
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.9060
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.7014
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.1326
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.3690
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.9152
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7040
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.9218
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.4218
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.6124
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.8917
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.9971
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.0721
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.2367
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.2751
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.9080
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.2300
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.2300
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.7300
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.7300
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.7300
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.1833
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.1833
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.4368
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.4368
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.8612
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.9697
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 0.9697
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.2835
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.5232
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.5672
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.7035
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9747
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.3826
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.9812
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 2.4881
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 2.2055
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 2.5692
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.9838
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 3.2073
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 3.2606
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.1664
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.1664
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.9117
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.2433
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.6189
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.9073
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.0110
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.4860
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.0000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.7079
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.8580
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.2980
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.0333
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.3764
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.1117
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.4256
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.4846
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.4080
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.7300
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 2.1379
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 2.1379
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.3845
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.7720
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.7720
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.7040
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.0200
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.2616
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.4415
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.4415
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.4415
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.5729
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.5729
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7040
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0200
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.1865
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.5622
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.7609
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.7609
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.2069
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.3237
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.5831
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.4368
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.5735
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.2729
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.3595
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.0262
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.1036
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.1036
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.6974
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.7644
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.0000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.9080
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.5690
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.8630
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 2.0860
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 2.4163
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.5431
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.8257
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 3.0392
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9789
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.1454
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.7758
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.8794
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 2.3306
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 2.5973
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.7977
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.9449
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.6525
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.7960
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.7960
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 0.7960
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.2453
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.4253
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 0.8267
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.1946
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7040
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0200
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.2616
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.6405
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 0.9365
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.1612
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.5692
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.9771
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.7588
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.0632
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.3132
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.3132
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.3132
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 0.5843
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 0.5843
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 0.5843
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.0843
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.0843
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.5211
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.2251
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.5850
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.5850
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.8642
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.5423
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.1343
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.1343
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.1343
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.2040
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.6451
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.6451
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.2280
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.1070
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.5901
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.7859
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.7859
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.3688
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9747
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.1411
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.8864
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.5549
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.6493
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.9210
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.2960
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.7629
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.9353
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9789
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.3294
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.8716
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.3209
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.5008
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 0.9022
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.2701
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.7438
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.4554
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9080
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0690
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.4258
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.5572
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.9400
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 2.0138
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.2967
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.5105
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.8108
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9747
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.2162
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.2162
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.5761
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.5761
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.8702
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.0932
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.4234
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.4234
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9747
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.1411
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.2621
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.9974
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.6543
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.9261
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.2506
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.4993
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.2528
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.0000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.5211
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.9290
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.2510
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.3743
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.3743
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.8544
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.9260
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.2505
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.5211
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.9290
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.9290
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.0900
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.2595
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.2595
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.6362
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.7759
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.3679
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7079
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.8580
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.9665
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.0438
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.3407
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.3822
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.5975
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.7565
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.7565
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.7585
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.0745
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.0745
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.3161
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.3161
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.3161
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.4960
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.6274
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.4831
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.8748
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 2.1822
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.1822
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.4164
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.4164
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.5211
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.7251
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.5073
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.7950
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.4790
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.2024
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.5592
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.9672
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.1855
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7960
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0207
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.0207
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.0207
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.0207
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.0207
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 0.6127
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 0.9087
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.3580
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7079
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.7079
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.8580
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.2980
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.6493
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.4445
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.1725
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.4694
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.6948
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7079
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.7079
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.0239
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.1904
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.4451
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.6357
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.6357
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.6357
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.2090
+INFO:__main__:Stage 2 Results:
+INFO:__main__:  prediction_accuracy: 0.7820 ± 0.1705
+INFO:__main__:  sequence_accuracy: 0.1800 ± 0.3842
+INFO:__main__:  learned_regret: 1.0400 ± 0.8709
+INFO:__main__:  optimal_regret: 0.8600 ± 0.9167
+INFO:__main__:  regret_ratio: 3.2567 ± 4.0183
+INFO:__main__:
+==================================================
+INFO:__main__:TRAINING STAGE 3
+INFO:__main__:==================================================
+INFO:__main__:Stage 3: 8319 train, 752 val sequences
+INFO:learned_mw_transformer:Training stage 3 with 4 thought steps
+INFO:learned_mw_transformer:Step 17950: Val loss = 0.6016
+INFO:learned_mw_transformer:Step 18000: Val loss = 0.5908
+INFO:learned_mw_transformer:Step 18050: Val loss = 0.5872
+INFO:learned_mw_transformer:Step 18100: Val loss = 0.5839
+INFO:learned_mw_transformer:Step 18150: Val loss = 0.5828
+INFO:learned_mw_transformer:Stage 3, Epoch 0: Loss = 0.5932
+INFO:learned_mw_transformer:Step 18200: Val loss = 0.5821
+INFO:learned_mw_transformer:Step 18250: Val loss = 0.5763
+INFO:learned_mw_transformer:Step 18300: Val loss = 0.5734
+INFO:learned_mw_transformer:Step 18350: Val loss = 0.5697
+INFO:learned_mw_transformer:Step 18400: Val loss = 0.5674
+INFO:learned_mw_transformer:Stage 3, Epoch 1: Loss = 0.5772
+INFO:learned_mw_transformer:Step 18450: Val loss = 0.5761
+INFO:learned_mw_transformer:Step 18500: Val loss = 0.5634
+INFO:learned_mw_transformer:Step 18550: Val loss = 0.5595
+INFO:learned_mw_transformer:Step 18600: Val loss = 0.5563
+INFO:learned_mw_transformer:Step 18650: Val loss = 0.5544
+INFO:learned_mw_transformer:Stage 3, Epoch 2: Loss = 0.5649
+INFO:learned_mw_transformer:Step 18700: Val loss = 0.5558
+INFO:learned_mw_transformer:Step 18750: Val loss = 0.5519
+INFO:learned_mw_transformer:Step 18800: Val loss = 0.5522
+INFO:learned_mw_transformer:Step 18850: Val loss = 0.5488
+INFO:learned_mw_transformer:Step 18900: Val loss = 0.5491
+INFO:learned_mw_transformer:Stage 3, Epoch 3: Loss = 0.5558
+INFO:learned_mw_transformer:Step 18950: Val loss = 0.5463
+INFO:learned_mw_transformer:Step 19000: Val loss = 0.5467
+INFO:learned_mw_transformer:Step 19050: Val loss = 0.5450
+INFO:learned_mw_transformer:Step 19100: Val loss = 0.5437
+INFO:learned_mw_transformer:Step 19150: Val loss = 0.5440
+INFO:learned_mw_transformer:Step 19200: Val loss = 0.5425
+INFO:learned_mw_transformer:Stage 3, Epoch 4: Loss = 0.5498
+INFO:learned_mw_transformer:Step 19250: Val loss = 0.5497
+INFO:learned_mw_transformer:Step 19300: Val loss = 0.5413
+INFO:learned_mw_transformer:Step 19350: Val loss = 0.5429
+INFO:learned_mw_transformer:Step 19400: Val loss = 0.5409
+INFO:learned_mw_transformer:Step 19450: Val loss = 0.5397
+INFO:learned_mw_transformer:Stage 3, Epoch 5: Loss = 0.5511
+INFO:learned_mw_transformer:Step 19500: Val loss = 0.5470
+INFO:learned_mw_transformer:Step 19550: Val loss = 0.5409
+INFO:learned_mw_transformer:Step 19600: Val loss = 0.5385
+INFO:learned_mw_transformer:Step 19650: Val loss = 0.5391
+INFO:learned_mw_transformer:Step 19700: Val loss = 0.5395
+INFO:learned_mw_transformer:Stage 3, Epoch 6: Loss = 0.5481
+INFO:learned_mw_transformer:Step 19750: Val loss = 0.5415
+INFO:learned_mw_transformer:Step 19800: Val loss = 0.5373
+INFO:learned_mw_transformer:Step 19850: Val loss = 0.5372
+INFO:learned_mw_transformer:Step 19900: Val loss = 0.5369
+INFO:learned_mw_transformer:Step 19950: Val loss = 0.5373
+INFO:learned_mw_transformer:Stage 3, Epoch 7: Loss = 0.5450
+INFO:learned_mw_transformer:Step 20000: Val loss = 0.5366
+INFO:learned_mw_transformer:Step 20050: Val loss = 0.5365
+INFO:learned_mw_transformer:Step 20100: Val loss = 0.5367
+INFO:learned_mw_transformer:Step 20150: Val loss = 0.5363
+INFO:learned_mw_transformer:Step 20200: Val loss = 0.5383
+INFO:learned_mw_transformer:Stage 3, Epoch 8: Loss = 0.5419
+INFO:learned_mw_transformer:Step 20250: Val loss = 0.5351
+INFO:learned_mw_transformer:Step 20300: Val loss = 0.5353
+INFO:learned_mw_transformer:Step 20350: Val loss = 0.5352
+INFO:learned_mw_transformer:Step 20400: Val loss = 0.5371
+INFO:learned_mw_transformer:Step 20450: Val loss = 0.5347
+INFO:learned_mw_transformer:Step 20500: Val loss = 0.5360
+INFO:learned_mw_transformer:Stage 3, Epoch 9: Loss = 0.5398
+INFO:learned_mw_transformer:Step 20550: Val loss = 0.5420
+INFO:learned_mw_transformer:Step 20600: Val loss = 0.5342
+INFO:learned_mw_transformer:Step 20650: Val loss = 0.5351
+INFO:learned_mw_transformer:Step 20700: Val loss = 0.5332
+INFO:learned_mw_transformer:Step 20750: Val loss = 0.5339
+INFO:learned_mw_transformer:Stage 3, Epoch 10: Loss = 0.5437
+INFO:learned_mw_transformer:Step 20800: Val loss = 0.5391
+INFO:learned_mw_transformer:Step 20850: Val loss = 0.5364
+INFO:learned_mw_transformer:Step 20900: Val loss = 0.5342
+INFO:learned_mw_transformer:Step 20950: Val loss = 0.5337
+INFO:learned_mw_transformer:Step 21000: Val loss = 0.5336
+INFO:learned_mw_transformer:Stage 3, Epoch 11: Loss = 0.5420
+INFO:learned_mw_transformer:Step 21050: Val loss = 0.5376
+INFO:learned_mw_transformer:Step 21100: Val loss = 0.5361
+INFO:learned_mw_transformer:Step 21150: Val loss = 0.5330
+INFO:learned_mw_transformer:Step 21200: Val loss = 0.5344
+INFO:learned_mw_transformer:Step 21250: Val loss = 0.5332
+INFO:learned_mw_transformer:Stage 3, Epoch 12: Loss = 0.5405
+INFO:learned_mw_transformer:Step 21300: Val loss = 0.5380
+INFO:learned_mw_transformer:Step 21350: Val loss = 0.5340
+INFO:learned_mw_transformer:Step 21400: Val loss = 0.5325
+INFO:learned_mw_transformer:Step 21450: Val loss = 0.5326
+INFO:learned_mw_transformer:Step 21500: Val loss = 0.5332
+INFO:learned_mw_transformer:Stage 3, Epoch 13: Loss = 0.5383
+INFO:learned_mw_transformer:Step 21550: Val loss = 0.5320
+INFO:learned_mw_transformer:Step 21600: Val loss = 0.5338
+INFO:learned_mw_transformer:Step 21650: Val loss = 0.5335
+INFO:learned_mw_transformer:Step 21700: Val loss = 0.5325
+INFO:learned_mw_transformer:Step 21750: Val loss = 0.5321
+INFO:learned_mw_transformer:Step 21800: Val loss = 0.5323
+INFO:learned_mw_transformer:Stage 3, Epoch 14: Loss = 0.5367
+INFO:learned_mw_transformer:Step 21850: Val loss = 0.5407
+INFO:learned_mw_transformer:Step 21900: Val loss = 0.5326
+INFO:learned_mw_transformer:Step 21950: Val loss = 0.5322
+INFO:learned_mw_transformer:Step 22000: Val loss = 0.5345
+INFO:learned_mw_transformer:Step 22050: Val loss = 0.5316
+INFO:learned_mw_transformer:Stage 3, Epoch 15: Loss = 0.5405
+INFO:learned_mw_transformer:Step 22100: Val loss = 0.5399
+INFO:learned_mw_transformer:Step 22150: Val loss = 0.5324
+INFO:learned_mw_transformer:Step 22200: Val loss = 0.5329
+INFO:learned_mw_transformer:Step 22250: Val loss = 0.5315
+INFO:learned_mw_transformer:Step 22300: Val loss = 0.5317
+INFO:learned_mw_transformer:Stage 3, Epoch 16: Loss = 0.5395
+INFO:learned_mw_transformer:Step 22350: Val loss = 0.5342
+INFO:learned_mw_transformer:Step 22400: Val loss = 0.5321
+INFO:learned_mw_transformer:Step 22450: Val loss = 0.5331
+INFO:learned_mw_transformer:Step 22500: Val loss = 0.5314
+INFO:learned_mw_transformer:Step 22550: Val loss = 0.5313
+INFO:learned_mw_transformer:Stage 3, Epoch 17: Loss = 0.5381
+INFO:learned_mw_transformer:Step 22600: Val loss = 0.5370
+INFO:learned_mw_transformer:Step 22650: Val loss = 0.5306
+INFO:learned_mw_transformer:Step 22700: Val loss = 0.5319
+INFO:learned_mw_transformer:Step 22750: Val loss = 0.5306
+INFO:learned_mw_transformer:Step 22800: Val loss = 0.5317
+INFO:learned_mw_transformer:Stage 3, Epoch 18: Loss = 0.5365
+INFO:learned_mw_transformer:Step 22850: Val loss = 0.5312
+INFO:learned_mw_transformer:Step 22900: Val loss = 0.5319
+INFO:learned_mw_transformer:Step 22950: Val loss = 0.5325
+INFO:learned_mw_transformer:Step 23000: Val loss = 0.5309
+INFO:learned_mw_transformer:Step 23050: Val loss = 0.5313
+INFO:learned_mw_transformer:Step 23100: Val loss = 0.5311
+INFO:learned_mw_transformer:Stage 3, Epoch 19: Loss = 0.5349
+INFO:learned_mw_transformer:Step 23150: Val loss = 0.5380
+INFO:learned_mw_transformer:Step 23200: Val loss = 0.5333
+INFO:learned_mw_transformer:Step 23250: Val loss = 0.5312
+INFO:learned_mw_transformer:Step 23300: Val loss = 0.5328
+INFO:learned_mw_transformer:Step 23350: Val loss = 0.5334
+INFO:learned_mw_transformer:Stage 3, Epoch 20: Loss = 0.5397
+INFO:learned_mw_transformer:Step 23400: Val loss = 0.5360
+INFO:learned_mw_transformer:Step 23450: Val loss = 0.5319
+INFO:learned_mw_transformer:Step 23500: Val loss = 0.5318
+INFO:learned_mw_transformer:Step 23550: Val loss = 0.5323
+INFO:learned_mw_transformer:Step 23600: Val loss = 0.5311
+INFO:learned_mw_transformer:Stage 3, Epoch 21: Loss = 0.5376
+INFO:learned_mw_transformer:Step 23650: Val loss = 0.5369
+INFO:learned_mw_transformer:Step 23700: Val loss = 0.5321
+INFO:learned_mw_transformer:Step 23750: Val loss = 0.5314
+INFO:learned_mw_transformer:Step 23800: Val loss = 0.5312
+INFO:learned_mw_transformer:Step 23850: Val loss = 0.5310
+INFO:learned_mw_transformer:Stage 3, Epoch 22: Loss = 0.5362
+INFO:learned_mw_transformer:Step 23900: Val loss = 0.5324
+INFO:learned_mw_transformer:Step 23950: Val loss = 0.5314
+INFO:learned_mw_transformer:Step 24000: Val loss = 0.5307
+INFO:learned_mw_transformer:Step 24050: Val loss = 0.5316
+INFO:learned_mw_transformer:Step 24100: Val loss = 0.5310
+INFO:learned_mw_transformer:Stage 3, Epoch 23: Loss = 0.5350
+INFO:learned_mw_transformer:Step 24150: Val loss = 0.5312
+INFO:learned_mw_transformer:Step 24200: Val loss = 0.5322
+INFO:learned_mw_transformer:Step 24250: Val loss = 0.5313
+INFO:learned_mw_transformer:Step 24300: Val loss = 0.5324
+INFO:learned_mw_transformer:Step 24350: Val loss = 0.5316
+INFO:learned_mw_transformer:Step 24400: Val loss = 0.5318
+INFO:learned_mw_transformer:Stage 3, Epoch 24: Loss = 0.5336
+INFO:learned_mw_transformer:Step 24450: Val loss = 0.5362
+INFO:learned_mw_transformer:Step 24500: Val loss = 0.5315
+INFO:learned_mw_transformer:Step 24550: Val loss = 0.5316
+INFO:learned_mw_transformer:Step 24600: Val loss = 0.5307
+INFO:learned_mw_transformer:Step 24650: Val loss = 0.5309
+INFO:learned_mw_transformer:Stage 3, Epoch 25: Loss = 0.5377
+INFO:learned_mw_transformer:Step 24700: Val loss = 0.5375
+INFO:learned_mw_transformer:Step 24750: Val loss = 0.5343
+INFO:learned_mw_transformer:Step 24800: Val loss = 0.5320
+INFO:learned_mw_transformer:Step 24850: Val loss = 0.5307
+INFO:learned_mw_transformer:Step 24900: Val loss = 0.5301
+INFO:learned_mw_transformer:Stage 3, Epoch 26: Loss = 0.5368
+INFO:learned_mw_transformer:Step 24950: Val loss = 0.5337
+INFO:learned_mw_transformer:Step 25000: Val loss = 0.5305
+INFO:learned_mw_transformer:Step 25050: Val loss = 0.5304
+INFO:learned_mw_transformer:Step 25100: Val loss = 0.5308
+INFO:learned_mw_transformer:Step 25150: Val loss = 0.5320
+INFO:learned_mw_transformer:Stage 3, Epoch 27: Loss = 0.5356
+INFO:learned_mw_transformer:Step 25200: Val loss = 0.5303
+INFO:learned_mw_transformer:Step 25250: Val loss = 0.5312
+INFO:learned_mw_transformer:Step 25300: Val loss = 0.5300
+INFO:learned_mw_transformer:Step 25350: Val loss = 0.5329
+INFO:learned_mw_transformer:Step 25400: Val loss = 0.5297
+INFO:learned_mw_transformer:Stage 3, Epoch 28: Loss = 0.5336
+INFO:learned_mw_transformer:Step 25450: Val loss = 0.5294
+INFO:learned_mw_transformer:Step 25500: Val loss = 0.5304
+INFO:learned_mw_transformer:Step 25550: Val loss = 0.5303
+INFO:learned_mw_transformer:Step 25600: Val loss = 0.5302
+INFO:learned_mw_transformer:Step 25650: Val loss = 0.5299
+INFO:learned_mw_transformer:Step 25700: Val loss = 0.5301
+INFO:learned_mw_transformer:Stage 3, Epoch 29: Loss = 0.5323
+INFO:__main__:Checkpoint saved: ../figures/checkpoints/model_stage_3.pt
+INFO:__main__:Evaluating after stage 3 (seq_length=15)...
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7123
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.1828
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.9264
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.2449
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 0.7321
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.0260
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.5796
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.8545
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.6932
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 2.1067
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 2.5097
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 1.9859
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 2.3658
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 2.6085
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.0000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.7123
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.1828
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.5789
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.9049
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 2.1680
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.7126
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 3.1813
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 3.4778
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 3.7151
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 3.8616
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 4.0466
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 4.0665
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 4.2054
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.0754
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.5754
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.0754
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.5000
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.0222
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 0.7872
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.4933
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.1325
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.5659
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 1.8321
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 2.2331
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 1.9972
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 1.9098
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 2.3108
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.2092
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.5944
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.7525
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.2847
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.6367
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.3506
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.4549
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.0930
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.3377
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 2.3377
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 2.3377
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 1.9398
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 2.1260
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 2.6473
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.0000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.5175
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.8052
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.0349
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.2792
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.5402
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.7469
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.1268
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.1268
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 2.1268
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 2.1268
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 2.5487
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 2.5487
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 2.5487
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.4246
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.6995
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.9181
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.6862
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.6862
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.6862
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.8443
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 2.3121
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 1.9187
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 2.0403
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 2.0403
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 2.1331
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.3311
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.5986
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.8109
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.3404
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.5330
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.9576
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.3101
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.4111
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 2.6783
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 2.8295
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 3.0090
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 3.0090
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 3.1479
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7149
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0196
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.5082
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.5082
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.7150
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 2.1522
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.3343
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.6668
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.9355
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 3.2837
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 3.2837
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 3.2837
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 3.0010
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 3.2265
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.4474
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.8831
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.3296
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.7027
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.7901
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.7901
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.8562
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.0829
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.3135
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 2.8008
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 3.1424
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 3.1809
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 3.2096
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 3.4735
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.9796
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.5550
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.2673
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.4599
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.6096
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.2218
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.2218
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.6588
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 2.1805
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 1.6265
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 1.9014
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 1.9014
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 1.6828
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9796
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.2239
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.4849
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.8984
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.8984
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.8984
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.3014
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.7777
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.1575
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 2.4689
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 2.4689
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 2.7332
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 2.9428
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 3.2700
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9796
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.5550
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.7673
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.9332
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.6147
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.9008
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.0251
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.0251
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.2610
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 2.3620
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 2.3620
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 1.8365
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 1.9240
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 1.8579
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.2092
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.8554
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.8554
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 2.1976
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 2.3363
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 2.4802
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.7010
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.7874
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 3.2394
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 3.5631
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 3.6825
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 3.7734
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 4.0551
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 4.1098
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7851
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.7851
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.7851
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.0147
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.0147
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.0147
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.1949
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.1949
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 0.5425
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 1.2603
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 1.2603
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 1.3999
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 1.3999
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 1.6661
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7851
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0147
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.1949
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.6821
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 0.8002
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 0.8901
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.2687
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.0142
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.3816
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 2.0316
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 2.0686
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 1.7543
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 1.7543
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 2.3462
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.9246
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.2771
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.2771
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.7771
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.7771
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.7771
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.2449
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.2449
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 1.9902
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 2.2445
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 2.4456
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 2.5239
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 2.6039
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9796
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.4042
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 2.0316
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 2.5857
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 2.2620
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 2.6554
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 3.1337
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 3.4068
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 3.4833
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 3.2823
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 3.4161
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 3.5185
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 3.1701
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 3.2637
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.1803
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.1803
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.9238
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.2424
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.6384
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.9245
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.0488
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.4821
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 1.7483
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 2.0345
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 1.8062
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 2.1323
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 1.7267
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.0000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.7149
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.8808
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.3273
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.0611
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.3907
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.1245
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.4654
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.5445
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 1.8054
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 1.8526
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 1.8526
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 2.0492
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 2.4728
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.4246
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.7771
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 2.2017
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 2.2017
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.4883
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.9082
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.9082
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 2.8176
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 2.8176
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 2.9366
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 3.3753
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 3.7412
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7123
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0170
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.1972
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.5933
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.8044
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.8044
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.2149
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.3513
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.6472
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 1.8840
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 2.3565
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 1.9586
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 2.4860
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 1.9582
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.4474
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.6010
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.3070
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.4140
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.0589
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.1566
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.1566
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.7444
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.8319
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 2.1338
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 2.2055
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 2.7526
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 2.4938
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 2.2993
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.0000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.9246
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.6008
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.8912
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 2.1231
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 2.4874
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.6360
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.9597
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 3.2207
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 3.6087
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 3.3999
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 3.4754
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 3.4754
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 3.5322
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9825
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.1627
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.8152
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.9395
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 2.4113
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 2.7181
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.9643
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 3.1585
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.8174
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 2.6993
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 2.9816
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 3.4216
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 3.0956
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 3.0956
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.7877
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.7877
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 0.7877
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.2469
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.4395
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 0.8121
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.2028
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 1.5422
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 2.0200
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 2.0200
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 2.2518
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 2.2518
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7123
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0170
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.2613
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.6150
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 0.9027
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.1324
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.5569
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.9815
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.7533
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 1.2560
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 1.6833
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 1.7644
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 2.3852
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 2.6857
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.0526
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.3026
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.3026
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.3026
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 0.5701
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 0.5701
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 0.5701
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.0701
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.0701
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 1.4947
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 0.8673
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 0.8673
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 1.3378
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 1.4774
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.5175
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.2298
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.6150
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.6150
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.9312
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.6146
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.2289
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.2289
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.2289
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 2.7692
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 2.3912
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 2.9190
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 3.0727
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 3.1909
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.2123
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.6659
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.6659
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.2287
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.0891
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.5777
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.7845
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.7845
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.3473
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 1.8602
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 2.4586
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 2.7911
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 2.9457
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 2.9457
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9825
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.3136
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.8486
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.3079
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.5005
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 0.8730
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.2637
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.7395
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.4533
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 1.4533
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 1.5577
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 1.3607
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 1.6842
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 2.0538
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9246
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.1008
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.4403
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.5899
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.9910
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 2.0858
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.3994
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.6516
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.9794
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 3.2441
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 3.4539
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 3.6678
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 3.5184
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 3.7276
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9796
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.2239
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.2239
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.6091
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.6091
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.8995
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.1314
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.4957
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.4957
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 2.1457
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 1.5916
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 1.5916
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 1.1670
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 1.4908
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9796
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.1599
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.2995
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.0333
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.7037
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 2.0089
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.3296
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.5879
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.3013
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 2.7383
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 2.7383
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 2.5837
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 2.7824
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 2.3041
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.0000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.5175
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.9421
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.2946
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.4379
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.4379
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.9184
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.0111
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.3318
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 2.3318
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 2.8573
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 3.3070
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 3.3070
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 3.1221
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.5175
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.9421
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.9421
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.1184
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.3032
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.3032
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.6599
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.8179
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.3934
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 1.3934
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 1.5367
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 1.5367
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 2.0171
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 2.1875
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7149
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.8808
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.0088
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.1064
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.4300
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.4896
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.7387
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.9354
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.9354
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 1.9354
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 1.9628
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 2.1097
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 2.5690
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 2.0865
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.7557
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.0604
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.0604
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.3047
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.3047
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.3047
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.4973
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.6469
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 1.8581
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 1.5715
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 1.5715
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 1.8464
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 2.0077
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.4886
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.9021
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 2.2443
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 2.2443
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 2.5217
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.5217
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 2.4113
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 2.6614
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 2.7453
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 2.9248
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 2.6212
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.5175
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.7298
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.5050
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.7872
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.4825
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.2076
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.5470
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.9716
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.1998
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 2.4426
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 2.5838
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 2.0783
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 2.2026
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 2.2973
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7877
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0173
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.0173
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.0173
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.0173
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.0173
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 0.5927
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 0.8804
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.3397
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 1.3397
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 1.1471
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 1.3914
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 1.6524
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 1.8592
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7149
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.7149
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.8808
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.3273
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.7004
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.4827
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.2088
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.5324
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.7932
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 2.1899
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 2.0121
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 2.0616
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 2.6397
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 2.8395
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.2908
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.5583
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.8460
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.1572
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 0.9072
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 0.6776
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 0.8899
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.1147
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.6147
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 1.7644
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 1.2671
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 1.9375
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 1.3374
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 2.0078
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7877
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.0173
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.1976
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.6847
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.0968
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.4264
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.4264
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.4264
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 0.8940
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 1.2873
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 1.6108
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 1.9804
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 2.3484
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 2.0479
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9796
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.4042
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.6070
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.7651
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.8868
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 2.0571
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.6325
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.7469
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.9517
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 2.0195
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 2.5917
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 2.7171
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 2.7171
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 2.7509
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 1.0000
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 1.2443
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.5053
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.7121
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.7121
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.7121
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.7121
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.1136
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 0.8693
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 0.8693
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 1.3988
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 1.5914
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 1.7942
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 1.9523
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.9825
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.9825
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.7382
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.2087
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 0.8127
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.1173
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.2976
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.4372
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.5441
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 1.2703
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 0.9467
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 1.5535
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 1.9265
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 2.2317
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.0000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7500
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.2908
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 0.7557
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 0.3651
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 0.6326
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 0.8449
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.3743
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.1817
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.1817
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 1.3620
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 0.7095
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 0.7095
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 1.2738
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 1.0295
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.5000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.7123
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.9371
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.2896
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.2896
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.9329
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.9329
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.4891
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.6380
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.7523
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 1.8393
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 1.9050
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 1.9542
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 1.9174
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 2.0894
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.0000
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.5175
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.0175
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.0175
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.2618
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.5229
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.7296
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.1311
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 1.5557
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 1.7586
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 2.0747
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 2.2019
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 2.6265
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 2.8551
+INFO:multiplicative_weights:Round 1: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 2: Updated weights, current regret: 0.2500
+INFO:multiplicative_weights:Round 3: Updated weights, current regret: 0.9825
+INFO:multiplicative_weights:Round 4: Updated weights, current regret: 1.6514
+INFO:multiplicative_weights:Round 5: Updated weights, current regret: 1.4328
+INFO:multiplicative_weights:Round 6: Updated weights, current regret: 1.0082
+INFO:multiplicative_weights:Round 7: Updated weights, current regret: 1.0082
+INFO:multiplicative_weights:Round 8: Updated weights, current regret: 1.6844
+INFO:multiplicative_weights:Round 9: Updated weights, current regret: 1.6844
+INFO:multiplicative_weights:Round 10: Updated weights, current regret: 2.1329
+INFO:multiplicative_weights:Round 11: Updated weights, current regret: 2.5078
+INFO:multiplicative_weights:Round 12: Updated weights, current regret: 2.1105
+INFO:multiplicative_weights:Round 13: Updated weights, current regret: 1.8746
+INFO:multiplicative_weights:Round 14: Updated weights, current regret: 1.5795
+INFO:multiplicative_weights:Round 15: Updated weights, current regret: 1.6587
+INFO:__main__:Stage 3 Results:
+INFO:__main__:  prediction_accuracy: 0.7440 ± 0.1551
+INFO:__main__:  sequence_accuracy: 0.0200 ± 0.1400
+INFO:__main__:  learned_regret: 1.3200 ± 1.0852
+INFO:__main__:  optimal_regret: 1.0600 ± 1.1560
+INFO:__main__:  regret_ratio: 3.6433 ± 4.1809
+INFO:__main__:
+==================================================
+INFO:__main__:TRAINING STAGE 4
+INFO:__main__:==================================================
+INFO:__main__:Stage 4: 7197 train, 647 val sequences
+INFO:learned_mw_transformer:Training stage 4 with 4 thought steps
+Traceback (most recent call last):
+  File "/home/ec2-user/transformer_decisionmaker/multiplicative_weights/scripts/gradient_train_transformer_for_mwu.py", line 950, in <module>
+    main()
+  File "/home/ec2-user/transformer_decisionmaker/multiplicative_weights/scripts/gradient_train_transformer_for_mwu.py", line 773, in main
+    stage_results = trainer.train_stage(stage, train_loader, val_loader)
+  File "/home/ec2-user/transformer_decisionmaker/multiplicative_weights/scripts/learned_mw_transformer.py", line 1041, in train_stage
+    loss = self._train_batch(batch, stage)
+  File "/home/ec2-user/transformer_decisionmaker/multiplicative_weights/scripts/learned_mw_transformer.py", line 1126, in _train_batch
+    _, pred_logit = self.model.think_and_predict(context)
+  File "/home/ec2-user/transformer_decisionmaker/multiplicative_weights/scripts/learned_mw_transformer.py", line 490, in think_and_predict
+    weights, thought_hiddens, final_h = self.think(embeddings)
+  File "/home/ec2-user/transformer_decisionmaker/multiplicative_weights/scripts/learned_mw_transformer.py", line 448, in think
+    h, attn = self._run_blocks(self.dropout(positioned), return_attention)
+  File "/home/ec2-user/transformer_decisionmaker/multiplicative_weights/scripts/learned_mw_transformer.py", line 394, in _run_blocks
+    x, attn = block(x, mask)
+  File "/home/ec2-user/transformer_decisionmaker/venv/lib64/python3.9/site-packages/torch/nn/modules/module.py", line 1773, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/ec2-user/transformer_decisionmaker/venv/lib64/python3.9/site-packages/torch/nn/modules/module.py", line 1784, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/ec2-user/transformer_decisionmaker/multiplicative_weights/scripts/learned_mw_transformer.py", line 113, in forward
+    attn_out, attn_weights = self.attn(self.ln1(x), mask)
+  File "/home/ec2-user/transformer_decisionmaker/venv/lib64/python3.9/site-packages/torch/nn/modules/module.py", line 1773, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/ec2-user/transformer_decisionmaker/venv/lib64/python3.9/site-packages/torch/nn/modules/module.py", line 1784, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/ec2-user/transformer_decisionmaker/multiplicative_weights/scripts/learned_mw_transformer.py", line 89, in forward
+    attn_weights = self.dropout(attn_weights)
+  File "/home/ec2-user/transformer_decisionmaker/venv/lib64/python3.9/site-packages/torch/nn/modules/module.py", line 1773, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/ec2-user/transformer_decisionmaker/venv/lib64/python3.9/site-packages/torch/nn/modules/module.py", line 1784, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/ec2-user/transformer_decisionmaker/venv/lib64/python3.9/site-packages/torch/nn/modules/dropout.py", line 70, in forward
+    return F.dropout(input, self.p, self.training, self.inplace)
+  File "/home/ec2-user/transformer_decisionmaker/venv/lib64/python3.9/site-packages/torch/nn/functional.py", line 1422, in dropout
+    _VF.dropout_(input, p, training) if inplace else _VF.dropout(input, p, training)
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 2.00 MiB. GPU 0 has a total capacity of 14.56 GiB of which 2.81 MiB is free. Including non-PyTorch memory, this process has 14.56 GiB memory in use. Of the allocated memory 14.37 GiB is allocated by PyTorch, and 54.55 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)

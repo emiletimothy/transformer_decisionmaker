@@ -1,0 +1,66 @@
+{
+  "os": "Linux-6.1.163-186.299.amzn2023.x86_64-x86_64-with-glibc2.34",
+  "python": "CPython 3.9.25",
+  "startedAt": "2026-04-07T04:32:52.670570Z",
+  "args": [
+    "--resume_from",
+    "../figures/checkpoints/model_stage_10.pt",
+    "--n_experts",
+    "4",
+    "--max_steps",
+    "95",
+    "--n_train",
+    "10000",
+    "--n_val",
+    "1000",
+    "--max_stages",
+    "13",
+    "--cot_mode",
+    "continuous",
+    "--n_thought_steps",
+    "4",
+    "--save_dir",
+    "../figures",
+    "--stage_lengths",
+    "65",
+    "80",
+    "95",
+    "--wandb_project",
+    "transformers_online_decision_makers"
+  ],
+  "program": "/home/ec2-user/transformer_decisionmaker/multiplicative_weights/scripts/gradient_train_transformer_for_mwu.py",
+  "codePath": "multiplicative_weights/scripts/gradient_train_transformer_for_mwu.py",
+  "codePathLocal": "gradient_train_transformer_for_mwu.py",
+  "git": {
+    "remote": "https://github.com/emiletimothy/transformer_decisionmaker.git",
+    "commit": "cf911b2c8944618ccfafc691d2927ed01ecdf189"
+  },
+  "email": "emiletimothy@outlook.com",
+  "root": "/home/ec2-user/transformer_decisionmaker/multiplicative_weights/scripts",
+  "host": "ip-172-31-11-157.us-east-2.compute.internal",
+  "executable": "/home/ec2-user/transformer_decisionmaker/venv/bin/python3",
+  "cpu_count": 4,
+  "cpu_count_logical": 8,
+  "gpu": "Tesla T4",
+  "gpu_count": 1,
+  "disk": {
+    "/": {
+      "total": "53607378944",
+      "used": "26545864704"
+    }
+  },
+  "memory": {
+    "total": "33267298304"
+  },
+  "gpu_nvidia": [
+    {
+      "name": "Tesla T4",
+      "memoryTotal": "16106127360",
+      "cudaCores": 2560,
+      "architecture": "Turing",
+      "uuid": "GPU-7022110b-6989-f954-e2d2-da0274311780"
+    }
+  ],
+  "cudaVersion": "13.0",
+  "writerId": "c4d7svibm32of2ky0i3ko6gmdq5ccuzj"
+}

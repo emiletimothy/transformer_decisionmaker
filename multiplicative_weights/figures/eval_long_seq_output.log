@@ -1,0 +1,83 @@
+nohup: ignoring input
+INFO:__main__:Loading checkpoint: ../figures/checkpoints/model_stage_4.pt
+INFO:__main__:Model: continuous, d_model=64, n_layers=2, max_seq_len=1024, n_thought_steps=4
+INFO:__main__:
+============================================================
+INFO:__main__:Sequence length: 10  |  trials: 50
+INFO:__main__:============================================================
+INFO:__main__:  trial 10/50 done
+INFO:__main__:  trial 20/50 done
+INFO:__main__:  trial 30/50 done
+INFO:__main__:  trial 40/50 done
+INFO:__main__:  trial 50/50 done
+INFO:__main__:
+  Results for length=10:
+INFO:__main__:    Learned final regret:  1.18 ± 0.89
+INFO:__main__:    Optimal MW regret:     1.14 ± 1.00
+INFO:__main__:    Regret ratio:          2.06 ± 2.97
+INFO:__main__:    Accuracy:              0.7300 ± 0.1825
+INFO:__main__:
+============================================================
+INFO:__main__:Sequence length: 20  |  trials: 50
+INFO:__main__:============================================================
+INFO:__main__:  trial 10/50 done
+INFO:__main__:  trial 20/50 done
+INFO:__main__:  trial 30/50 done
+INFO:__main__:  trial 40/50 done
+INFO:__main__:  trial 50/50 done
+INFO:__main__:
+  Results for length=20:
+INFO:__main__:    Learned final regret:  1.36 ± 1.31
+INFO:__main__:    Optimal MW regret:     1.46 ± 1.33
+INFO:__main__:    Regret ratio:          2.26 ± 3.24
+INFO:__main__:    Accuracy:              0.7560 ± 0.1502
+INFO:__main__:
+============================================================
+INFO:__main__:Sequence length: 50  |  trials: 50
+INFO:__main__:============================================================
+INFO:__main__:  trial 10/50 done
+INFO:__main__:  trial 20/50 done
+INFO:__main__:  trial 30/50 done
+INFO:__main__:  trial 40/50 done
+INFO:__main__:  trial 50/50 done
+INFO:__main__:
+  Results for length=50:
+INFO:__main__:    Learned final regret:  8.74 ± 4.68
+INFO:__main__:    Optimal MW regret:     2.24 ± 1.72
+INFO:__main__:    Regret ratio:          5.46 ± 3.98
+INFO:__main__:    Accuracy:              0.6324 ± 0.0976
+INFO:__main__:
+============================================================
+INFO:__main__:Sequence length: 100  |  trials: 50
+INFO:__main__:============================================================
+INFO:__main__:  trial 10/50 done
+INFO:__main__:  trial 20/50 done
+INFO:__main__:  trial 30/50 done
+INFO:__main__:  trial 40/50 done
+INFO:__main__:  trial 50/50 done
+INFO:__main__:
+  Results for length=100:
+INFO:__main__:    Learned final regret:  24.74 ± 9.34
+INFO:__main__:    Optimal MW regret:     3.42 ± 3.09
+INFO:__main__:    Regret ratio:          9.44 ± 7.66
+INFO:__main__:    Accuracy:              0.5366 ± 0.0491
+INFO:__main__:
+============================================================
+INFO:__main__:Sequence length: 500  |  trials: 50
+INFO:__main__:============================================================
+INFO:__main__:  trial 10/50 done
+INFO:__main__:  trial 20/50 done
+INFO:__main__:  trial 30/50 done
+INFO:__main__:  trial 40/50 done
+INFO:__main__:  trial 50/50 done
+INFO:__main__:
+  Results for length=500:
+INFO:__main__:    Learned final regret:  135.58 ± 62.08
+INFO:__main__:    Optimal MW regret:     6.88 ± 7.46
+INFO:__main__:    Regret ratio:          30.32 ± 36.24
+INFO:__main__:    Accuracy:              0.5044 ± 0.0495
+INFO:__main__:
+============================================================
+INFO:__main__:Sequence length: 1000  |  trials: 50
+INFO:__main__:============================================================
+INFO:__main__:  trial 10/50 done

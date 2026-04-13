@@ -96,7 +96,7 @@ class MultiplicativeWeights:
         regret = algorithm_loss - best_expert_loss
         self.regret_history.append(regret)
         
-        logger.info(f"Round {self.round_count}: Updated weights, current regret: {regret:.4f}")
+        logger.debug(f"Round {self.round_count}: Updated weights, current regret: {regret:.4f}")
     
     def get_regret(self) -> float:
         """Get current cumulative regret."""

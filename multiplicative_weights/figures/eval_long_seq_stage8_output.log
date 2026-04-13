@@ -1,0 +1,90 @@
+nohup: ignoring input
+INFO:__main__:Loading checkpoint: ../figures/checkpoints/model_stage_8.pt
+INFO:__main__:Model: continuous, d_model=64, n_layers=2, max_seq_len=1024, n_thought_steps=4
+INFO:__main__:
+============================================================
+INFO:__main__:Sequence length: 10  |  trials: 50
+INFO:__main__:============================================================
+INFO:__main__:  trial 10/50 done
+INFO:__main__:  trial 20/50 done
+INFO:__main__:  trial 30/50 done
+INFO:__main__:  trial 40/50 done
+INFO:__main__:  trial 50/50 done
+INFO:__main__:
+  Results for length=10:
+INFO:__main__:    Learned final regret:  1.24 ± 0.95
+INFO:__main__:    Optimal MW regret:     1.14 ± 1.00
+INFO:__main__:    Regret ratio:          2.47 ± 3.35
+INFO:__main__:    Accuracy:              0.7240 ± 0.1692
+INFO:__main__:
+============================================================
+INFO:__main__:Sequence length: 20  |  trials: 50
+INFO:__main__:============================================================
+INFO:__main__:  trial 10/50 done
+INFO:__main__:  trial 20/50 done
+INFO:__main__:  trial 30/50 done
+INFO:__main__:  trial 40/50 done
+INFO:__main__:  trial 50/50 done
+INFO:__main__:
+  Results for length=20:
+INFO:__main__:    Learned final regret:  1.60 ± 1.50
+INFO:__main__:    Optimal MW regret:     1.46 ± 1.33
+INFO:__main__:    Regret ratio:          2.38 ± 3.19
+INFO:__main__:    Accuracy:              0.7470 ± 0.1586
+INFO:__main__:
+============================================================
+INFO:__main__:Sequence length: 50  |  trials: 50
+INFO:__main__:============================================================
+INFO:__main__:  trial 10/50 done
+INFO:__main__:  trial 20/50 done
+INFO:__main__:  trial 30/50 done
+INFO:__main__:  trial 40/50 done
+INFO:__main__:  trial 50/50 done
+INFO:__main__:
+  Results for length=50:
+INFO:__main__:    Learned final regret:  3.76 ± 2.83
+INFO:__main__:    Optimal MW regret:     2.24 ± 1.72
+INFO:__main__:    Regret ratio:          2.93 ± 3.27
+INFO:__main__:    Accuracy:              0.7360 ± 0.1101
+INFO:__main__:
+============================================================
+INFO:__main__:Sequence length: 100  |  trials: 50
+INFO:__main__:============================================================
+INFO:__main__:  trial 10/50 done
+INFO:__main__:  trial 20/50 done
+INFO:__main__:  trial 30/50 done
+INFO:__main__:  trial 40/50 done
+INFO:__main__:  trial 50/50 done
+INFO:__main__:
+  Results for length=100:
+INFO:__main__:    Learned final regret:  17.00 ± 7.68
+INFO:__main__:    Optimal MW regret:     3.42 ± 3.09
+INFO:__main__:    Regret ratio:          7.11 ± 5.51
+INFO:__main__:    Accuracy:              0.6140 ± 0.0577
+INFO:__main__:
+============================================================
+INFO:__main__:Sequence length: 500  |  trials: 50
+INFO:__main__:============================================================
+INFO:__main__:  trial 10/50 done
+INFO:__main__:  trial 20/50 done
+INFO:__main__:  trial 30/50 done
+INFO:__main__:  trial 40/50 done
+INFO:__main__:  trial 50/50 done
+INFO:__main__:
+  Results for length=500:
+INFO:__main__:    Learned final regret:  122.90 ± 51.43
+INFO:__main__:    Optimal MW regret:     6.88 ± 7.46
+INFO:__main__:    Regret ratio:          27.72 ± 33.30
+INFO:__main__:    Accuracy:              0.5276 ± 0.0246
+INFO:__main__:Saved ../figures/eval_stage8/long_seq_regret_trajectories.png
+INFO:__main__:Saved ../figures/eval_stage8/long_seq_summary.png
+
+================================================================================
+  Length |     Learned Regret |     Optimal Regret |        Ratio |     Accuracy
+--------------------------------------------------------------------------------
+      10 |    1.24 ±   0.95 |    1.14 ±   1.00 |  2.47 ± 3.35 | 0.7240 ± 0.1692
+      20 |    1.60 ±   1.50 |    1.46 ±   1.33 |  2.38 ± 3.19 | 0.7470 ± 0.1586
+      50 |    3.76 ±   2.83 |    2.24 ±   1.72 |  2.93 ± 3.27 | 0.7360 ± 0.1101
+     100 |   17.00 ±   7.68 |    3.42 ±   3.09 |  7.11 ± 5.51 | 0.6140 ± 0.0577
+     500 |  122.90 ±  51.43 |    6.88 ±   7.46 | 27.72 ± 33.30 | 0.5276 ± 0.0246
+================================================================================

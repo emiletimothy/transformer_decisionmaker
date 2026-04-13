@@ -527,8 +527,14 @@ def generate_sequence_with_continuous_cot(model, sequence, tokenizer, device):
             )
 
         # Continuous thought: get weights and decision (BEFORE seeing losses)
+        # Sliding window: keep START token + most recent tokens if context exceeds max length
+        max_ctx = model.config.max_sequence_length
+        if len(token_ids) > max_ctx:
+            ctx_ids = [token_ids[0]] + token_ids[len(token_ids) - max_ctx + 1:]
+        else:
+            ctx_ids = token_ids
         context_tensor = torch.tensor(
-            [token_ids], dtype=torch.long, device=device
+            [ctx_ids], dtype=torch.long, device=device
         )
         with torch.no_grad():
             weights, pred_logit = model.think_and_predict(context_tensor)
@@ -1013,10 +1019,10 @@ class ContinuousCoTTrainer:
                     val_loader: DataLoader = None) -> Dict:
         """Train for one stage of the Coconut-style curriculum.
         
-        Sets thought depth = min(stage, K_max) for this stage.
+        Always uses K_max thought steps; only sequence length varies by stage.
         Uses early stopping if val loss doesn't improve for `patience` epochs.
         """
-        n_thoughts = min(stage, self.model.config.n_thought_steps)
+        n_thoughts = self.model.config.n_thought_steps
         self.model.n_thought_steps = n_thoughts
         logger.info(f"Training stage {stage} with {n_thoughts} thought steps")
         
@@ -1090,12 +1096,64 @@ class ContinuousCoTTrainer:
         
         return {'losses': stage_losses}
     
+    def _collect_decision_groups(self, input_ids, target_mask, prediction_targets):
+        """Group decision contexts by length for efficient batched inference.
+        
+        Within a stage, most sequences have the same structure, so contexts at
+        the same decision index share the same token length and can be batched.
+        
+        When a context exceeds max_sequence_length, a sliding window keeps the
+        START token (position 0) plus the most recent tokens that fit — matching
+        the eval-time sliding window behaviour.
+        
+        Returns list of (context_batch [N, ctx_len], targets [N]) tuples,
+        grouped by context length.
+        """
+        from collections import defaultdict
+        max_ctx = self.model.config.max_sequence_length
+        groups = defaultdict(lambda: {'contexts': [], 'targets': []})
+        
+        batch_size = input_ids.shape[0]
+        for i in range(batch_size):
+            decision_pos = target_mask[i].nonzero(as_tuple=True)[0]
+            for pos in decision_pos:
+                ctx_len = pos.item()
+                if ctx_len < 2:
+                    continue
+                ctx = input_ids[i, :ctx_len]
+                # Sliding window: keep START token + most recent tokens
+                if ctx_len > max_ctx:
+                    ctx = torch.cat([ctx[:1], ctx[ctx_len - max_ctx + 1:]])
+                    ctx_len = max_ctx
+                groups[ctx_len]['contexts'].append(ctx)
+                groups[ctx_len]['targets'].append(prediction_targets[i, pos])
+        
+        # Stack each group into tensors
+        result = []
+        for ctx_len in sorted(groups.keys()):
+            g = groups[ctx_len]
+            ctx_batch = torch.stack(g['contexts'])      # [N, ctx_len]
+            tgt_batch = torch.stack(g['targets'])        # [N]
+            result.append((ctx_batch, tgt_batch))
+        return result
+    
+    @staticmethod
+    def _max_micro_batch(ctx_len: int, base: int = 32, threshold: int = 256) -> int:
+        """Heuristic micro-batch cap to avoid OOM on long contexts.
+        
+        For short contexts (<threshold tokens) use full batch.
+        For longer contexts, scale down linearly.
+        """
+        if ctx_len <= threshold:
+            return base
+        return max(1, base * threshold // ctx_len)
+    
     def _train_batch(self, batch: Dict, stage: int) -> float:
         """Train on a single batch using think_and_predict at each decision point.
         
-        For each sequence, finds decision positions (target_mask == True),
-        extracts context up to each position, runs thought recurrence,
-        and computes BCE loss on the prediction.
+        Batches contexts of the same length together for GPU parallelism
+        (~batch_size x speedup over serial processing). Uses per-group gradient
+        accumulation to stay memory-safe, with micro-batching for long contexts.
         """
         self.optimizer.zero_grad()
         
@@ -1103,44 +1161,35 @@ class ContinuousCoTTrainer:
         prediction_targets = batch['prediction_targets'].to(self.device)
         target_mask = batch['target_mask'].to(self.device)
         
-        batch_size = input_ids.shape[0]
-        total_loss = 0.0
-        n_decisions = 0
+        decision_groups = self._collect_decision_groups(
+            input_ids, target_mask, prediction_targets
+        )
         
-        for i in range(batch_size):
-            seq_ids = input_ids[i]
-            seq_mask = target_mask[i]
-            seq_targets = prediction_targets[i]
-            
-            # Find decision positions (where target_mask is True)
-            decision_pos = seq_mask.nonzero(as_tuple=True)[0]
-            
-            for pos in decision_pos:
-                # Context: all tokens before the decision position (SEP)
-                context = seq_ids[:pos].unsqueeze(0)  # [1, ctx_len]
-                
-                if context.shape[1] < 2:
-                    continue
-                
-                # Run thought recurrence and get prediction
-                _, pred_logit = self.model.think_and_predict(context)
-                
-                # BCE loss on the decision
-                target = seq_targets[pos]
-                loss = self.prediction_loss_fn(pred_logit.squeeze(), target)
-                total_loss = total_loss + loss
-                n_decisions += 1
+        total_decisions = sum(ctx.shape[0] for ctx, _ in decision_groups)
+        if total_decisions == 0:
+            return 0.0
         
-        if n_decisions > 0:
-            avg_loss = total_loss / n_decisions
-            avg_loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
-            self.optimizer.step()
-            return avg_loss.item()
-        return 0.0
+        running_loss = 0.0
+        
+        for ctx_batch, tgt_batch in decision_groups:
+            ctx_len = ctx_batch.shape[1]
+            mb = self._max_micro_batch(ctx_len)
+            
+            # Split into micro-batches if needed
+            for start in range(0, ctx_batch.shape[0], mb):
+                mb_ctx = ctx_batch[start:start + mb]
+                mb_tgt = tgt_batch[start:start + mb]
+                _, pred_logits = self.model.think_and_predict(mb_ctx)
+                loss = self.prediction_loss_fn(pred_logits.squeeze(-1), mb_tgt)
+                (loss * mb_ctx.shape[0] / total_decisions).backward()
+                running_loss += loss.item() * mb_ctx.shape[0]
+        
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
+        self.optimizer.step()
+        return running_loss / total_decisions
     
     def _evaluate(self, val_loader: DataLoader) -> Dict:
-        """Evaluate on validation data using think_and_predict."""
+        """Evaluate on validation data using batched think_and_predict."""
         self.model.eval()
         total_loss = 0.0
         n_decisions = 0
@@ -1151,24 +1200,20 @@ class ContinuousCoTTrainer:
                 prediction_targets = batch['prediction_targets'].to(self.device)
                 target_mask = batch['target_mask'].to(self.device)
                 
-                batch_size = input_ids.shape[0]
+                decision_groups = self._collect_decision_groups(
+                    input_ids, target_mask, prediction_targets
+                )
                 
-                for i in range(batch_size):
-                    seq_ids = input_ids[i]
-                    seq_mask = target_mask[i]
-                    seq_targets = prediction_targets[i]
+                for ctx_batch, tgt_batch in decision_groups:
+                    ctx_len = ctx_batch.shape[1]
+                    mb = self._max_micro_batch(ctx_len)
                     
-                    decision_pos = seq_mask.nonzero(as_tuple=True)[0]
-                    
-                    for pos in decision_pos:
-                        context = seq_ids[:pos].unsqueeze(0)
-                        if context.shape[1] < 2:
-                            continue
-                        
-                        _, pred_logit = self.model.think_and_predict(context)
-                        target = seq_targets[pos]
-                        loss = self.prediction_loss_fn(pred_logit.squeeze(), target)
-                        total_loss += loss.item()
-                        n_decisions += 1
+                    for start in range(0, ctx_batch.shape[0], mb):
+                        mb_ctx = ctx_batch[start:start + mb]
+                        mb_tgt = tgt_batch[start:start + mb]
+                        _, pred_logits = self.model.think_and_predict(mb_ctx)
+                        loss = self.prediction_loss_fn(pred_logits.squeeze(-1), mb_tgt)
+                        total_loss += loss.item() * mb_ctx.shape[0]
+                        n_decisions += mb_ctx.shape[0]
         
         return {'loss': total_loss / max(n_decisions, 1)}

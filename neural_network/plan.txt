@@ -1,0 +1,103 @@
+we want to show that a transformer, when trained on encoding traces, implicitly
+learns to perform forward passes and backpropagation of the underlying neural
+network encoder — the transformer's context processing *is* gradient descent.
+
+Neural Network Encoder Module — Plan
+=====================================
+
+Thesis: A transformer trained on (input, latent) traces from a neural network
+encoder implicitly learns to perform the encoder's forward pass — and when
+given multiple context examples, its attention layers implicitly perform
+gradient-based updates to an internal model, analogous to backpropagation.
+
+Analogous to the multiplicative_weights module where a transformer learns
+to reproduce MW updates from execution traces, here a transformer learns
+to reproduce a neural network's forward pass and weight updates from
+encoding traces. The key claim: processing context examples ≈ implicit
+gradient steps, and predicting the query output ≈ implicit forward pass.
+
+--- Ground Truth Encoder ---
+A small autoencoder (2-layer MLP encoder + decoder) is trained on synthetic
+data (random clusters in R^d). The encoder maps input_dim → latent_dim.
+Once trained, it becomes the "oracle" — analogous to the MW algorithm.
+
+
+--- Synthetic Data ---
+Phase 1 — Autoencoder training data:
+  - Sample points from K Gaussian clusters in R^d (e.g., K=5–10, d=16–32)
+  - Each cluster has a random mean (uniform in [-5, 5]^d) and shared covariance
+  - ~10,000 points total, split 80/10/10 train/val/test
+  - Labels: cluster IDs (used only for downstream eval, not autoencoder training)
+  - The autoencoder trains on reconstruction loss (input, input) pairs
+
+Phase 2 — Transformer encoding traces:
+  - Run the trained oracle encoder on fresh samples from the same cluster distribution
+  - For each sample, record:
+      input vector  → discretized into tokens (bin each float into B buckets, e.g., B=64)
+      latent code   → encoder output, discretized the same way
+  - Group into sequences of k encoding steps:
+      [x_1, z_1, x_2, z_2, ..., x_{k-1}, z_{k-1}, x_k, ???]
+      The first k-1 pairs are "context" (= implicit training data for the
+      internal model). The final input x_k is the "query" — the transformer
+      must predict z_k by implicitly doing a forward pass.
+  - More context pairs = more implicit gradient steps = better predictions
+  - Dataset sizes: ~3000 train / 500 val / 200 test sequences
+  - Max sequence length: 10–50 encoding steps per sequence
+  - Curriculum stages generate sequences of increasing length (stage i → i steps)
+
+--- Trace Generation ---
+We run the trained encoder on fresh inputs and record:
+  - input vectors (discretized into tokens)
+  - target latent codes (the encoder's output, discretized)
+These traces are grouped into sequences where the first k-1 (input, latent)
+pairs serve as context and the k-th input is the query. This structure is
+crucial: it forces the transformer to *use* the context examples to build
+an internal model, rather than memorizing the function in its weights alone.
+
+--- Transformer Training ---
+A GPT-2-style transformer (with optional COCONUT continuous CoT) is trained
+on these traces via multi-stage curriculum:
+  - Stage i: sequences with i-1 context pairs + 1 query
+  - The transformer sees context (input, latent) pairs then a query input,
+    and must predict the query's latent code
+  - Each additional context pair ≈ one more implicit gradient step
+  - Discrete mode: predicts discretized latent tokens autoregressively
+  - Continuous mode: uses hidden-state recurrence to produce latent vectors
+
+The curriculum matters: stage 1 (zero context) tests pure memorization;
+higher stages test whether the transformer improves with more "training data,"
+which would be evidence of implicit gradient-based learning.
+
+--- Evaluation ---
+Standard metrics:
+  - Reconstruction MSE: compare transformer's predicted latents to encoder's
+  - Cosine similarity of predicted vs true latent representations
+  - Downstream classification: use predicted latents for cluster assignment
+  - Latent space visualization (PCA/t-SNE)
+
+Implicit backprop evidence:
+  - Learning curve: plot prediction quality vs number of context examples
+    (more context = more implicit gradient steps → should improve)
+  - GD baseline comparison: actually run few-shot gradient descent on a
+    small network with the same k-1 context examples as training data,
+    compare its predictions to the transformer's — if they match, the
+    transformer is implicitly doing GD
+  - Attention pattern analysis: identify heads that correlate with
+    gradient computation (e.g., heads that compute input-output
+    covariances, which is what one step of GD on MSE loss produces)
+  - Ablation: shuffle context order — if the transformer is doing GD,
+    order shouldn't matter much (GD on a batch is order-invariant)
+  - Probing: extract transformer hidden states after processing k context
+    examples, compare to actual weight matrices of a network trained with
+    k gradient steps on those examples
+
+Files:
+  scripts/
+    simple_encoder.py                    — ground truth autoencoder
+    learned_encoder_transformer.py       — transformer model + tokenizer + trainer
+    generate_dataset.py                  — generate encoding traces
+    train_transformer_for_encoder.py     — multi-stage training script
+    eval.py                              — evaluation and visualization
+    run_train_and_eval.bash              — convenience runner
+  data/                                  — generated datasets
+  figures/                               — plots and results
