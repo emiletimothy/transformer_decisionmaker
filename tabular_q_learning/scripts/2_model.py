@@ -1,22 +1,14 @@
 #!/usr/bin/env python3
 """
-2_model.py — COCONUT Q-Learning Transformer
+2_model.py — COCONUT Q-Learning Transformer (Two-Phase Per-Round Layout)
 
-Custom GPT-2 style Transformer with a single output head:
-    action_head : Linear(d_model, n_actions)  at <Select> positions (CE loss only)
-
-The model has no explicit Q-value head. Instead, it must discover Q-value
-tracking internally through the COCONUT continuous thought mechanism. The
-THINK token's hidden state is injected into the COT token's embedding before
-the final transformer pass, allowing the model to propagate implicit Q-value
-state across rounds.
-
-Reward scalars are injected into the embedding of each TOK_R token via a learned
-linear projection `reward_proj : R^1 -> R^d_model`, making the reward value
-accessible to the transformer as a continuous signal.
+Custom GPT-2 style Transformer with two output heads:
+    action_head : Linear(d_model, n_actions)   at <Select> positions (CE loss always on)
+    thought_head: Linear(d_model, vocab_size)  at discrete thought positions (CE loss on
+                  rounds where continuous_round_mask == False)
 
 Vocabulary layout (matches 1_generate_data.py):
-    vocab_size = 2 + n_states + n_actions + 5
+    vocab_size = 2 + n_states + n_actions + 9 + n_q_bins
 
 Architecture:
     - Token embedding    : nn.Embedding(vocab_size, d_model)
@@ -24,14 +16,20 @@ Architecture:
     - Reward projection  : nn.Linear(1, d_model, bias=False)
     - 4 x TransformerBlock (pre-norm, causal MHA + FFN with GELU)
     - Final LayerNorm
-    - action_head : nn.Linear(d_model, n_actions)
+    - action_head  : nn.Linear(d_model, n_actions)
+    - thought_head : nn.Linear(d_model, vocab_size)
+
+COCONUT mechanism (forward_hao):
+    For continuous rounds, the hidden state at TOK_UPDATE is extracted via
+    _run_blocks_only and injected into the single TOK_COT position before the
+    final full-sequence pass. Discrete rounds proceed without injection.
 
 Default capacity: d_model=256, n_heads=8, d_ff=1024, n_layers=4 (~3.5M params)
 """
 
 import math
 from dataclasses import dataclass, field, asdict
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -49,16 +47,16 @@ class COCONUTConfig:
     n_layers:    int   = 4
     n_heads:     int   = 8
     d_model:     int   = 256
-    d_ff:        int   = 1024     # feed-forward hidden dim (4 * d_model)
+    d_ff:        int   = 1024
     dropout:     float = 0.1
     max_seq_len: int   = 1024
-    n_q_bins:    int   = 32       # number of Q-value discretization bins
-    q_bin_min:   float = 0.0      # lower bound for Q-value binning
-    q_bin_max:   float = 5.0      # upper bound (~1/(1-gamma) with headroom)
+    n_q_bins:    int   = 32
+    q_bin_min:   float = 0.0
+    q_bin_max:   float = 5.0
 
     @property
     def vocab_size(self) -> int:
-        return 2 + self.n_states + self.n_actions + 5 + self.n_q_bins
+        return 2 + self.n_states + self.n_actions + 9 + self.n_q_bins
 
     def to_dict(self) -> Dict:
         d = asdict(self)
@@ -76,9 +74,9 @@ class COCONUTConfig:
 # ---------------------------------------------------------------------------
 
 def build_vocab(n_states: int, n_actions: int, n_q_bins: int = 32) -> Dict[str, object]:
-    """Return token ID constants for the COCONUT vocabulary."""
-    TOK_R = 2 + n_states + n_actions
-    old_vocab = 2 + n_states + n_actions + 5
+    """Return token ID constants for the two-phase COCONUT vocabulary."""
+    TOK_R    = 2 + n_states + n_actions
+    old_vocab = 2 + n_states + n_actions + 9  # 9 special tokens: R,EVAL,SEL,THINK,COT,UPD,QCURR,QNEXT,ANEXT
     return {
         'TOK_NULL':   0,
         'TOK_START':  1,
@@ -87,8 +85,12 @@ def build_vocab(n_states: int, n_actions: int, n_q_bins: int = 32) -> Dict[str, 
         'TOK_R':      TOK_R,
         'TOK_EVAL':   TOK_R + 1,
         'TOK_SELECT': TOK_R + 2,
-        'TOK_THINK':  TOK_R + 3,
-        'TOK_COT':    TOK_R + 4,
+        'TOK_THINK':  TOK_R + 3,   # legacy; never placed in sequences
+        'TOK_COT':    TOK_R + 4,   # continuous thought placeholder
+        'TOK_UPDATE': TOK_R + 5,   # Phase 2 end marker; COCONUT injection source
+        'TOK_QCURR':  TOK_R + 6,   # scaffold (no loss)
+        'TOK_QNEXT':  TOK_R + 7,   # scaffold (no loss)
+        'TOK_ANEXT':  TOK_R + 8,   # a_{t+1} echo scaffold (no loss)
         'TOK_QBIN':   list(range(old_vocab, old_vocab + n_q_bins)),
         'vocab_size': old_vocab + n_q_bins,
     }
@@ -110,62 +112,46 @@ class CausalMultiHeadAttention(nn.Module):
 
     def __init__(self, d_model: int, n_heads: int, dropout: float = 0.1):
         super().__init__()
-        assert d_model % n_heads == 0, "d_model must be divisible by n_heads"
+        assert d_model % n_heads == 0
         self.n_heads = n_heads
         self.d_head  = d_model // n_heads
         self.scale   = math.sqrt(self.d_head)
 
-        self.qkv_proj = nn.Linear(d_model, 3 * d_model, bias=False)
-        self.out_proj = nn.Linear(d_model, d_model, bias=False)
-        self.attn_drop = nn.Dropout(dropout)
+        self.qkv_proj  = nn.Linear(d_model, 3 * d_model, bias=False)
+        self.out_proj  = nn.Linear(d_model, d_model, bias=False)
+        self.attn_drop  = nn.Dropout(dropout)
         self.resid_drop = nn.Dropout(dropout)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        x : [B, T, d_model]
-        Returns : [B, T, d_model]
-        """
+    def forward(self, x: torch.Tensor, return_attn: bool = False):
         B, T, C = x.shape
-        qkv = self.qkv_proj(x)                             # [B, T, 3C]
-        q, k, v = qkv.split(C, dim=-1)                     # each [B, T, C]
+        qkv = self.qkv_proj(x)
+        q, k, v = qkv.split(C, dim=-1)
 
-        # Reshape to [B, n_heads, T, d_head]
         q = q.view(B, T, self.n_heads, self.d_head).transpose(1, 2)
         k = k.view(B, T, self.n_heads, self.d_head).transpose(1, 2)
         v = v.view(B, T, self.n_heads, self.d_head).transpose(1, 2)
 
-        # Scaled dot-product attention with causal mask
-        attn = (q @ k.transpose(-2, -1)) / self.scale      # [B, H, T, T]
+        attn = (q @ k.transpose(-2, -1)) / self.scale
         causal_mask = torch.triu(
             torch.ones(T, T, device=x.device, dtype=torch.bool), diagonal=1
         )
         attn = attn.masked_fill(causal_mask.unsqueeze(0).unsqueeze(0), float('-inf'))
-        attn = F.softmax(attn, dim=-1)
-        attn = self.attn_drop(attn)
+        attn_weights = F.softmax(attn, dim=-1)
+        attn = self.attn_drop(attn_weights)
 
-        out = (attn @ v)                                    # [B, H, T, d_head]
-        out = out.transpose(1, 2).contiguous().view(B, T, C)
-        return self.resid_drop(self.out_proj(out))
+        out = (attn @ v).transpose(1, 2).contiguous().view(B, T, C)
+        out = self.resid_drop(self.out_proj(out))
+        if return_attn:
+            return out, attn_weights
+        return out
 
     def forward_with_kv_cache(
         self,
         x: torch.Tensor,
         past_kv: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
     ) -> Tuple[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
-        """Attention with KV cache for incremental decoding.
-
-        Parameters
-        ----------
-        x      : [B, T_new, d_model] — new token embeddings only
-        past_kv: (past_k, past_v) each [B, H, T_past, d_head], or None
-
-        Returns
-        -------
-        out    : [B, T_new, d_model]
-        new_kv : (k, v) each [B, H, T_past+T_new, d_head]
-        """
         B, T_new, C = x.shape
-        qkv = self.qkv_proj(x)                              # [B, T_new, 3C]
+        qkv = self.qkv_proj(x)
         q, k, v = qkv.split(C, dim=-1)
 
         q = q.view(B, T_new, self.n_heads, self.d_head).transpose(1, 2)
@@ -177,7 +163,7 @@ class CausalMultiHeadAttention(nn.Module):
             v = torch.cat([past_kv[1], v], dim=2)
 
         T_total = k.shape[2]
-        attn = (q @ k.transpose(-2, -1)) / self.scale       # [B, H, T_new, T_total]
+        attn = (q @ k.transpose(-2, -1)) / self.scale
         causal_mask = torch.triu(
             torch.ones(T_new, T_total, device=x.device, dtype=torch.bool),
             diagonal=T_total - T_new + 1,
@@ -191,8 +177,6 @@ class CausalMultiHeadAttention(nn.Module):
 
 
 class FeedForward(nn.Module):
-    """Position-wise feed-forward network with GELU activation."""
-
     def __init__(self, d_model: int, d_ff: int, dropout: float = 0.1):
         super().__init__()
         self.net = nn.Sequential(
@@ -207,8 +191,7 @@ class FeedForward(nn.Module):
 
 
 class TransformerBlock(nn.Module):
-    """Pre-norm Transformer block: LayerNorm -> Attention -> residual,
-                                   LayerNorm -> FFN -> residual."""
+    """Pre-norm Transformer block."""
 
     def __init__(self, d_model: int, n_heads: int, d_ff: int, dropout: float = 0.1):
         super().__init__()
@@ -217,7 +200,12 @@ class TransformerBlock(nn.Module):
         self.norm2 = nn.LayerNorm(d_model)
         self.ff    = FeedForward(d_model, d_ff, dropout)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, return_attn: bool = False):
+        if return_attn:
+            attn_out, attn_weights = self.attn(self.norm1(x), return_attn=True)
+            x = x + attn_out
+            x = x + self.ff(self.norm2(x))
+            return x, attn_weights
         x = x + self.attn(self.norm1(x))
         x = x + self.ff(self.norm2(x))
         return x
@@ -227,7 +215,6 @@ class TransformerBlock(nn.Module):
         x: torch.Tensor,
         past_kv: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
     ) -> Tuple[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
-        """Pre-norm block with KV cache for incremental decoding."""
         attn_out, new_kv = self.attn.forward_with_kv_cache(self.norm1(x), past_kv)
         x = x + attn_out
         x = x + self.ff(self.norm2(x))
@@ -240,37 +227,17 @@ class TransformerBlock(nn.Module):
 
 class COCONUTTransformer(nn.Module):
     """
-    COCONUT Q-Learning Transformer.
+    COCONUT Q-Learning Transformer (two-phase per-round layout).
 
-    Architecture
-    ------------
-    1. Token embedding  + position embedding
-    2. Reward scalar injection at TOK_R positions via reward_proj
-    3. 4x TransformerBlock (pre-norm, causal)
-    4. Final LayerNorm
-    5. action_head : hidden[select_positions] -> [B, n_sel, n_actions] logits
-
-    The model has a SINGLE output head (action_head). It has no explicit
-    Q-value head — Q-value tracking must emerge implicitly in the COCONUT
-    continuous thought state.
-
-    Forward inputs
-    --------------
-    input_ids        : [B, T]       long
-    reward_values    : [B, n_r]     float  (actual reward scalars, NOT token IDs)
-    reward_positions : [B, n_r]     long   (positions of TOK_R in input_ids; -1 = pad)
-    select_positions : [B, n_sel]   long   (positions of TOK_SELECT; -1 = pad)
-
-    COCONUT additional inputs
-    -------------------------
-    think_positions  : [B, n_rounds] long  (positions of TOK_THINK; -1 = pad)
-    cot_positions    : [B, n_rounds] long  (positions of TOK_COT; -1 = pad)
-
-    Padding convention
-    ------------------
-    All position tensors use -1 as pad sentinel.  The model clamps negative
-    positions to 0 before gathering (safe because padding is masked out in
-    the loss), and returns zeros for padded slots.
+    Forward inputs (for forward_hao)
+    ---------------------------------
+    input_ids             : [B, T]         long
+    reward_values         : [B, n_r]       float
+    reward_positions      : [B, n_r]       long   (-1 = pad)
+    select_positions      : [B, n_rounds]  long   (-1 = pad)
+    update_positions      : [B, n_rounds]  long   (-1 = pad)
+    thought_positions     : [B, n_rounds, 3] long (-1 = pad / continuous slot unused)
+    continuous_round_mask : [B, n_rounds]  bool   (True = continuous thought round)
     """
 
     def __init__(self, config: COCONUTConfig):
@@ -279,46 +246,35 @@ class COCONUTTransformer(nn.Module):
         self.d_model   = config.d_model
         self.n_actions = config.n_actions
 
-        # Embeddings
-        self.tok_emb  = nn.Embedding(config.vocab_size, config.d_model)
-        self.pos_emb  = nn.Embedding(config.max_seq_len, config.d_model)
-
-        # Continuous reward injection: maps scalar r -> d_model-dim delta
+        self.tok_emb     = nn.Embedding(config.vocab_size, config.d_model)
+        self.pos_emb     = nn.Embedding(config.max_seq_len, config.d_model)
         self.reward_proj = nn.Linear(1, config.d_model, bias=False)
+        self.emb_drop    = nn.Dropout(config.dropout)
 
-        self.emb_drop = nn.Dropout(config.dropout)
-
-        # Transformer blocks
         self.blocks = nn.ModuleList([
             TransformerBlock(config.d_model, config.n_heads, config.d_ff, config.dropout)
             for _ in range(config.n_layers)
         ])
-
         self.final_norm = nn.LayerNorm(config.d_model)
 
-        # Single output head — CE loss on action prediction at SELECT positions
         self.action_head = nn.Linear(config.d_model, config.n_actions)
+        self.thought_head = nn.Linear(config.d_model, config.vocab_size)
 
-        # Explanation head — CE loss on discrete explain tokens (Hao curriculum)
-        self.explain_head = nn.Linear(config.d_model, config.vocab_size)
-
-        # Precompute token ID offsets (mirrors build_vocab in 1_generate_data.py)
-        self._tok_s_start = 2                    # TOK_S[i] = 2 + i
-        self._tok_a_start = 2 + config.n_states  # TOK_A[i] = 2 + n_states + i
-
-        # Teacher COT construction parameters (for forward_teacher_forced)
-        # cot_update_bias: learnable "this is a Q-update COT" signal
-        # eval_vector: direction in d_model space along which Q-values are encoded
+        # Legacy parameters kept for any callers of forward_teacher_forced
+        self._tok_s_start = 2
+        self._tok_a_start = 2 + config.n_states
         self.cot_update_bias = nn.Parameter(torch.empty(config.d_model))
         self.eval_vector     = nn.Parameter(torch.empty(config.d_model))
 
         self._init_weights()
-
-        # Initialize teacher COT params after _init_weights (explicit init overrides)
         nn.init.normal_(self.cot_update_bias, mean=0.0, std=0.02)
         v = torch.randn(config.d_model)
-        v = v / v.norm()
-        self.eval_vector.data.copy_(v)
+        self.eval_vector.data.copy_(v / v.norm())
+
+    @property
+    def explain_head(self):
+        """Backward-compat alias for thought_head (checkpoint key migration)."""
+        return self.thought_head
 
     # ------------------------------------------------------------------
     # Initialisation
@@ -337,53 +293,50 @@ class COCONUTTransformer(nn.Module):
                 nn.init.zeros_(module.bias)
 
     # ------------------------------------------------------------------
-    # Core building blocks: embeddings and transformer passes
+    # Core building blocks
     # ------------------------------------------------------------------
 
     def _embed(
         self,
-        input_ids: torch.Tensor,           # [B, T]
-        reward_values: torch.Tensor,       # [B, n_r]
-        reward_positions: torch.Tensor,    # [B, n_r]
+        input_ids:        torch.Tensor,
+        reward_values:    torch.Tensor,
+        reward_positions: torch.Tensor,
     ) -> torch.Tensor:
-        """Build embeddings with reward scalar injection."""
         B, T = input_ids.shape
         device = input_ids.device
+        positions = torch.arange(T, device=device).unsqueeze(0).expand(B, -1)
+        x = self.tok_emb(input_ids) + self.pos_emb(positions)
 
-        # Token + position embeddings
-        positions = torch.arange(T, device=device).unsqueeze(0).expand(B, -1)  # [B, T]
-        x = self.tok_emb(input_ids) + self.pos_emb(positions)                  # [B, T, d]
-
-        # Inject reward scalars at TOK_R positions
         if reward_values is not None and reward_positions is not None:
             n_r = reward_values.shape[1]
             if n_r > 0:
-                rv = reward_values.unsqueeze(-1).float()        # [B, n_r, 1]
-                deltas = self.reward_proj(rv)                   # [B, n_r, d]
-
-                safe_pos = reward_positions.clamp(min=0)        # [B, n_r]
+                rv = reward_values.unsqueeze(-1).float()
+                deltas = self.reward_proj(rv)
+                safe_pos = reward_positions.clamp(min=0)
                 pos_idx = safe_pos.unsqueeze(-1).expand(-1, -1, self.d_model)
-
                 valid = (reward_positions >= 0).unsqueeze(-1).expand_as(deltas)
                 deltas = deltas * valid.float()
-
                 x = x.scatter_add(1, pos_idx, deltas)
 
         return self.emb_drop(x)
 
     def _run_transformer(self, x: torch.Tensor) -> torch.Tensor:
-        """Run all transformer blocks + final norm."""
         for block in self.blocks:
             x = block(x)
         return self.final_norm(x)
 
-    def _run_blocks_only(self, x: torch.Tensor) -> torch.Tensor:
-        """Run transformer blocks WITHOUT final_norm.
+    def _run_transformer_with_attn(
+        self, x: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        all_attn = []
+        for block in self.blocks:
+            x, attn_w = block(x, return_attn=True)
+            all_attn.append(attn_w)
+        h = self.final_norm(x)
+        return h, torch.stack(all_attn, dim=0)
 
-        Used during COCONUT prefix passes so that injected COT embeddings
-        are raw block outputs — matching the scale of other positions'
-        embeddings going into the final full-sequence pass.
-        """
+    def _run_blocks_only(self, x: torch.Tensor) -> torch.Tensor:
+        """Run blocks WITHOUT final_norm (used for COCONUT prefix passes)."""
         for block in self.blocks:
             x = block(x)
         return x
@@ -393,18 +346,6 @@ class COCONUTTransformer(nn.Module):
         x_new: torch.Tensor,
         past_kvs: Optional[list] = None,
     ) -> Tuple[torch.Tensor, list]:
-        """Run blocks on new tokens only, reusing cached K/V.
-
-        Parameters
-        ----------
-        x_new    : [B, T_new, d] — embeddings for new token(s)
-        past_kvs : list of (past_k, past_v) per layer, or None for cold start
-
-        Returns
-        -------
-        h_new    : [B, T_new, d] — block outputs (no final_norm)
-        new_kvs  : list of (k, v) per layer (past + new concatenated)
-        """
         new_kvs = []
         for i, block in enumerate(self.blocks):
             pkv = past_kvs[i] if past_kvs is not None else None
@@ -412,160 +353,223 @@ class COCONUTTransformer(nn.Module):
             new_kvs.append(kv)
         return x_new, new_kvs
 
-    # ------------------------------------------------------------------
-    # Gather helper
-    # ------------------------------------------------------------------
-
     @staticmethod
     def _gather_at_positions(
-        hidden: torch.Tensor,      # [B, T, d]
-        positions: torch.Tensor,   # [B, n_pos]  — may contain -1 padding
+        hidden: torch.Tensor,
+        positions: torch.Tensor,
     ) -> torch.Tensor:
-        """Extract hidden states at the given positions.
-
-        Negative (padding) positions are clamped to 0; callers must mask
-        the resulting output before computing loss.
-
-        Returns : [B, n_pos, d]
-        """
+        """Extract hidden states at given positions. Pads clamp to 0."""
         B, T, d = hidden.shape
-        safe = positions.clamp(min=0)                      # [B, n_pos]
-        idx  = safe.unsqueeze(-1).expand(-1, -1, d)        # [B, n_pos, d]
-        return hidden.gather(1, idx)                        # [B, n_pos, d]
+        safe = positions.clamp(min=0)
+        idx  = safe.unsqueeze(-1).expand(-1, -1, d)
+        return hidden.gather(1, idx)
 
     # ------------------------------------------------------------------
-    # Teacher COT embedding construction
-    # ------------------------------------------------------------------
-
-    def construct_teacher_cot_embedding(
-        self,
-        st_ids:   torch.Tensor,   # [B] long — permuted state indices (0-based)
-        at_ids:   torch.Tensor,   # [B] long — permuted action indices (0-based)
-        q_values: torch.Tensor,   # [B] float — Q_{t+1}(s_t, a_t)
-    ) -> torch.Tensor:
-        """Build teacher-prescribed COT embeddings for one round.
-
-        Encodes the Q-value update as:
-            id_part  = cot_update_bias + tok_emb(S[st]) + tok_emb(A[at])
-            buf_part = q_value * eval_vector
-            result   = id_part + buf_part   shape [B, d_model]
-
-        This provides the model a structured signal of *what* Q-value was just
-        updated for *which* (s, a) pair, giving Phase A training concrete targets
-        to learn from before Phase B switches to model-generated COT.
-
-        Returns
-        -------
-        teacher_emb : [B, d_model]
-        """
-        # Convert 0-based state/action indices to vocabulary token IDs
-        tok_s_ids = st_ids + self._tok_s_start   # [B]
-        tok_a_ids = at_ids + self._tok_a_start   # [B]
-
-        # Identity part: learnable bias + state embedding + action embedding
-        id_part = (
-            self.cot_update_bias.unsqueeze(0)    # [1, d_model] broadcast to [B, d_model]
-            + self.tok_emb(tok_s_ids)            # [B, d_model]
-            + self.tok_emb(tok_a_ids)            # [B, d_model]
-        )
-
-        # Buffer part: Q-value scalar projected onto the eval_vector direction
-        buf_part = q_values.unsqueeze(-1) * self.eval_vector.unsqueeze(0)  # [B, d_model]
-
-        return id_part + buf_part   # [B, d_model]
-
-    # ------------------------------------------------------------------
-    # Standard forward (single pass — no COCONUT feedback)
-    # Used as baseline / ablation (--no_coconut flag in training/eval)
+    # Standard forward (no COCONUT feedback) — baseline / ablation
     # ------------------------------------------------------------------
 
     def forward(
         self,
-        input_ids:        torch.Tensor,            # [B, T]
-        reward_values:    Optional[torch.Tensor],  # [B, n_r]
-        reward_positions: Optional[torch.Tensor],  # [B, n_r]
-        select_positions: torch.Tensor,            # [B, n_sel]
+        input_ids:        torch.Tensor,
+        reward_values:    Optional[torch.Tensor],
+        reward_positions: Optional[torch.Tensor],
+        select_positions: torch.Tensor,
     ) -> torch.Tensor:
-        """Single-pass forward. COT tokens use their static learned embedding.
-
-        Returns
-        -------
-        action_logits : [B, n_sel, n_actions]
-        """
         x = self._embed(input_ids, reward_values, reward_positions)
-        h = self._run_transformer(x)   # [B, T, d_model]
-
-        sel_hidden    = self._gather_at_positions(h, select_positions)  # [B, n_sel, d]
-        action_logits = self.action_head(sel_hidden)                     # [B, n_sel, n_actions]
+        h = self._run_transformer(x)
+        sel_hidden    = self._gather_at_positions(h, select_positions)
+        action_logits = self.action_head(sel_hidden)
         return action_logits
 
     # ------------------------------------------------------------------
-    # COCONUT forward (with continuous thought feedback) — corrected
+    # forward_hao — two-phase per-round layout with round-level curriculum
     # ------------------------------------------------------------------
 
-    def forward_coconut(
+    def forward_hao(
         self,
         input_ids:             torch.Tensor,            # [B, T]
         reward_values:         Optional[torch.Tensor],  # [B, n_r]
         reward_positions:      Optional[torch.Tensor],  # [B, n_r]
-        select_positions:      torch.Tensor,            # [B, n_sel]
-        think_positions:       torch.Tensor,            # [B, n_rounds]
-        cot_positions:         torch.Tensor,            # [B, n_rounds]
+        select_positions:      torch.Tensor,            # [B, n_rounds]
+        update_positions:      torch.Tensor,            # [B, n_rounds]
+        thought_positions:     torch.Tensor,            # [B, n_rounds, 3]
+        continuous_round_mask: torch.Tensor,            # [B, n_rounds] bool
         return_hidden:         bool = False,
+        return_attention:      bool = False,
         truncate_bptt_window:  int  = 5,
     ):
-        """COCONUT forward pass with continuous thought feedback.
+        """Two-phase COCONUT forward with round-level continuous/discrete curriculum.
 
-        For each round r, runs the transformer blocks (WITHOUT final_norm)
-        on the prefix up to the THINK position, then injects the hidden state
-        at THINK into the COT position. This corrects the distribution mismatch
-        bug in the previous version (which applied final_norm during prefix passes,
-        making injected embeddings out of distribution with other positions).
+        For discrete rounds: tokens are embedded normally; thought_logits extracted
+        from the 3 thought positions after the final transformer pass.
 
-        After all rounds, a single full-sequence pass through blocks + final_norm
-        produces the final hidden states used for action prediction.
+        For continuous rounds: the hidden state at TOK_UPDATE (Phase 2 workspace
+        end) is extracted via _run_blocks_only on the prefix, then injected into
+        the single TOK_COT slot (thought_positions[:, r, 0]). Positions 1 and 2
+        of thought_positions are -1 for continuous rounds.
 
         Parameters
         ----------
-        return_hidden : if True, return (action_logits, h_final) so the caller
-                        can extract hidden states at arbitrary positions
-                        (needed for Q-value probing in evaluation).
+        continuous_round_mask : [B, n_rounds] bool
+            True  = this round uses 1 continuous COT token (TOK_COT injection)
+            False = this round uses 3 discrete thought tokens (supervised)
 
         Returns
         -------
-        action_logits : [B, n_sel, n_actions]
-        h_final       : [B, T, d_model]  (only if return_hidden=True)
+        action_logits  : [B, n_rounds, n_actions]
+        thought_logits : [B, n_rounds, 3, vocab_size]  — zero-filled for continuous rounds
+        h_final        : [B, T, d_model]               (only if return_hidden=True)
+        all_attn       : [L, B, H, T, T]               (only if return_attention=True and all discrete)
         """
         B, T = input_ids.shape
-        n_rounds = think_positions.shape[1]
+        n_rounds = select_positions.shape[1]
 
-        # Step 1: Compute all embeddings (token + position + reward injection).
-        # COT positions initially hold the learned TOK_COT token embedding;
-        # we overwrite them sequentially in the loop below.
-        x = self._embed(input_ids, reward_values, reward_positions).clone()  # [B, T, d]
+        # ---- Fast path: all rounds discrete ----
+        if not continuous_round_mask.any():
+            x = self._embed(input_ids, reward_values, reward_positions)
+            if return_attention:
+                h, all_attn = self._run_transformer_with_attn(x)
+            else:
+                h = self._run_transformer(x)
+                all_attn = None
 
-        # Step 2: Sequential round-by-round COCONUT feedback.
-        # For each round, run blocks (NOT final_norm) on the prefix up to THINK,
-        # extract the hidden state at THINK, inject it into COT.
+            sel_h = self._gather_at_positions(h, select_positions)
+            action_logits = self.action_head(sel_h)
+
+            tp_flat = thought_positions.view(B, -1)         # [B, n_rounds*3]
+            # clamp -1 positions to 0; loss mask handles them
+            tp_safe = tp_flat.clamp(min=0)
+            th_h = self._gather_at_positions(h, tp_safe)    # [B, n_rounds*3, d]
+            th_h = th_h.view(B, n_rounds, 3, self.d_model)
+            thought_logits = self.thought_head(th_h)        # [B, n_rounds, 3, V]
+
+            outs = (action_logits, thought_logits)
+            if return_hidden and return_attention:
+                return outs + (h, all_attn)
+            if return_hidden:
+                return outs + (h,)
+            if return_attention:
+                return outs + (all_attn,)
+            return outs
+
+        # ---- COCONUT path: some rounds are continuous ----
+        x = self._embed(input_ids, reward_values, reward_positions).clone()
+
+        kv_cache = None
+        cache_end = 0
+
         for r in range(n_rounds):
-            think_pos_r = think_positions[:, r]   # [B]
-            cot_pos_r   = cot_positions[:, r]     # [B]
-            valid = (cot_pos_r >= 0)              # [B] — False for padding rounds
+            upd_pos_r  = update_positions[:, r]        # [B]
+            cot_pos_r  = thought_positions[:, r, 0]    # [B] — COT slot for continuous rounds
+            is_cont_r  = continuous_round_mask[:, r]   # [B] bool
+            valid      = (upd_pos_r >= 0)
 
             if not valid.any():
-                break  # all remaining rounds are padding
+                break
 
-            # Run transformer blocks (WITHOUT final_norm) on prefix up to
-            # and including the THINK position. Causal mask is generated
-            # dynamically from seq_len, so variable-length prefixes work correctly.
+            # Only process continuous rounds in this loop
+            cont_valid = valid & is_cont_r
+            if not cont_valid.any():
+                # All valid rounds this iteration are discrete — advance cache to
+                # the last update position so we stay in sync.
+                max_upd = int(upd_pos_r[valid].max().item()) + 1
+                if max_upd > cache_end:
+                    detach = (r < n_rounds - truncate_bptt_window)
+                    new_x = x[:, cache_end:max_upd, :]
+                    if detach:
+                        new_x = new_x.detach()
+                    _, kv_cache = self._run_blocks_cached(new_x, kv_cache)
+                    cache_end = max_upd
+                continue
+
+            detach = (r < n_rounds - truncate_bptt_window)
+
+            # Feed tokens up to (and including) the update position
+            max_upd = int(upd_pos_r[valid].max().item()) + 1
+            if max_upd > cache_end:
+                new_x = x[:, cache_end:max_upd, :]
+                if detach:
+                    new_x = new_x.detach()
+                h_new, kv_cache = self._run_blocks_cached(new_x, kv_cache)
+                cache_end = max_upd
+                h_upd = h_new[:, -1, :]  # hidden at update position [B, d]
+            else:
+                # Already cached up to here — run on the single update token
+                upd_x = x[:, max_upd - 1:max_upd, :]
+                if detach:
+                    upd_x = upd_x.detach()
+                h_new, kv_cache = self._run_blocks_cached(upd_x, kv_cache)
+                h_upd = h_new[:, -1, :]
+
+            # Inject hidden state at TOK_UPDATE into the COT position
+            cont_bs  = cont_valid.nonzero(as_tuple=True)[0]  # [n_cont]
+            tgt_pos  = cot_pos_r[cont_bs].long()              # [n_cont]
+            src_vals = h_upd[cont_bs]                         # [n_cont, d]
+            if detach:
+                src_vals = src_vals.detach()
+            x = torch.index_put(x, (cont_bs, tgt_pos), src_vals)
+
+            # Feed the injected COT token through the cache
+            max_cot = int(cot_pos_r[cont_valid].max().item()) + 1
+            if max_cot > cache_end:
+                ct_x = x[:, cache_end:max_cot, :]
+                if detach:
+                    ct_x = ct_x.detach()
+                _, kv_cache = self._run_blocks_cached(ct_x, kv_cache)
+                cache_end = max_cot
+
+        # Final full-sequence pass
+        h_final = self._run_transformer(x)
+
+        # Action logits at SELECT positions
+        sel_h = self._gather_at_positions(h_final, select_positions)
+        action_logits = self.action_head(sel_h)
+
+        # Thought logits: gather at all thought positions
+        # For continuous rounds, thought_positions[:,r,1] and [:,r,2] are -1;
+        # they get clamped to 0 here — loss masking in compute_hao_loss handles exclusion.
+        tp_flat = thought_positions.view(B, -1).clamp(min=0)
+        th_h = self._gather_at_positions(h_final, tp_flat)
+        th_h = th_h.view(B, n_rounds, 3, self.d_model)
+        thought_logits = self.thought_head(th_h)
+
+        # Zero out thought logits for continuous rounds (no loss there)
+        cont_mask_exp = continuous_round_mask.unsqueeze(-1).unsqueeze(-1)  # [B, R, 1, 1]
+        thought_logits = thought_logits * (~cont_mask_exp).float()
+
+        outs = (action_logits, thought_logits)
+        if return_hidden:
+            outs = outs + (h_final,)
+        return outs
+
+    # ------------------------------------------------------------------
+    # COCONUT forward (legacy; kept for ablation / reference)
+    # ------------------------------------------------------------------
+
+    def forward_coconut(
+        self,
+        input_ids:             torch.Tensor,
+        reward_values:         Optional[torch.Tensor],
+        reward_positions:      Optional[torch.Tensor],
+        select_positions:      torch.Tensor,
+        think_positions:       torch.Tensor,
+        cot_positions:         torch.Tensor,
+        return_hidden:         bool = False,
+        truncate_bptt_window:  int  = 5,
+    ):
+        """Legacy COCONUT forward for backward compatibility (old single-COT layout)."""
+        B, T = input_ids.shape
+        n_rounds = think_positions.shape[1]
+        x = self._embed(input_ids, reward_values, reward_positions).clone()
+
+        for r in range(n_rounds):
+            think_pos_r = think_positions[:, r]
+            cot_pos_r   = cot_positions[:, r]
+            valid = (cot_pos_r >= 0)
+            if not valid.any():
+                break
             max_prefix = int(think_pos_r[valid].max().item()) + 1
-            h = self._run_blocks_only(x[:, :max_prefix, :].clone())  # [B, max_prefix, d]
-
-            # Inject hidden state at THINK into COT position.
-            # Truncated BPTT: only the last `truncate_bptt_window` rounds keep
-            # live gradients; earlier rounds are detached to keep the graph shallow.
-            # When n_rounds <= truncate_bptt_window (early curriculum), all rounds
-            # have live gradients since the detach condition is never true.
+            h = self._run_blocks_only(x[:, :max_prefix, :].clone())
             for b in range(B):
                 if valid[b]:
                     t_pos = int(think_pos_r[b].item())
@@ -575,211 +579,49 @@ class COCONUTTransformer(nn.Module):
                     else:
                         x[b, c_pos, :] = h[b, t_pos, :]
 
-        # Step 3: Final full-sequence forward pass with COT embeddings injected.
-        # Uses _run_transformer (blocks + final_norm) for the complete hidden states.
-        h_final = self._run_transformer(x)  # [B, T, d]
-
-        # Step 4: Extract action logits at SELECT positions.
-        sel_hidden    = self._gather_at_positions(h_final, select_positions)  # [B, n_sel, d]
-        action_logits = self.action_head(sel_hidden)                           # [B, n_sel, n_actions]
+        h_final = self._run_transformer(x)
+        sel_hidden    = self._gather_at_positions(h_final, select_positions)
+        action_logits = self.action_head(sel_hidden)
 
         if return_hidden:
             return action_logits, h_final
         return action_logits
 
     # ------------------------------------------------------------------
-    # Teacher-forced forward (Phase A training — single pass, no recurrence)
+    # Teacher-forced forward (deprecated; left for reference)
     # ------------------------------------------------------------------
 
-    def forward_teacher_forced(
+    def construct_teacher_cot_embedding(
         self,
-        input_ids:              torch.Tensor,            # [B, T]
-        reward_values:          Optional[torch.Tensor],  # [B, n_r]
-        reward_positions:       Optional[torch.Tensor],  # [B, n_r]
-        select_positions:       torch.Tensor,            # [B, n_sel]
-        cot_positions:          torch.Tensor,            # [B, n_rounds]
-        teacher_cot_embeddings: torch.Tensor,            # [B, n_rounds, d_model]
+        st_ids:   torch.Tensor,
+        at_ids:   torch.Tensor,
+        q_values: torch.Tensor,
     ) -> torch.Tensor:
-        """Teacher-forced COCONUT forward pass.
+        import warnings
+        warnings.warn(
+            "construct_teacher_cot_embedding is deprecated in the two-phase layout.",
+            DeprecationWarning, stacklevel=2,
+        )
+        tok_s_ids = st_ids + self._tok_s_start
+        tok_a_ids = at_ids + self._tok_a_start
+        id_part = (
+            self.cot_update_bias.unsqueeze(0)
+            + self.tok_emb(tok_s_ids)
+            + self.tok_emb(tok_a_ids)
+        )
+        buf_part = q_values.unsqueeze(-1) * self.eval_vector.unsqueeze(0)
+        return id_part + buf_part
 
-        Instead of running sequential prefix passes to produce COT embeddings,
-        directly injects pre-computed teacher_cot_embeddings at each COT position.
-        Then does a single full-sequence transformer pass.
-
-        This is O(1) forward passes (vs O(n_rounds) for forward_coconut), giving
-        ~5–8x speedup for Phase A training. Gradients flow through the injected
-        teacher embeddings back into construct_teacher_cot_embedding's parameters
-        (cot_update_bias, eval_vector, tok_emb for the s/a tokens).
-
-        Parameters
-        ----------
-        teacher_cot_embeddings : [B, n_rounds, d_model]  — from construct_teacher_cot_embedding
-
-        Returns
-        -------
-        action_logits : [B, n_sel, n_actions]
-        """
-        B = input_ids.shape[0]
-        n_rounds = cot_positions.shape[1]
-
-        # Build full embeddings (token + position + reward injection)
-        x = self._embed(input_ids, reward_values, reward_positions).clone()  # [B, T, d]
-
-        # Overwrite COT positions with teacher embeddings
-        for r in range(n_rounds):
-            cot_pos_r = cot_positions[:, r]   # [B]
-            valid = (cot_pos_r >= 0)          # [B]
-            for b in range(B):
-                if valid[b]:
-                    c_pos = int(cot_pos_r[b].item())
-                    x[b, c_pos, :] = teacher_cot_embeddings[b, r, :]
-
-        # Single full-sequence forward pass (blocks + final_norm)
-        h = self._run_transformer(x)          # [B, T, d]
-
-        # Extract action logits at SELECT positions
-        sel_hidden    = self._gather_at_positions(h, select_positions)  # [B, n_sel, d]
-        action_logits = self.action_head(sel_hidden)                     # [B, n_sel, n_actions]
-        return action_logits
-
-    # ------------------------------------------------------------------
-    # Hao-style forward (mixed discrete/continuous explanation tokens)
-    # ------------------------------------------------------------------
-
-    def forward_hao(
-        self,
-        input_ids:             torch.Tensor,            # [B, T]
-        reward_values:         Optional[torch.Tensor],  # [B, n_r]
-        reward_positions:      Optional[torch.Tensor],  # [B, n_r]
-        select_positions:      torch.Tensor,            # [B, n_sel]
-        think_positions:       torch.Tensor,            # [B, n_rounds]
-        explain_positions:     torch.Tensor,            # [B, n_rounds, 3]
-        n_continuous:          int,                      # 0, 1, 2, or 3
-        return_hidden:         bool = False,
-        truncate_bptt_window:  int  = 5,
-    ):
-        """Hao-style forward with progressive discrete->continuous explanation.
-
-        Each round has 3 explanation token positions. The first (3-n_continuous)
-        are discrete tokens with standard embeddings; the last n_continuous are
-        continuous thoughts produced via COCONUT hidden-state feedback.
-
-        Uses KV caching for the COCONUT injection loop to avoid recomputing the
-        full prefix for each continuous thought. After all injections, a final
-        full-sequence pass through blocks+final_norm produces the hidden states
-        used for action prediction and explanation logits.
-
-        Parameters
-        ----------
-        explain_positions : [B, n_rounds, 3] — positions of the 3 explain tokens
-        n_continuous      : how many of the 3 are continuous (0=fully discrete)
-        return_hidden     : if True, also return h_final [B, T, d_model] for probing
-
-        Returns
-        -------
-        action_logits  : [B, n_sel, n_actions]
-        explain_logits : [B, n_rounds, 3, vocab_size]
-        h_final        : [B, T, d_model]  (only if return_hidden=True)
-        """
-        B, T = input_ids.shape
-        n_rounds = think_positions.shape[1]
-        n_discrete = 3 - n_continuous
-
-        # ---- Fast path: fully discrete (Stage 0) ----
-        if n_continuous == 0:
-            x = self._embed(input_ids, reward_values, reward_positions)
-            h = self._run_transformer(x)                                # [B, T, d]
-
-            sel_h = self._gather_at_positions(h, select_positions)      # [B, n_sel, d]
-            action_logits = self.action_head(sel_h)                     # [B, n_sel, n_act]
-
-            ep_flat = explain_positions.view(B, -1)                     # [B, n_rounds*3]
-            exp_h = self._gather_at_positions(h, ep_flat)               # [B, n_rounds*3, d]
-            exp_h = exp_h.view(B, n_rounds, 3, self.d_model)
-            explain_logits = self.explain_head(exp_h)                   # [B, n_rounds, 3, V]
-
-            if return_hidden:
-                return action_logits, explain_logits, h
-            return action_logits, explain_logits
-
-        # ---- COCONUT path: n_continuous > 0 ----
-        # Build embeddings. Continuous positions hold TOK_COT placeholders
-        # which will be overwritten by hidden-state feedback below.
-        x = self._embed(input_ids, reward_values, reward_positions).clone()  # [B, T, d]
-
-        # KV-cached injection loop: incrementally process tokens and inject
-        # continuous thoughts. The cache avoids recomputing the full prefix
-        # each time we need a hidden state for injection.
-        kv_cache = None    # list of (k, v) per layer
-        cache_end = 0      # exclusive end of cached positions
-        h_last = None      # [B, d] — block output at last cached position
-
-        for r in range(n_rounds):
-            think_pos_r = think_positions[:, r]       # [B]
-            exp_pos_r   = explain_positions[:, r, :]  # [B, 3]
-            valid = (think_pos_r >= 0)
-
-            if not valid.any():
-                break
-
-            detach = (r < n_rounds - truncate_bptt_window)
-
-            # --- Feed discrete tokens: everything from cache_end through
-            #     THINK + any discrete explanation tokens ---
-            if n_discrete > 0:
-                feed_to = int(exp_pos_r[valid, n_discrete - 1].max().item()) + 1
-            else:
-                feed_to = int(think_pos_r[valid].max().item()) + 1
-
-            if feed_to > cache_end:
-                new_x = x[:, cache_end:feed_to, :]
-                if detach:
-                    new_x = new_x.detach()
-                h_new, kv_cache = self._run_blocks_cached(new_x, kv_cache)
-                h_last = h_new[:, -1, :]   # [B, d]
-                cache_end = feed_to
-
-            # --- Chain continuous thoughts ---
-            for j in range(n_continuous):
-                exp_idx = n_discrete + j
-                # Inject source hidden into target continuous-thought position.
-                # Use non-inplace index_put to avoid corrupting the autograd
-                # version counter on x, which would break backward().
-                valid_bs  = valid.nonzero(as_tuple=True)[0]          # [n_valid]
-                tgt_pos   = exp_pos_r[valid_bs, exp_idx].long()       # [n_valid]
-                src_vals  = h_last[valid_bs]                          # [n_valid, d]
-                if detach:
-                    src_vals = src_vals.detach()
-                x = torch.index_put(x, (valid_bs, tgt_pos), src_vals)
-
-                # Feed the (now-injected) continuous thought token
-                max_tgt = int(exp_pos_r[valid, exp_idx].max().item()) + 1
-                ct_x = x[:, cache_end:max_tgt, :]
-                if detach:
-                    ct_x = ct_x.detach()
-                h_ct, kv_cache = self._run_blocks_cached(ct_x, kv_cache)
-                h_last = h_ct[:, -1, :]
-                cache_end = max_tgt
-
-        # --- Final full-sequence pass ---
-        # All continuous thought embeddings have been injected into x.
-        # Run full blocks+final_norm to get hidden states at all positions.
-        # (Same pattern as forward_coconut's final step.)
-        h_final = self._run_transformer(x)  # [B, T, d]
-
-        # Extract action logits at SELECT positions
-        sel_h = self._gather_at_positions(h_final, select_positions)
-        action_logits = self.action_head(sel_h)
-
-        # Extract explain logits at all 3 explanation positions per round
-        ep_flat = explain_positions.view(B, -1)
-        exp_h = self._gather_at_positions(h_final, ep_flat)
-        exp_h = exp_h.view(B, n_rounds, 3, self.d_model)
-        explain_logits = self.explain_head(exp_h)
-
-        if return_hidden:
-            return action_logits, explain_logits, h_final
-        return action_logits, explain_logits
+    def forward_teacher_forced(self, *args, **kwargs):
+        import warnings
+        warnings.warn(
+            "forward_teacher_forced is deprecated in the two-phase layout.",
+            DeprecationWarning, stacklevel=2,
+        )
+        raise NotImplementedError(
+            "forward_teacher_forced is not supported in the two-phase layout. "
+            "Use forward_hao instead."
+        )
 
     # ------------------------------------------------------------------
     # Parameter count
@@ -794,12 +636,11 @@ class COCONUTTransformer(nn.Module):
 # ---------------------------------------------------------------------------
 
 def print_model_summary(config: COCONUTConfig) -> None:
-    """Instantiate model, print architecture and parameter counts."""
     model = COCONUTTransformer(config)
     total = model.num_parameters()
 
     print("=" * 60)
-    print("COCONUTTransformer — Architecture Summary")
+    print("COCONUTTransformer — Two-Phase Layout Summary")
     print("=" * 60)
     print(f"  n_states    : {config.n_states}")
     print(f"  n_actions   : {config.n_actions}")
@@ -819,39 +660,66 @@ def print_model_summary(config: COCONUTConfig) -> None:
     print(f"  Total trainable parameters: {total:,}")
     print("=" * 60)
 
-    # Quick forward-pass smoke test
-    B, T, n_r, n_sel, n_rounds = 2, 64, 5, 5, 5
-    dummy_ids    = torch.randint(0, config.vocab_size, (B, T))
-    dummy_rv     = torch.rand(B, n_r)
-    dummy_rp     = torch.randint(0, T - 2, (B, n_r))
-    dummy_sel    = torch.randint(0, T, (B, n_sel))
-    # think_positions must be strictly before cot_positions
-    dummy_think  = torch.sort(torch.randint(1, T - 1, (B, n_rounds)), dim=1).values
-    dummy_cot    = dummy_think + 1
-    # clamp to valid range
-    dummy_cot    = dummy_cot.clamp(max=T - 1)
+    # Smoke test: two-phase forward_hao (all discrete)
+    B, n_rounds = 2, 3
+    # 18 tokens/round (discrete) + 2 prefix = 56 tokens for n_actions=2
+    round_len_disc = 4 + 3 * config.n_actions + 1 + 4 + 3
+    T = 2 + n_rounds * round_len_disc
+
+    dummy_ids  = torch.randint(0, config.vocab_size, (B, T))
+    dummy_rv   = torch.rand(B, n_rounds)
+    dummy_rp   = torch.randint(0, T - 2, (B, n_rounds))
+    dummy_sel  = torch.randint(0, T, (B, n_rounds))
+    dummy_upd  = (dummy_sel + 2).clamp(max=T - 1)
+    dummy_th   = torch.stack([
+        dummy_upd + 1,
+        dummy_upd + 2,
+        dummy_upd + 3,
+    ], dim=-1).clamp(max=T - 1)                              # [B, n_rounds, 3]
+    dummy_mask = torch.zeros(B, n_rounds, dtype=torch.bool)  # all discrete
 
     model.eval()
     with torch.no_grad():
-        # Test standard forward
-        al = model(dummy_ids, dummy_rv, dummy_rp, dummy_sel)
-        # Test COCONUT forward with return_hidden
-        al_coc, h_fin = model.forward_coconut(
-            dummy_ids, dummy_rv, dummy_rp, dummy_sel,
-            dummy_think, dummy_cot, return_hidden=True
+        al, tl = model.forward_hao(
+            input_ids             = dummy_ids,
+            reward_values         = dummy_rv,
+            reward_positions      = dummy_rp,
+            select_positions      = dummy_sel,
+            update_positions      = dummy_upd,
+            thought_positions     = dummy_th,
+            continuous_round_mask = dummy_mask,
         )
 
-    print(f"  Smoke test — standard forward:")
+    print(f"  Smoke test — forward_hao (all discrete):")
     print(f"    input_ids     : {list(dummy_ids.shape)}")
-    print(f"    action_logits : {list(al.shape)}   (expect [B={B}, n_sel={n_sel}, n_actions={config.n_actions}])")
-    print(f"  Smoke test — forward_coconut (return_hidden=True):")
-    print(f"    action_logits : {list(al_coc.shape)}")
-    print(f"    h_final       : {list(h_fin.shape)}  (expect [B={B}, T={T}, d_model={config.d_model}])")
+    print(f"    action_logits : {list(al.shape)}  (expect [{B}, {n_rounds}, {config.n_actions}])")
+    print(f"    thought_logits: {list(tl.shape)}  (expect [{B}, {n_rounds}, 3, {config.vocab_size}])")
+
+    # Smoke test: mixed curriculum (first round continuous)
+    dummy_mask_mixed = torch.zeros(B, n_rounds, dtype=torch.bool)
+    dummy_mask_mixed[:, 0] = True
+    dummy_th_mixed = dummy_th.clone()
+    dummy_th_mixed[:, 0, 1] = -1   # continuous round: only slot 0 valid
+    dummy_th_mixed[:, 0, 2] = -1
+
+    with torch.no_grad():
+        al2, tl2 = model.forward_hao(
+            input_ids             = dummy_ids,
+            reward_values         = dummy_rv,
+            reward_positions      = dummy_rp,
+            select_positions      = dummy_sel,
+            update_positions      = dummy_upd,
+            thought_positions     = dummy_th_mixed,
+            continuous_round_mask = dummy_mask_mixed,
+        )
+    print(f"  Smoke test — forward_hao (mixed: round 0 continuous):")
+    print(f"    action_logits : {list(al2.shape)}")
+    print(f"    thought_logits: {list(tl2.shape)}")
     print("=" * 60)
 
 
 # ---------------------------------------------------------------------------
-# Main (prints model summary when run directly)
+# Main
 # ---------------------------------------------------------------------------
 
 if __name__ == '__main__':

@@ -2,10 +2,10 @@
 """
 1_generate_data.py — Adversarial Environment & Data Generator
 
-Generates 50,000 Q-learning trajectories formatted as strict COCONUT sequences
+Generates 50,000 Q-learning trajectories formatted as two-phase COCONUT sequences
 and saves them to data/coconut_dataset.pt.
 
-Vocabulary layout (vocab_size = 2 + n_states + n_actions + 5):
+Vocabulary layout (vocab_size = 2 + n_states + n_actions + 9):
     TOK_NULL   = 0
     TOK_START  = 1
     TOK_S      = [2, ..., 2 + n_states - 1]
@@ -13,33 +13,48 @@ Vocabulary layout (vocab_size = 2 + n_states + n_actions + 5):
     TOK_R      = 2 + n_states + n_actions        (float value stored separately)
     TOK_EVAL   = TOK_R + 1
     TOK_SELECT = TOK_R + 2
-    TOK_THINK  = TOK_R + 3  (unsupervised "thinking" token; hidden state extracted here)
+    TOK_THINK  = TOK_R + 3  (legacy; never placed in new sequences)
     TOK_COT    = TOK_R + 4  (continuous thought placeholder; embedding overwritten at runtime)
+    TOK_UPDATE = TOK_R + 5  (Phase 2 workspace end marker; no loss)
+    TOK_QCURR  = TOK_R + 6  (scaffold; no loss)
+    TOK_QNEXT  = TOK_R + 7  (scaffold; no loss)
+    TOK_ANEXT  = TOK_R + 8  (a_{t+1} echo scaffold; no loss)
 
-Per-round COCONUT sequence (for n_actions=2, round_len=13 tokens):
+Per-round TWO-PHASE sequence (for n_actions=2, round_len=18 tokens discrete):
+
+  Phase 1 — action selection (always supervised at TOK_SELECT):
     s_t, a_t, TOK_R, s_{t+1},
     s_{t+1}, a_0, TOK_EVAL,
     s_{t+1}, a_1, TOK_EVAL,
-    TOK_SELECT,
-    TOK_THINK, TOK_COT
+    TOK_SELECT
+
+  Phase 2 — TD update workspace (scaffold + discrete thought block):
+    TOK_ANEXT, TOK_QCURR, TOK_QNEXT, TOK_UPDATE,
+    TOK_S[s_t], TOK_A[a_t], TOK_QBIN[0]  ← placeholder; real Q_bin computed at collation
+
+Continuous rounds (emitted by 3_train.py collate) replace the 3-token thought block
+with 1 TOK_COT, giving 16 tokens per round instead of 18.
 
 Full episode:
     [TOK_NULL, TOK_START, round_0, round_1, ..., round_{T-1}]
 
 Output per sequence:
-    input_ids        : List[int]    — full token sequence
+    input_ids        : List[int]    — full token sequence (18 tokens/round, all discrete)
     reward_values    : List[float]  — actual r per step (not binned)
     reward_positions : List[int]    — positions of TOK_R in input_ids
     select_positions : List[int]    — positions of TOK_SELECT tokens
     select_targets   : List[int]    — greedy action at s_{t+1} after TD update (CE target)
-    think_positions  : List[int]    — positions of TOK_THINK tokens (for COCONUT extraction)
-    cot_positions    : List[int]    — positions of TOK_COT tokens (continuous thought placeholders)
+    a_next_positions : List[int]    — positions of TOK_ANEXT tokens
+    q_curr_positions : List[int]    — positions of TOK_QCURR tokens
+    q_next_positions : List[int]    — positions of TOK_QNEXT tokens
+    update_positions : List[int]    — positions of TOK_UPDATE tokens
+    thought_positions: List[List[int]] — [pos0, pos1, pos2] per round (the 3-token thought block)
+    q_values_for_cot : List[dict]   — {st, at, q_new} per step (for Q_bin at collation time)
     n_steps          : int
 """
 
 import argparse
 import os
-import sys
 from typing import Dict, List, Tuple
 
 import numpy as np
@@ -51,7 +66,7 @@ import torch
 # ---------------------------------------------------------------------------
 
 def build_vocab(n_states: int, n_actions: int) -> Dict[str, object]:
-    """Build vocabulary token ID constants for the COCONUT sequence format."""
+    """Build vocabulary token ID constants for the two-phase COCONUT sequence format."""
     TOK_NULL   = 0
     TOK_START  = 1
     TOK_S      = list(range(2, 2 + n_states))
@@ -59,9 +74,13 @@ def build_vocab(n_states: int, n_actions: int) -> Dict[str, object]:
     TOK_R      = 2 + n_states + n_actions
     TOK_EVAL   = TOK_R + 1
     TOK_SELECT = TOK_R + 2
-    TOK_THINK  = TOK_R + 3
-    TOK_COT    = TOK_R + 4
-    vocab_size = 2 + n_states + n_actions + 5
+    TOK_THINK  = TOK_R + 3  # legacy; never placed in new sequences
+    TOK_COT    = TOK_R + 4  # continuous thought placeholder
+    TOK_UPDATE = TOK_R + 5  # Phase 2 workspace end marker
+    TOK_QCURR  = TOK_R + 6  # scaffold (no loss)
+    TOK_QNEXT  = TOK_R + 7  # scaffold (no loss)
+    TOK_ANEXT  = TOK_R + 8  # a_{t+1} echo scaffold (no loss)
+    vocab_size = 2 + n_states + n_actions + 9
     return {
         'TOK_NULL':   TOK_NULL,
         'TOK_START':  TOK_START,
@@ -72,6 +91,10 @@ def build_vocab(n_states: int, n_actions: int) -> Dict[str, object]:
         'TOK_SELECT': TOK_SELECT,
         'TOK_THINK':  TOK_THINK,
         'TOK_COT':    TOK_COT,
+        'TOK_UPDATE': TOK_UPDATE,
+        'TOK_QCURR':  TOK_QCURR,
+        'TOK_QNEXT':  TOK_QNEXT,
+        'TOK_ANEXT':  TOK_ANEXT,
         'vocab_size': vocab_size,
     }
 
@@ -100,13 +123,9 @@ def generate_random_mdp(
     if rng is None:
         rng = np.random.default_rng()
 
-    # Dirichlet(alpha=1) = uniform over simplex
     P = rng.dirichlet(alpha=np.ones(n_states), size=(n_states, n_actions))
-    # P[s, a, :] sums to 1; shape (n_states, n_actions, n_states)
-
     R = rng.beta(2.0, 2.0, size=(n_states, n_actions)).astype(np.float32)
     R = np.clip(R, 0.0, 1.0)
-
     P = P.astype(np.float32)
     return P, R
 
@@ -138,8 +157,7 @@ def generate_episode(
     n_steps       : episode length (number of Bellman updates)
     alpha, gamma  : Q-learning hyperparameters
     epsilon       : exploration rate for ε-greedy behavior policy
-    q_init        : initial value for all Q-table entries (0 = neutral, >0 = optimistic,
-                    <0 = pessimistic); sampled per trajectory by the caller
+    q_init        : initial value for all Q-table entries
     rng           : numpy random Generator
 
     Returns
@@ -148,12 +166,13 @@ def generate_episode(
         states, actions, rewards, next_states : List[int/float], length n_steps
         next_actions : List[int], length n_steps  (greedy action at s_{t+1} after TD update)
         q_snapshots  : List[np.ndarray]  Q-table AFTER each update, (n_states, n_actions)
+        q_values_for_cot : List[dict]  {st, at, q_new} per step
     """
     if rng is None:
         rng = np.random.default_rng()
 
     Q = np.full((n_states, n_actions), q_init, dtype=np.float32)
-    s = int(rng.integers(n_states))  # random start state
+    s = int(rng.integers(n_states))
 
     states           = []
     actions          = []
@@ -161,11 +180,10 @@ def generate_episode(
     next_states      = []
     next_actions     = []
     q_snapshots      = []
-    q_before_updates = []   # Q-table BEFORE the TD update at each step
-    q_values_for_cot = []   # post-update Q(s_t, a_t) with (s_t, a_t) indices
+    q_before_updates = []
+    q_values_for_cot = []
 
     for _ in range(n_steps):
-        # ε-greedy behavior policy
         if rng.random() < epsilon:
             a = int(rng.integers(n_actions))
         else:
@@ -173,19 +191,14 @@ def generate_episode(
             ties = [ac for ac in range(n_actions) if Q[s, ac] == best]
             a = int(rng.choice(ties))
 
-        # Environment step: deterministic reward, stochastic transition
         r = float(R[s, a])
         s_next = int(rng.choice(n_states, p=P[s, a]))
 
-        # Capture Q BEFORE the TD update
         q_before = Q.copy()
 
-        # Q-learning update (off-policy: uses greedy max over s_next)
         max_q_next = float(np.max(Q[s_next]))
         Q[s, a] = (1.0 - alpha) * Q[s, a] + alpha * (r + gamma * max_q_next)
 
-        # SELECT target = greedy action at s_{t+1} (NOT ε-greedy).
-        # The model learns to predict the optimal action, not the exploratory one.
         best_next = float(np.max(Q[s_next]))
         ties_next = [ac for ac in range(n_actions) if Q[s_next, ac] == best_next]
         a_next = int(rng.choice(ties_next))
@@ -196,8 +209,6 @@ def generate_episode(
         next_states.append(s_next)
         next_actions.append(a_next)
         q_snapshots.append(Q.copy())
-
-        # New: store pre-update Q-table and post-update Q(s_t, a_t) for COT scaffolding
         q_before_updates.append(q_before)
         q_values_for_cot.append({'st': s, 'at': a, 'q_new': float(Q[s, a])})
 
@@ -209,9 +220,9 @@ def generate_episode(
         'rewards':          rewards,
         'next_states':      next_states,
         'next_actions':     next_actions,
-        'q_snapshots':      q_snapshots,      # List of (n_states, n_actions) arrays, AFTER update
-        'q_before_updates': q_before_updates, # List of (n_states, n_actions) arrays, BEFORE update
-        'q_values_for_cot': q_values_for_cot, # List of {'st', 'at', 'q_new'} per step
+        'q_snapshots':      q_snapshots,
+        'q_before_updates': q_before_updates,
+        'q_values_for_cot': q_values_for_cot,
     }
 
 
@@ -225,18 +236,10 @@ def apply_permutations(
     n_actions: int,
     rng: np.random.Generator,
 ) -> Dict:
-    """Randomly relabel state and action integers in-place.
+    """Randomly relabel state and action integers in-place."""
+    perm_s = rng.permutation(n_states)
+    perm_a = rng.permutation(n_actions)
 
-    Shuffles the integer labels of states AND actions so the model cannot
-    memorize specific state/action indices. Also permutes Q-table rows/columns
-    to match the new labeling.
-
-    Returns a new episode dict with permuted fields.
-    """
-    perm_s = rng.permutation(n_states)   # perm_s[old_state] = new_state
-    perm_a = rng.permutation(n_actions)  # perm_a[old_action] = new_action
-
-    # Inverse permutation for Q-table reordering
     inv_s = np.argsort(perm_s)
     inv_a = np.argsort(perm_a)
 
@@ -245,18 +248,15 @@ def apply_permutations(
     new_next_states  = [int(perm_s[s])        for s in episode['next_states']]
     new_next_actions = [int(perm_a[a])        for a in episode['next_actions']]
 
-    # Permute Q-table: Q_new[perm_s[s], perm_a[a]] = Q_old[s, a]
     new_q_snapshots = []
     for Q in episode['q_snapshots']:
-        Q_new = Q[np.ix_(inv_s, inv_a)]   # reindex rows then cols
+        Q_new = Q[np.ix_(inv_s, inv_a)]
         new_q_snapshots.append(Q_new)
 
-    # Permute q_before_updates (same logic as q_snapshots)
     new_q_before_updates = []
     for Q in episode.get('q_before_updates', []):
         new_q_before_updates.append(Q[np.ix_(inv_s, inv_a)])
 
-    # Permute q_values_for_cot: remap st and at indices; q_new scalar is invariant
     new_q_values_for_cot = []
     for entry in episode.get('q_values_for_cot', []):
         new_q_values_for_cot.append({
@@ -280,36 +280,38 @@ def apply_permutations(
 
 
 # ---------------------------------------------------------------------------
-# COCONUT sequence builder
+# Two-phase COCONUT sequence builder
 # ---------------------------------------------------------------------------
 
 def build_coconut_sequence(
     episode: Dict,
-    n_states: int,
+    n_states: int,  # noqa: kept for API compat
     n_actions: int,
     vocab: Dict,
 ) -> Dict:
-    """Convert a raw episode trajectory to a COCONUT token sequence.
+    """Convert a raw episode trajectory to a two-phase COCONUT token sequence.
 
-    Per-round structure:
+    Always emits the discrete form (18 tokens/round for n_actions=2). The
+    continuous form (16 tokens/round) is constructed at collation time by
+    3_train.py's build_mixed_sequence, which replaces the 3-token thought block
+    with 1 TOK_COT for rounds designated continuous by the curriculum mask.
+
+    Per-round structure (discrete, n_actions=2):
+      Phase 1 (11 tokens):
         s_t, a_t, TOK_R, s_{t+1},
-        [s_{t+1}, a_c, TOK_EVAL] for c in 0..n_actions-1,
-        TOK_SELECT,
-        TOK_THINK, TOK_COT
+        s_{t+1}, a_0, TOK_EVAL,
+        s_{t+1}, a_1, TOK_EVAL,
+        TOK_SELECT
+      Phase 2 (7 tokens):
+        TOK_ANEXT, TOK_QCURR, TOK_QNEXT, TOK_UPDATE,
+        TOK_S[s_t], TOK_A[a_t], TOK_QBIN[0]   ← Q_bin placeholder
 
-    round_len = 4 + 3*n_actions + 3  tokens  (13 for n_actions=2)
+    round_len_discrete  = 4 + 3*n_actions + 1 + 4 + 3 = 12 + 3*n_actions
+    round_len_continuous = 4 + 3*n_actions + 1 + 4 + 1 = 10 + 3*n_actions
 
-    The TOK_R position carries the reward as a *discrete token ID* but the
-    actual float reward is stored in `reward_values` at the matching index.
-
-    TOK_SELECT is the ONLY supervised position. The target is the greedy
-    action at s_{t+1} after the TD update — argmax Q(s_{t+1}, ·).
-
-    TOK_THINK is an unsupervised processing token. No loss is applied here.
-    Its hidden state is extracted and injected into TOK_COT for COCONUT feedback.
-
-    TOK_COT is the continuous thought placeholder. Its embedding is overwritten
-    at runtime with the hidden state from TOK_THINK.
+    TOK_SELECT is the ONLY supervised Phase 1 position. Target = greedy a_{t+1}.
+    TOK_ANEXT, TOK_QCURR, TOK_QNEXT, TOK_UPDATE are scaffold tokens (no loss).
+    The 3-token thought block [s_t, a_t, Q_bin] is supervised in discrete rounds.
 
     Returns
     -------
@@ -319,8 +321,12 @@ def build_coconut_sequence(
         reward_positions : List[int]
         select_positions : List[int]
         select_targets   : List[int]
-        think_positions  : List[int]
-        cot_positions    : List[int]
+        a_next_positions : List[int]
+        q_curr_positions : List[int]
+        q_next_positions : List[int]
+        update_positions : List[int]
+        thought_positions: List[List[int]]  — [[p0,p1,p2], ...] per round
+        q_values_for_cot : List[dict]       — {st, at, q_new} per round
         n_steps          : int
     """
     TOK_S      = vocab['TOK_S']
@@ -328,16 +334,21 @@ def build_coconut_sequence(
     TOK_R      = vocab['TOK_R']
     TOK_EVAL   = vocab['TOK_EVAL']
     TOK_SELECT = vocab['TOK_SELECT']
-    TOK_THINK  = vocab['TOK_THINK']
-    TOK_COT    = vocab['TOK_COT']
+    TOK_ANEXT  = vocab['TOK_ANEXT']
+    TOK_QCURR  = vocab['TOK_QCURR']
+    TOK_QNEXT  = vocab['TOK_QNEXT']
+    TOK_UPDATE = vocab['TOK_UPDATE']
 
     ids               = [vocab['TOK_NULL'], vocab['TOK_START']]
     reward_values     : List[float] = []
     reward_positions  : List[int]   = []
     select_positions  : List[int]   = []
     select_targets    : List[int]   = []
-    think_positions   : List[int]   = []
-    cot_positions     : List[int]   = []
+    a_next_positions  : List[int]   = []
+    q_curr_positions  : List[int]   = []
+    q_next_positions  : List[int]   = []
+    update_positions  : List[int]   = []
+    thought_positions : List[List[int]] = []
 
     n_steps   = episode['n_steps'] if 'n_steps' in episode else len(episode['states'])
     states    = episode['states']
@@ -345,6 +356,7 @@ def build_coconut_sequence(
     rewards   = episode['rewards']
     nxt_s     = episode['next_states']
     nxt_a     = episode['next_actions']
+    qvc       = episode.get('q_values_for_cot', [])
 
     for t in range(n_steps):
         s   = states[t]
@@ -353,51 +365,78 @@ def build_coconut_sequence(
         s_p = nxt_s[t]
         a_p = nxt_a[t]
 
+        # ---- Phase 1: action selection ----
+
         # s_t
         ids.append(TOK_S[s])
         # a_t
         ids.append(TOK_A[a])
-        # reward (token ID only; actual float stored separately)
+        # TOK_R (reward; actual float stored in reward_values)
         reward_positions.append(len(ids))
         reward_values.append(r)
         ids.append(TOK_R)
         # s_{t+1}
         ids.append(TOK_S[s_p])
 
-        # Eval blocks: for each candidate action c at s_{t+1}
-        # (structural scaffolding — lets the model evaluate each action)
+        # Eval blocks: [s_{t+1}, a_c, TOK_EVAL] for each candidate action c
         for c in range(n_actions):
             ids.append(TOK_S[s_p])
             ids.append(TOK_A[c])
             ids.append(TOK_EVAL)
 
-        # SELECT token — ONLY supervised position
-        # SELECT target = greedy action at s_{t+1} (NOT ε-greedy).
-        # The model learns to predict the optimal action, not the exploratory one.
+        # TOK_SELECT — supervised; target = greedy action at s_{t+1}
         select_positions.append(len(ids))
-        select_targets.append(a_p)      # 0-based greedy action index
+        select_targets.append(a_p)
         ids.append(TOK_SELECT)
 
-        # THINK token — unsupervised processing token; no loss applied here.
-        # Hidden state at this position is extracted and injected into COT.
-        think_positions.append(len(ids))
-        ids.append(TOK_THINK)
+        # ---- Phase 2: TD workspace scaffold + thought block ----
 
-        # COT — continuous thought placeholder; embedding overwritten at train/eval time
-        # with the hidden state from the THINK position.
-        cot_positions.append(len(ids))
-        ids.append(TOK_COT)
+        # TOK_ANEXT — a_{t+1} echo scaffold (no loss)
+        a_next_positions.append(len(ids))
+        ids.append(TOK_ANEXT)
+
+        # TOK_QCURR — scaffold (no loss)
+        q_curr_positions.append(len(ids))
+        ids.append(TOK_QCURR)
+
+        # TOK_QNEXT — scaffold (no loss)
+        q_next_positions.append(len(ids))
+        ids.append(TOK_QNEXT)
+
+        # TOK_UPDATE — workspace end marker (no loss); COCONUT injection source
+        update_positions.append(len(ids))
+        ids.append(TOK_UPDATE)
+
+        # 3-token discrete thought block: [s_t, a_t, Q_bin placeholder]
+        # The actual Q_bin (from q_values_for_cot) is substituted at collation time.
+        # We store TOK_S[s_t] and TOK_A[a_t] directly; Q_bin uses index 0 as placeholder.
+        p0 = len(ids)
+        ids.append(TOK_S[s])   # thought token 0: s_t
+
+        p1 = len(ids)
+        ids.append(TOK_A[a])   # thought token 1: a_t
+
+        p2 = len(ids)
+        # Q_bin placeholder = first Q-bin token; real bin computed at collation
+        # We need to know the Q_bin token ID but 1_generate_data.py doesn't track n_q_bins.
+        # Store a sentinel integer 0 here; build_mixed_sequence in 3_train.py replaces it.
+        ids.append(0)          # thought token 2: Q_bin placeholder (token ID 0 = TOK_NULL)
+
+        thought_positions.append([p0, p1, p2])
 
     return {
-        'input_ids':        ids,
-        'reward_values':    reward_values,
-        'reward_positions': reward_positions,
-        'select_positions': select_positions,
-        'select_targets':   select_targets,
-        'think_positions':  think_positions,
-        'cot_positions':    cot_positions,
-        'n_steps':          n_steps,
-        'q_values_for_cot': episode.get('q_values_for_cot', []),
+        'input_ids':         ids,
+        'reward_values':     reward_values,
+        'reward_positions':  reward_positions,
+        'select_positions':  select_positions,
+        'select_targets':    select_targets,
+        'a_next_positions':  a_next_positions,
+        'q_curr_positions':  q_curr_positions,
+        'q_next_positions':  q_next_positions,
+        'update_positions':  update_positions,
+        'thought_positions': thought_positions,
+        'q_values_for_cot':  qvc,
+        'n_steps':           n_steps,
     }
 
 
@@ -415,41 +454,19 @@ def generate_dataset(
     gamma: float = 0.9,
     seed: int = 42,
 ) -> List[Dict]:
-    """Generate `n_sequences` COCONUT-formatted trajectories.
-
-    Per-trajectory randomization:
-      - ε ~ Uniform(0, 1): smooth spectrum from pure exploitation to pure exploration
-      - Q₀ sampled from one of three regimes with equal probability:
-          neutral:    Q₀ = 0
-          optimistic: Q₀ ~ Uniform(0.1, 0.5)   (encourages early exploration)
-          pessimistic: Q₀ ~ Uniform(-0.5, -0.1) (discourages early exploration)
-      - Fresh random MDP per trajectory
-      - Random start state
-      - Random state/action label permutation
-    """
+    """Generate `n_sequences` two-phase COCONUT-formatted trajectories."""
     rng = np.random.default_rng(seed)
     vocab = build_vocab(n_states, n_actions)
     sequences = []
 
     for i in range(n_sequences):
         n_steps = int(rng.integers(min_steps, max_steps + 1))
-
-        # Sample ε uniformly — covers full exploration spectrum
         epsilon = float(rng.uniform(0.0, 1.0))
-
-        # Sample Q initialisation regime
-        regime = int(rng.integers(3))
-        if regime == 0:
-            q_init = 0.0                              # neutral
-        elif regime == 1:
-            q_init = float(rng.uniform(0.1, 0.5))    # optimistic
-        else:
-            q_init = float(rng.uniform(-0.5, -0.1))  # pessimistic
 
         P, R = generate_random_mdp(n_states, n_actions, rng=rng)
         ep = generate_episode(
             P, R, n_states, n_actions, n_steps,
-            alpha=alpha, gamma=gamma, epsilon=epsilon, q_init=q_init,
+            alpha=alpha, gamma=gamma, epsilon=epsilon, q_init=0.0,
             rng=rng,
         )
         ep['n_steps'] = n_steps
@@ -467,7 +484,7 @@ def generate_dataset(
 # Sanity-check printer
 # ---------------------------------------------------------------------------
 
-def print_sample(seq: Dict, vocab: Dict, n_actions: int) -> None:
+def print_sample(seq: Dict, vocab: Dict, n_actions: int = 2) -> None:  # noqa: n_actions unused in body
     """Pretty-print the first few tokens of a sample sequence."""
     tnames = {
         vocab['TOK_NULL']:   'NULL',
@@ -475,39 +492,49 @@ def print_sample(seq: Dict, vocab: Dict, n_actions: int) -> None:
         vocab['TOK_R']:      'R',
         vocab['TOK_EVAL']:   'EVAL',
         vocab['TOK_SELECT']: 'SELECT',
-        vocab['TOK_THINK']:  'THINK',
+        vocab['TOK_THINK']:  'THINK(legacy)',
         vocab['TOK_COT']:    'COT',
+        vocab['TOK_UPDATE']: 'UPDATE',
+        vocab['TOK_QCURR']:  'QCURR',
+        vocab['TOK_QNEXT']:  'QNEXT',
+        vocab['TOK_ANEXT']:  'ANEXT',
     }
     for i, s in enumerate(vocab['TOK_S']):
         tnames[s] = f'S{i}'
     for i, a in enumerate(vocab['TOK_A']):
         tnames[a] = f'A{i}'
 
-    rp_set    = set(seq['reward_positions'])
-    sel_set   = set(seq['select_positions'])
-    think_set = set(seq['think_positions'])
+    rp_set     = set(seq['reward_positions'])
+    sel_set    = set(seq['select_positions'])
+    upd_set    = set(seq['update_positions'])
+    thought_set = set()
+    for tp in seq['thought_positions']:
+        thought_set.update(tp)
+
     r_idx = 0; sel_idx = 0
 
     print(f"\nSample sequence  (n_steps={seq['n_steps']}, "
           f"seq_len={len(seq['input_ids'])})")
     print(f"  select_targets : {seq['select_targets'][:3]} ...")
     print()
-    print(f"  {'pos':>4}  {'name':<10}  {'id':>4}  note")
-    print(f"  {'-'*4}  {'-'*10}  {'-'*4}  {'-'*30}")
-    for pos, tid in enumerate(seq['input_ids'][:50]):
+    print(f"  {'pos':>4}  {'name':<14}  {'id':>4}  note")
+    print(f"  {'-'*4}  {'-'*14}  {'-'*4}  {'-'*35}")
+    for pos, tid in enumerate(seq['input_ids'][:60]):
         name = tnames.get(tid, f'?{tid}')
         note = ''
         if pos in rp_set:
             note = f'r={seq["reward_values"][r_idx]:.4f}'
             r_idx += 1
         elif pos in sel_set:
-            note = f'target_action={seq["select_targets"][sel_idx]}  (greedy, not ε-greedy)'
+            note = f'target_action={seq["select_targets"][sel_idx]}'
             sel_idx += 1
-        elif pos in think_set:
-            note = '[unsupervised THINK — hidden state injected into COT]'
-        print(f"  {pos:>4}  {name:<10}  {tid:>4}  {note}")
-    if len(seq['input_ids']) > 50:
-        print(f"  ... ({len(seq['input_ids']) - 50} more tokens)")
+        elif pos in upd_set:
+            note = '[COCONUT injection source]'
+        elif pos in thought_set:
+            note = '[thought block token]'
+        print(f"  {pos:>4}  {name:<14}  {tid:>4}  {note}")
+    if len(seq['input_ids']) > 60:
+        print(f"  ... ({len(seq['input_ids']) - 60} more tokens)")
 
 
 # ---------------------------------------------------------------------------
@@ -516,7 +543,7 @@ def print_sample(seq: Dict, vocab: Dict, n_actions: int) -> None:
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Generate COCONUT Q-learning dataset'
+        description='Generate two-phase COCONUT Q-learning dataset'
     )
     parser.add_argument('--n_sequences', type=int, default=50_000)
     parser.add_argument('--n_states',    type=int, default=4)
@@ -533,10 +560,10 @@ def main():
 
     np.random.seed(args.seed)
 
-    print(f"Generating {args.n_sequences:,} COCONUT sequences "
+    print(f"Generating {args.n_sequences:,} two-phase COCONUT sequences "
           f"({args.n_states} states, {args.n_actions} actions, "
           f"steps=[{args.min_steps},{args.max_steps}]) ...")
-    print(f"  ε ~ Uniform(0,1) per trajectory, Q₀ ~ {{neutral/optimistic/pessimistic}}")
+    print(f"  ε ~ Uniform(0,1) per trajectory, Q₀ = 0")
 
     vocab = build_vocab(args.n_states, args.n_actions)
     print(f"\nVocabulary (vocab_size={vocab['vocab_size']}):")
@@ -544,12 +571,16 @@ def main():
     print(f"  S={vocab['TOK_S']}")
     print(f"  A={vocab['TOK_A']}")
     print(f"  R={vocab['TOK_R']}  EVAL={vocab['TOK_EVAL']}  SELECT={vocab['TOK_SELECT']}")
-    print(f"  THINK={vocab['TOK_THINK']}  COT={vocab['TOK_COT']}")
+    print(f"  THINK(legacy)={vocab['TOK_THINK']}  COT={vocab['TOK_COT']}")
+    print(f"  UPDATE={vocab['TOK_UPDATE']}  QCURR={vocab['TOK_QCURR']}")
+    print(f"  QNEXT={vocab['TOK_QNEXT']}  ANEXT={vocab['TOK_ANEXT']}")
 
-    round_len = 4 + 3 * args.n_actions + 3   # SELECT + THINK + COT = +3
-    print(f"\nRound length: {round_len} tokens (includes TOK_THINK and TOK_COT placeholders)")
-    print(f"Max sequence length: 2 + {round_len}*{args.max_steps} = "
-          f"{2 + round_len * args.max_steps} tokens")
+    round_len_discrete   = 4 + 3 * args.n_actions + 1 + 4 + 3
+    round_len_continuous = 4 + 3 * args.n_actions + 1 + 4 + 1
+    print(f"\nRound length (discrete):   {round_len_discrete} tokens")
+    print(f"Round length (continuous): {round_len_continuous} tokens")
+    print(f"Max sequence length (discrete form): 2 + {round_len_discrete}*{args.max_steps} = "
+          f"{2 + round_len_discrete * args.max_steps} tokens")
 
     all_seqs = generate_dataset(
         n_sequences=args.n_sequences,
@@ -562,42 +593,39 @@ def main():
         seed=args.seed,
     )
 
-    # Train / val split: 90% / 10%
     n_val   = args.n_sequences // 10
     n_train = args.n_sequences - n_val
     train_seqs = all_seqs[:n_train]
     val_seqs   = all_seqs[n_train:]
 
-    # Sequence length statistics
     seq_lens = [len(s['input_ids']) for s in all_seqs]
-    print(f"\nSequence length stats:")
+    print(f"\nSequence length stats (discrete form):")
     print(f"  min={min(seq_lens)}  max={max(seq_lens)}  "
           f"mean={sum(seq_lens)/len(seq_lens):.1f}")
 
-    # Print a sample
     print_sample(all_seqs[0], vocab, args.n_actions)
 
-    # Save
     out_path = args.output
     os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
     torch.save({
         'train':  train_seqs,
         'val':    val_seqs,
         'config': {
-            'n_states':          args.n_states,
-            'n_actions':         args.n_actions,
-            'n_sequences':       args.n_sequences,
-            'n_train':           n_train,
-            'n_val':             n_val,
-            'min_steps':         args.min_steps,
-            'max_steps':         args.max_steps,
-            'alpha':             args.alpha,
-            'gamma':             args.gamma,
-            'epsilon':           'uniform(0,1)',
-            'q_init':            'neutral/optimistic/pessimistic',
-            'seed':              args.seed,
-            'vocab_size':        vocab['vocab_size'],
-            'round_len':         round_len,
+            'n_states':             args.n_states,
+            'n_actions':            args.n_actions,
+            'n_sequences':          args.n_sequences,
+            'n_train':              n_train,
+            'n_val':                n_val,
+            'min_steps':            args.min_steps,
+            'max_steps':            args.max_steps,
+            'alpha':                args.alpha,
+            'gamma':                args.gamma,
+            'epsilon':              'uniform(0,1)',
+            'q_init':               0.0,
+            'seed':                 args.seed,
+            'vocab_size':           vocab['vocab_size'],
+            'round_len_discrete':   round_len_discrete,
+            'round_len_continuous': round_len_continuous,
         },
     }, out_path)
 
