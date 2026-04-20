@@ -108,7 +108,7 @@ echo ""
 echo "=== Step 4/4: Evaluation ==="
 echo "Start: $(date)"
 python3 scripts/4_evaluate.py \
-  --checkpoint checkpoints/coconut_transformer_coconut-v3-20260412-0040.pt \
+  --checkpoint checkpoints/coconut_transformer_hao.pt \
   --figures_dir figures \
   --n_steps 50 \
   --alpha 0.1 \
