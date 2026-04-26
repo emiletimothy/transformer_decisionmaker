@@ -221,6 +221,7 @@ def build_mixed_sequence(
         'thought_targets':      new_thought_targets,
         'continuous_round_mask': list(continuous_round_mask),
         'n_steps':              n_steps,
+        'n_actions':            seq.get('n_actions', vocab.get('n_actions_max', 4)),
     }
 
 
@@ -299,6 +300,9 @@ def collate_fn_hao(
     thought_positions_list = []  # [B, max_steps, 3]
     thought_targets_list   = []  # [B, max_steps, 3]
     cont_mask_list         = []  # [B, max_steps]
+    n_actions_list         = []  # [B] actual MDP action count per sample
+
+    max_actions_global = vocab.get('n_actions_max', 4)
 
     for s in expanded:
         input_ids_list.append(pad_ids(s['input_ids'], max_seq))
@@ -307,6 +311,7 @@ def collate_fn_hao(
         select_positions_list.append(pad_ints(s['select_positions'], max_steps))
         select_targets_list.append(pad_ints(s['select_targets'], max_steps, pad=0))
         update_positions_list.append(pad_ints(s['update_positions'], max_steps))
+        n_actions_list.append(s.get('n_actions', max_actions_global))
 
         tp = s['thought_positions']
         tt = s['thought_targets']
@@ -320,15 +325,16 @@ def collate_fn_hao(
         cont_mask_list.append(cm_padded)
 
     return {
-        'input_ids':            torch.tensor(input_ids_list,         dtype=torch.long),
-        'reward_values':        torch.tensor(reward_values_list,     dtype=torch.float32),
-        'reward_positions':     torch.tensor(reward_positions_list,  dtype=torch.long),
-        'select_positions':     torch.tensor(select_positions_list,  dtype=torch.long),
-        'select_targets':       torch.tensor(select_targets_list,    dtype=torch.long),
-        'update_positions':     torch.tensor(update_positions_list,  dtype=torch.long),
-        'thought_positions':    torch.tensor(thought_positions_list, dtype=torch.long),
-        'thought_targets':      torch.tensor(thought_targets_list,   dtype=torch.long),
-        'continuous_round_mask': torch.tensor(cont_mask_list,        dtype=torch.bool),
+        'input_ids':             torch.tensor(input_ids_list,         dtype=torch.long),
+        'reward_values':         torch.tensor(reward_values_list,     dtype=torch.float32),
+        'reward_positions':      torch.tensor(reward_positions_list,  dtype=torch.long),
+        'select_positions':      torch.tensor(select_positions_list,  dtype=torch.long),
+        'select_targets':        torch.tensor(select_targets_list,    dtype=torch.long),
+        'update_positions':      torch.tensor(update_positions_list,  dtype=torch.long),
+        'thought_positions':     torch.tensor(thought_positions_list, dtype=torch.long),
+        'thought_targets':       torch.tensor(thought_targets_list,   dtype=torch.long),
+        'continuous_round_mask': torch.tensor(cont_mask_list,         dtype=torch.bool),
+        'n_actions_per_sample':  torch.tensor(n_actions_list,         dtype=torch.long),
     }
 
 
@@ -354,13 +360,14 @@ def get_warmup_cosine_scheduler(
 # ---------------------------------------------------------------------------
 
 def compute_hao_loss(
-    action_logits:         torch.Tensor,   # [B, n_rounds, n_actions]
-    select_positions:      torch.Tensor,   # [B, n_rounds]  (-1 = pad)
-    select_targets:        torch.Tensor,   # [B, n_rounds]
-    thought_logits:        torch.Tensor,   # [B, n_rounds, 3, vocab_size]
-    thought_positions:     torch.Tensor,   # [B, n_rounds, 3]
-    thought_targets:       torch.Tensor,   # [B, n_rounds, 3]
-    continuous_round_mask: torch.Tensor,   # [B, n_rounds] bool
+    action_logits:         torch.Tensor,          # [B, n_rounds, max_actions]
+    select_positions:      torch.Tensor,          # [B, n_rounds]  (-1 = pad)
+    select_targets:        torch.Tensor,          # [B, n_rounds]
+    thought_logits:        torch.Tensor,          # [B, n_rounds, 3, vocab_size]
+    thought_positions:     torch.Tensor,          # [B, n_rounds, 3]
+    thought_targets:       torch.Tensor,          # [B, n_rounds, 3]
+    continuous_round_mask: torch.Tensor,          # [B, n_rounds] bool
+    n_actions_per_sample:  Optional[torch.Tensor] = None,  # [B] actual n_actions
     lambda_thought:        float = 1.0,
 ) -> Tuple[torch.Tensor, float, float, float]:
     """Compute CE_select + lambda * CE_thought.
@@ -369,9 +376,23 @@ def compute_hao_loss(
     CE_thought: active only for discrete rounds (continuous_round_mask == False)
                 at all 3 thought positions that are valid (>= 0).
 
+    n_actions_per_sample: if provided, masks logits for action indices >=
+    each sample's actual n_actions to -inf before CE, so phantom actions
+    (padded up to max_actions) don't affect the loss or accuracy.
+
     Returns (total_loss, ce_select_val, ce_thought_val, select_accuracy).
     """
     device = action_logits.device
+
+    # ---- Mask phantom action logits ----
+    if n_actions_per_sample is not None:
+        max_actions = action_logits.shape[-1]
+        action_range = torch.arange(max_actions, device=device)
+        # valid_mask: [B, max_actions] — True for valid action indices
+        valid_mask = action_range.unsqueeze(0) < n_actions_per_sample.unsqueeze(1)
+        # Expand over n_rounds: [B, 1, max_actions] → [B, n_rounds, max_actions]
+        valid_mask = valid_mask.unsqueeze(1).expand_as(action_logits)
+        action_logits = action_logits.masked_fill(~valid_mask, float('-inf'))
 
     # ---- CE_select ----
     valid_sel = (select_positions >= 0)
@@ -476,12 +497,16 @@ def train(args) -> None:
     val_seqs   = checkpoint_data['val']
     cfg_data   = checkpoint_data['config']
     print(f"  train: {len(train_seqs):,}  val: {len(val_seqs):,}")
-    print(f"  n_states={cfg_data['n_states']}, n_actions={cfg_data['n_actions']}")
+    max_states  = cfg_data.get('max_states',  cfg_data.get('n_states',  8))
+    max_actions = cfg_data.get('max_actions', cfg_data.get('n_actions', 4))
+    print(f"  max_states={max_states}, max_actions={max_actions}")
 
     # ---- Model config ----
     model_config = COCONUTConfig(
-        n_states    = cfg_data['n_states'],
-        n_actions   = cfg_data['n_actions'],
+        max_states  = max_states,
+        max_actions = max_actions,
+        n_states    = max_states,
+        n_actions   = max_actions,
         n_layers    = args.n_layers,
         n_heads     = args.n_heads,
         d_model     = args.d_model,
@@ -490,8 +515,7 @@ def train(args) -> None:
         max_seq_len = args.max_seq_len,
     )
 
-    vocab = build_vocab(cfg_data['n_states'], cfg_data['n_actions'],
-                        model_config.n_q_bins)
+    vocab = build_vocab(max_states, max_actions, model_config.n_q_bins)
 
     # ---- Datasets ----
     train_ds = COCONUTDataset(train_seqs)
@@ -542,8 +566,12 @@ def train(args) -> None:
                 "n_q_bins":      model_config.n_q_bins,
                 "n_params":      n_params,
                 "n_sequences":   cfg_data.get('n_sequences', len(train_seqs) + len(val_seqs)),
-                "n_states":      cfg_data['n_states'],
-                "n_actions":     cfg_data['n_actions'],
+                "max_states":    max_states,
+                "max_actions":   max_actions,
+                "min_states":    cfg_data.get('min_states', max_states),
+                "min_actions":   cfg_data.get('min_actions', max_actions),
+                "reward_distributions": cfg_data.get('reward_distributions', ['peaked']),
+                "transition_concentrations": cfg_data.get('transition_concentrations', ['uniform']),
                 "epochs":        args.epochs,
                 "batch_size":    args.batch_size,
                 "lr":            args.lr,
@@ -673,6 +701,7 @@ def train(args) -> None:
                     batch['thought_positions'],
                     batch['thought_targets'],
                     batch['continuous_round_mask'],
+                    n_actions_per_sample = batch.get('n_actions_per_sample'),
                     lambda_thought = 1.0,
                 )
 
@@ -830,7 +859,7 @@ def main():
     parser.add_argument('--d_model',     type=int,   default=256)
     parser.add_argument('--d_ff',        type=int,   default=1024)
     parser.add_argument('--dropout',     type=float, default=0.1)
-    parser.add_argument('--max_seq_len', type=int,   default=1024)
+    parser.add_argument('--max_seq_len', type=int,   default=1280)
 
     # Training hyperparameters
     parser.add_argument('--epochs',       type=int,   default=25)

@@ -42,21 +42,27 @@ import torch.nn.functional as F
 
 @dataclass
 class COCONUTConfig:
-    n_states:    int   = 4
-    n_actions:   int   = 2
+    # max_states/max_actions define the fixed vocabulary and model capacity.
+    # Sequences may contain MDPs with fewer states/actions — those simply don't
+    # use the higher-indexed token IDs.
+    max_states:  int   = 8
+    max_actions: int   = 4
+    # Legacy fields kept for backward compat with old checkpoints
+    n_states:    int   = 8
+    n_actions:   int   = 4
     n_layers:    int   = 4
     n_heads:     int   = 8
     d_model:     int   = 256
     d_ff:        int   = 1024
     dropout:     float = 0.1
-    max_seq_len: int   = 1024
+    max_seq_len: int   = 1280
     n_q_bins:    int   = 32
     q_bin_min:   float = 0.0
-    q_bin_max:   float = 5.0
+    q_bin_max:   float = 10.0  # increased from 5.0 to cover diverse reward distributions
 
     @property
     def vocab_size(self) -> int:
-        return 2 + self.n_states + self.n_actions + 9 + self.n_q_bins
+        return 2 + self.max_states + self.max_actions + 9 + self.n_q_bins
 
     def to_dict(self) -> Dict:
         d = asdict(self)
@@ -73,26 +79,31 @@ class COCONUTConfig:
 # Vocabulary helpers (mirrors 1_generate_data.py)
 # ---------------------------------------------------------------------------
 
-def build_vocab(n_states: int, n_actions: int, n_q_bins: int = 32) -> Dict[str, object]:
-    """Return token ID constants for the two-phase COCONUT vocabulary."""
-    TOK_R    = 2 + n_states + n_actions
-    old_vocab = 2 + n_states + n_actions + 9  # 9 special tokens: R,EVAL,SEL,THINK,COT,UPD,QCURR,QNEXT,ANEXT
+def build_vocab(max_states: int, max_actions: int, n_q_bins: int = 32) -> Dict[str, object]:
+    """Return token ID constants for the two-phase COCONUT vocabulary.
+
+    Uses max_states and max_actions so the vocab is fixed regardless of a
+    particular MDP's actual size.
+    """
+    TOK_R     = 2 + max_states + max_actions
+    old_vocab = 2 + max_states + max_actions + 9  # 9 special tokens
     return {
-        'TOK_NULL':   0,
-        'TOK_START':  1,
-        'TOK_S':      list(range(2, 2 + n_states)),
-        'TOK_A':      list(range(2 + n_states, 2 + n_states + n_actions)),
-        'TOK_R':      TOK_R,
-        'TOK_EVAL':   TOK_R + 1,
-        'TOK_SELECT': TOK_R + 2,
-        'TOK_THINK':  TOK_R + 3,   # legacy; never placed in sequences
-        'TOK_COT':    TOK_R + 4,   # continuous thought placeholder
-        'TOK_UPDATE': TOK_R + 5,   # Phase 2 end marker; COCONUT injection source
-        'TOK_QCURR':  TOK_R + 6,   # scaffold (no loss)
-        'TOK_QNEXT':  TOK_R + 7,   # scaffold (no loss)
-        'TOK_ANEXT':  TOK_R + 8,   # a_{t+1} echo scaffold (no loss)
-        'TOK_QBIN':   list(range(old_vocab, old_vocab + n_q_bins)),
-        'vocab_size': old_vocab + n_q_bins,
+        'TOK_NULL':      0,
+        'TOK_START':     1,
+        'TOK_S':         list(range(2, 2 + max_states)),
+        'TOK_A':         list(range(2 + max_states, 2 + max_states + max_actions)),
+        'TOK_R':         TOK_R,
+        'TOK_EVAL':      TOK_R + 1,
+        'TOK_SELECT':    TOK_R + 2,
+        'TOK_THINK':     TOK_R + 3,   # legacy; never placed in sequences
+        'TOK_COT':       TOK_R + 4,   # continuous thought placeholder
+        'TOK_UPDATE':    TOK_R + 5,   # Phase 2 end marker; COCONUT injection source
+        'TOK_QCURR':     TOK_R + 6,   # scaffold (no loss)
+        'TOK_QNEXT':     TOK_R + 7,   # scaffold (no loss)
+        'TOK_ANEXT':     TOK_R + 8,   # a_{t+1} echo scaffold (no loss)
+        'TOK_QBIN':      list(range(old_vocab, old_vocab + n_q_bins)),
+        'vocab_size':    old_vocab + n_q_bins,
+        'n_actions_max': max_actions,
     }
 
 
@@ -244,7 +255,7 @@ class COCONUTTransformer(nn.Module):
         super().__init__()
         self.config    = config
         self.d_model   = config.d_model
-        self.n_actions = config.n_actions
+        self.n_actions = config.max_actions  # output head always covers max_actions
 
         self.tok_emb     = nn.Embedding(config.vocab_size, config.d_model)
         self.pos_emb     = nn.Embedding(config.max_seq_len, config.d_model)
@@ -257,12 +268,13 @@ class COCONUTTransformer(nn.Module):
         ])
         self.final_norm = nn.LayerNorm(config.d_model)
 
-        self.action_head = nn.Linear(config.d_model, config.n_actions)
+        # action_head covers max_actions; at loss time, logits for phantom actions
+        # (beyond a specific MDP's n_actions) are masked to -inf before CE.
+        self.action_head = nn.Linear(config.d_model, config.max_actions)
         self.thought_head = nn.Linear(config.d_model, config.vocab_size)
 
-        # Legacy parameters kept for any callers of forward_teacher_forced
         self._tok_s_start = 2
-        self._tok_a_start = 2 + config.n_states
+        self._tok_a_start = 2 + config.max_states
         self.cot_update_bias = nn.Parameter(torch.empty(config.d_model))
         self.eval_vector     = nn.Parameter(torch.empty(config.d_model))
 
@@ -519,7 +531,11 @@ class COCONUTTransformer(nn.Module):
                 cache_end = max_cot
 
         # Final full-sequence pass
-        h_final = self._run_transformer(x)
+        if return_attention:
+            h_final, all_attn = self._run_transformer_with_attn(x)
+        else:
+            h_final = self._run_transformer(x)
+            all_attn = None
 
         # Action logits at SELECT positions
         sel_h = self._gather_at_positions(h_final, select_positions)
@@ -538,8 +554,12 @@ class COCONUTTransformer(nn.Module):
         thought_logits = thought_logits * (~cont_mask_exp).float()
 
         outs = (action_logits, thought_logits)
+        if return_hidden and return_attention:
+            return outs + (h_final, all_attn)
         if return_hidden:
-            outs = outs + (h_final,)
+            return outs + (h_final,)
+        if return_attention:
+            return outs + (all_attn,)
         return outs
 
     # ------------------------------------------------------------------
@@ -642,8 +662,8 @@ def print_model_summary(config: COCONUTConfig) -> None:
     print("=" * 60)
     print("COCONUTTransformer — Two-Phase Layout Summary")
     print("=" * 60)
-    print(f"  n_states    : {config.n_states}")
-    print(f"  n_actions   : {config.n_actions}")
+    print(f"  max_states  : {config.max_states}")
+    print(f"  max_actions : {config.max_actions}")
     print(f"  vocab_size  : {config.vocab_size}")
     print(f"  n_layers    : {config.n_layers}")
     print(f"  n_heads     : {config.n_heads}")
@@ -662,8 +682,7 @@ def print_model_summary(config: COCONUTConfig) -> None:
 
     # Smoke test: two-phase forward_hao (all discrete)
     B, n_rounds = 2, 3
-    # 18 tokens/round (discrete) + 2 prefix = 56 tokens for n_actions=2
-    round_len_disc = 4 + 3 * config.n_actions + 1 + 4 + 3
+    round_len_disc = 12 + 3 * config.max_actions
     T = 2 + n_rounds * round_len_disc
 
     dummy_ids  = torch.randint(0, config.vocab_size, (B, T))
