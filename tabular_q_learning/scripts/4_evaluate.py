@@ -29,7 +29,8 @@ Output files
     figures/action_agreement.png      — per-step agreement mean ± std (ID vs OOD)
     figures/probe_scatter.png         — probed vs true Q-values scatter
     figures/probe_frobenius.png       — probe Frobenius error + zero baseline
-    figures/attention_heatmap.png     — SELECT and UPDATE attention (two-row)
+    figures/attention_heatmap.png     — SELECT and COT query-row attention (focused)
+    figures/attention_heatmap.csv     — raw attention scores (layer, head, query → keys)
     figures/training_curves.png       — train/val CE + accuracy over training
     figures/effective_alpha_gamma.png — fitted (alpha_eff, gamma_eff) scatter
     figures/q_convergence.png         — model probe vs tabular convergence to Q*
@@ -753,21 +754,27 @@ def plot_attention_heatmap(
     save_path:   str,
     q_snapshots: Optional[np.ndarray] = None,
 ) -> None:
-    """Full T×T attention heatmap: one subplot per (layer, head).
+    """Focused attention heatmap: COT and SELECT query rows for one round.
 
-    Layout: n_layers rows × n_heads columns, each cell showing the complete
-    causal attention matrix for that layer/head (Query × Key).
-    Special token positions are annotated on axes.
-    Forces all-discrete mode (stage 0) for attention extraction.
+    For each (layer, head), shows two horizontal bars:
+      - Row "COT attends to": attention weights of the COT token over all keys
+      - Row "SELECT attends to": attention weights of the SELECT token over all keys
+
+    Uses the checkpoint's actual stage_idx so the COT latent token is present
+    (continuous round).  Falls back to all-discrete if stage 0.
+
+    Also saves a CSV with the raw scores to <save_path>.csv.
     """
+    import csv
+
     model.eval()
 
-    n_show      = min(3, len(trajectory))
+    # Use one continuous round if available; fall back to stage 0
+    vis_stage = stage_idx if stage_idx > 0 else 0
+    n_show    = 1   # single round is sufficient for focused view
     short_traj  = trajectory[:n_show]
     short_snaps = q_snapshots[:n_show] if q_snapshots is not None else None
 
-    # Force all rounds discrete so the fast path returns attention weights
-    vis_stage = 0
     tensors = trajectory_to_tensors(
         short_traj, vocab, n_actions, vis_stage, config, device,
         n_steps=n_show, q_snapshots=short_snaps,
@@ -785,7 +792,6 @@ def plot_attention_heatmap(
             return_attention      = True,
         )
 
-    # out = (action_logits, thought_logits, all_attn) for all-discrete
     if not isinstance(out, tuple) or len(out) < 3:
         print("  Attention heatmap: no attention weights returned. Skipping.")
         return
@@ -798,74 +804,88 @@ def plot_attention_heatmap(
     labels = get_token_labels(ids, vocab)
     T      = len(ids)
 
-    # all_attn: [L, B, H, T, T] — take batch 0, convert to numpy
     attn_np = all_attn[:, 0, :, :, :].cpu().numpy()   # [L, H, T, T]
     L, H    = attn_np.shape[:2]
 
-    sel_positions = tensors['select_positions'][0].cpu().tolist()
-    upd_positions = tensors['update_positions'][0].cpu().tolist()
+    sel_pos = int(tensors['select_positions'][0, 0].item())
+    th_pos  = int(tensors['thought_positions'][0, 0, 0].item())   # COT or first discrete tok
 
-    cell_px  = max(4.0, T * 0.07)   # inches per subplot cell
+    crm = tensors['continuous_round_mask'][0].cpu().numpy()
+    has_cot = bool(crm[0]) if len(crm) > 0 else False
+
+    query_rows: List[Tuple[int, str]] = [(sel_pos, 'SELECT')]
+    if has_cot and th_pos >= 0:
+        query_rows.append((th_pos, 'COT'))
+
+    n_queries = len(query_rows)
+
+    # ---- Plot: rows = layers, columns = heads, height per row = n_queries ----
+    bar_h = 0.6          # inches per query bar
+    col_w = max(5.0, T * 0.12)
     fig, axes = plt.subplots(
         L, H,
-        figsize=(H * cell_px, L * cell_px),
+        figsize=(H * col_w, L * bar_h * (n_queries + 1.5)),
         squeeze=False,
     )
 
-    cmap = plt.cm.hot_r   # dark=low, bright=high — matches MWU style
+    cmap = plt.cm.Blues
 
     for layer_idx in range(L):
         for head_idx in range(H):
             ax   = axes[layer_idx][head_idx]
             data = attn_np[layer_idx, head_idx]   # [T, T]
 
-            im = ax.imshow(data, aspect='equal', cmap=cmap,
-                           vmin=0.0, vmax=data.max() + 1e-9,
-                           origin='upper', interpolation='nearest')
+            # Stack query rows: shape (n_queries, T)
+            rows = np.stack([data[pos] for pos, _ in query_rows], axis=0)
+            vmax = rows.max() + 1e-9
 
-            # Mark SELECT positions (red horizontal/vertical lines)
-            for sp in sel_positions:
-                if sp >= 0:
-                    ax.axhline(sp, color='red',  linewidth=0.6, alpha=0.5)
-                    ax.axvline(sp, color='red',  linewidth=0.6, alpha=0.5)
-            # Mark UPDATE positions (blue)
-            for up in upd_positions:
-                if up >= 0:
-                    ax.axhline(up, color='blue', linewidth=0.6, alpha=0.5)
-                    ax.axvline(up, color='blue', linewidth=0.6, alpha=0.5)
+            im = ax.imshow(
+                rows, aspect='auto', cmap=cmap,
+                vmin=0.0, vmax=vmax, origin='upper', interpolation='nearest',
+            )
 
-            # Tick labels on outermost axes — every token
-            tick_pos  = list(range(T))
-
+            # x-axis: token labels on bottom row only
             if layer_idx == L - 1:
-                ax.set_xticks(tick_pos)
-                ax.set_xticklabels(labels, rotation=90, fontsize=5)
+                ax.set_xticks(range(T))
+                ax.set_xticklabels(labels, rotation=90, fontsize=6)
             else:
                 ax.set_xticks([])
 
+            # y-axis: query labels on leftmost column only
+            ax.set_yticks(range(n_queries))
             if head_idx == 0:
-                ax.set_yticks(tick_pos)
-                ax.set_yticklabels(labels, fontsize=5)
+                ax.set_yticklabels([lbl for _, lbl in query_rows], fontsize=7)
             else:
-                ax.set_yticks([])
+                ax.set_yticklabels([])
 
-            # Column header (head index) on top row only
             if layer_idx == 0:
                 ax.set_title(f'Head {head_idx}', fontsize=8, pad=3)
-
-            # Row label (layer index) on leftmost column only
             if head_idx == 0:
-                ax.set_ylabel(f'Layer {layer_idx + 1}', fontsize=8)
+                ax.set_ylabel(f'L{layer_idx + 1}', fontsize=8)
 
+    cot_note = 'COT (latent)' if has_cot else 'stage-0 discrete (no COT)'
     fig.suptitle(
-        f'Attention Heatmap — Layer {L}, Step {n_show}/{len(trajectory)} tokens\n'
-        f'Red lines = SELECT positions  |  Blue lines = UPDATE positions',
-        fontsize=10, y=1.01,
+        f'Attention — query rows: SELECT & COT  |  {cot_note}  |  round 1',
+        fontsize=10, y=1.02,
     )
     plt.tight_layout()
     plt.savefig(save_path, dpi=150, bbox_inches='tight')
     plt.close()
     print(f"  Saved: {save_path}")
+
+    # ---- CSV export ----
+    csv_path = os.path.splitext(save_path)[0] + '.csv'
+    with open(csv_path, 'w', newline='') as f:
+        writer = csv.writer(f)
+        header = ['layer', 'head', 'query_token'] + labels
+        writer.writerow(header)
+        for layer_idx in range(L):
+            for head_idx in range(H):
+                data = attn_np[layer_idx, head_idx]
+                for pos, lbl in query_rows:
+                    row = [layer_idx + 1, head_idx, lbl] + data[pos].tolist()
+                    writer.writerow(row)
+    print(f"  Saved: {csv_path}")
 
 
 # ---------------------------------------------------------------------------

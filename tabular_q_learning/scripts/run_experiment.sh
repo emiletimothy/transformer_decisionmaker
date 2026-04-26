@@ -20,16 +20,26 @@ export WANDB_API_KEY=wandb_v1_I3I8IPHLFZ77VAmGl7J58ZVRQKl_OKlRNU9j38Hncxd9XzPG3V
 N_SEQUENCES=50000
 EPOCHS=28
 BATCH_SIZE=64
-RUN_NAME="coconut-v3-$(date +%Y%m%d-%H%M)"
+RUN_NAME="coconut-v4-mixed-$(date +%Y%m%d-%H%M)"
 NO_COCONUT=""
+MAX_STATES=8
+MAX_ACTIONS=4
+MIN_STATES=2
+MIN_ACTIONS=2
+STOCHASTIC_REWARDS=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --n_sequences) N_SEQUENCES="$2"; shift 2 ;;
-    --epochs)      EPOCHS="$2";      shift 2 ;;
-    --batch_size)  BATCH_SIZE="$2";  shift 2 ;;
-    --run_name)    RUN_NAME="$2";    shift 2 ;;
-    --no_coconut)  NO_COCONUT="--no_coconut"; shift 1 ;;
+    --n_sequences)      N_SEQUENCES="$2";      shift 2 ;;
+    --epochs)           EPOCHS="$2";           shift 2 ;;
+    --batch_size)       BATCH_SIZE="$2";       shift 2 ;;
+    --run_name)         RUN_NAME="$2";         shift 2 ;;
+    --no_coconut)       NO_COCONUT="--no_coconut"; shift 1 ;;
+    --max_states)       MAX_STATES="$2";       shift 2 ;;
+    --max_actions)      MAX_ACTIONS="$2";      shift 2 ;;
+    --min_states)       MIN_STATES="$2";       shift 2 ;;
+    --min_actions)      MIN_ACTIONS="$2";      shift 2 ;;
+    --stochastic_rewards) STOCHASTIC_REWARDS="--stochastic_rewards"; shift 1 ;;
     *) echo "Unknown argument: $1"; exit 1 ;;
   esac
 done
@@ -52,11 +62,16 @@ else:
     print(' GPU:         None (CPU only)')
 print(f' PyTorch:     {torch.__version__}')
 "
-echo " n_sequences : $N_SEQUENCES"
-echo " epochs      : $EPOCHS"
-echo " batch_size  : $BATCH_SIZE"
-echo " no_coconut  : ${NO_COCONUT:-false}"
-echo " run_name    : $RUN_NAME"
+echo " n_sequences  : $N_SEQUENCES"
+echo " epochs       : $EPOCHS"
+echo " batch_size   : $BATCH_SIZE"
+echo " no_coconut   : ${NO_COCONUT:-false}"
+echo " run_name     : $RUN_NAME"
+echo " max_states   : $MAX_STATES"
+echo " max_actions  : $MAX_ACTIONS"
+echo " min_states   : $MIN_STATES"
+echo " min_actions  : $MIN_ACTIONS"
+echo " stoch_rewards: ${STOCHASTIC_REWARDS:-false}"
 echo "============================================================"
 echo ""
 
@@ -65,13 +80,16 @@ echo ""
 # echo "Start: $(date)"
 # python3 scripts/1_generate_data.py \
 #   --n_sequences "$N_SEQUENCES" \
-#   --n_states 4 \
-#   --n_actions 2 \
+#   --max_states "$MAX_STATES" \
+#   --max_actions "$MAX_ACTIONS" \
+#   --min_states "$MIN_STATES" \
+#   --min_actions "$MIN_ACTIONS" \
 #   --min_steps 10 \
 #   --max_steps 50 \
 #   --alpha 0.1 \
 #   --gamma 0.9 \
 #   --seed 42 \
+#   ${STOCHASTIC_REWARDS} \
 #   --output data/coconut_dataset.pt
 # echo "Done: $(date)"
 # echo ""
@@ -92,7 +110,7 @@ echo ""
 #   --d_model 256 \
 #   --d_ff 1024 \
 #   --dropout 0.1 \
-#   --max_seq_len 1024 \
+#   --max_seq_len 1280 \
 #   --epochs "$EPOCHS" \
 #   --batch_size "$BATCH_SIZE" \
 #   --lr 1e-4 \
@@ -108,7 +126,7 @@ echo ""
 echo "=== Step 4/4: Evaluation ==="
 echo "Start: $(date)"
 python3 scripts/4_evaluate.py \
-  --checkpoint checkpoints/coconut_transformer_hao.pt \
+  --checkpoint checkpoints/coconut_transformer_coconut-v4-mixed-20260420-0105.pt \
   --figures_dir figures \
   --n_steps 50 \
   --alpha 0.1 \
