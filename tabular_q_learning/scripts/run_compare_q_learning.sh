@@ -1,11 +1,18 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=compare_ql_transformer
-#SBATCH --partition=jsteinhardt
+#SBATCH --partition=jsteinhardt,yss
 #SBATCH --gpus=A100:1
 #SBATCH --cpus-per-task=4
 #SBATCH --time=02:00:00
 #SBATCH --output=%x.out
 #SBATCH --error=%x.err
+#SBATCH --mail-user=abdullah_ateyeh@berkeley.edu
+#SBATCH --mail-type=END,FAIL
+
+# Define our directories based on where the job was submitted
+SCRIPT_DIR="$SLURM_SUBMIT_DIR"
+# Resolve the absolute path for the figures directory (../figures)
+FIGURES_DIR="$(readlink -m "$SCRIPT_DIR/../figures")"
 
 echo "=================================================="
 echo "Job:       $SLURM_JOB_NAME ($SLURM_JOB_ID)"
@@ -28,17 +35,18 @@ echo ""
 echo "Running compare_q_learning_transformer.py"
 echo ""
 
+# Move to the directory where the script was submitted from
 cd "$SCRIPT_DIR"
 
 python3 compare_q_learning_transformer.py \
   --n_states 4 \
   --n_actions 2 \
-  --T 2000 \
+  --T 200 \
   --alpha 0.1 \
   --gamma 0.9 \
   --epsilon 0.1 \
   --seed 42 \
-  --save_dir "../figures"
+  --save_dir "$FIGURES_DIR"
 
 echo ""
 echo "=================================================="
