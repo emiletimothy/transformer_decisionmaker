@@ -1,28 +1,21 @@
 #!/usr/bin/env python3
 """
-3_train.py — Hao-Style Multi-Stage Curriculum Training (Two-Phase Per-Round Layout)
+3_train.py — BPTT Training with Recurrent Continuous Context
 
 Trains the COCONUTTransformer from 2_model.py on the dataset produced by
-1_generate_data.py using a 5-stage curriculum that progressively increases the
-fraction of ROUNDS using the continuous thought block (1 TOK_COT token) vs. the
-discrete thought block (3 tokens: s_t, a_t, Q_bin).
+1_generate_data.py using Backpropagation Through Time (BPTT).
 
-Per-round token layout:
-  Phase 1 (11 tokens, |A|=2): s_t, a_t, R, s_next, [s_next, a_c, EVAL]*|A|, SELECT
-  Phase 2 discrete (7 tokens): ANEXT, QCURR, QNEXT, UPDATE, s_t, a_t, Q_bin
-  Phase 2 continuous (5 tokens): ANEXT, QCURR, QNEXT, UPDATE, COT
+No curriculum stages. The model uses continuous context from epoch 1.
 
-Stage schedule (curriculum over rounds, not tokens):
-    Stage 0 (epochs  1-5):  0% continuous rounds   — all discrete
-    Stage 1 (epochs  6-10): 25% continuous rounds
-    Stage 2 (epochs 11-15): 50% continuous rounds
-    Stage 3 (epochs 16-20): 75% continuous rounds
-    Stage 4 (epochs 21-25): 100% continuous rounds  — all continuous
-
-Loss: CE_select (always) + lambda_thought * CE_thought (discrete rounds only)
-
-Optimizer state is reset at each stage transition (following Hao et al.).
-KV caching accelerates the COCONUT injection loop in Stages 1-4.
+BPTT loop per episode:
+  1. Initialize context tokens c_1..c_{|A|} as learned parameters.
+  2. For each transition t:
+     a. Build discrete token sequence for step t.
+     b. Feed context + tokens to model.forward_step.
+     c. Accumulate CE loss from SELECT logits vs. a*.
+     d. Extract UPDATE hidden state.
+     e. Replace c_{a_t} with the UPDATE hidden state for step t+1.
+  3. Backpropagate through the full episode (or truncated window).
 """
 
 import argparse
@@ -30,7 +23,6 @@ import math
 import os
 import random
 import time
-from functools import partial
 from typing import Dict, List, Optional, Tuple
 
 import torch
@@ -56,286 +48,86 @@ _spec.loader.exec_module(_mod)
 COCONUTConfig      = _mod.COCONUTConfig
 COCONUTTransformer = _mod.COCONUTTransformer
 build_vocab        = _mod.build_vocab
-discretize_q_value = _mod.discretize_q_value
 
 
 # ---------------------------------------------------------------------------
-# Hao-style curriculum stage definitions
-# (last_epoch_inclusive, max_steps, frac_continuous, description)
+# Token sequence builder for a single transition
 # ---------------------------------------------------------------------------
 
-HAO_STAGES = [
-    (5,  50, 0.00, "Stage 0: 0% continuous rounds (all discrete)"),
-    (10, 50, 0.25, "Stage 1: 25% continuous rounds"),
-    (15, 50, 0.50, "Stage 2: 50% continuous rounds"),
-    (20, 50, 0.75, "Stage 3: 75% continuous rounds"),
-    (25, 50, 1.00, "Stage 4: 100% continuous rounds (all continuous)"),
-]
-STAGE_MAX_STEPS = [ms for _, ms, _, _ in HAO_STAGES]
-
-
-# ---------------------------------------------------------------------------
-# Sequence truncation helper
-# ---------------------------------------------------------------------------
-
-def truncate_sequence(seq: Dict, max_steps: int) -> Dict:
-    """Return a copy of seq truncated to at most max_steps rounds."""
-    n = min(seq['n_steps'], max_steps)
-    if n == seq['n_steps']:
-        return seq
-
-    full_n   = seq['n_steps']
-    full_len = len(seq['input_ids'])
-    round_len = (full_len - 2) // full_n  # 2-token prefix
-
-    trunc = dict(seq)
-    trunc['input_ids'] = seq['input_ids'][:2 + n * round_len]
-    for field in ('reward_values', 'reward_positions',
-                  'select_positions', 'select_targets',
-                  'a_next_positions', 'q_curr_positions', 'q_next_positions',
-                  'update_positions', 'thought_positions',
-                  'q_values_for_cot'):
-        if field in seq:
-            trunc[field] = seq[field][:n]
-    trunc['n_steps'] = n
-    return trunc
-
-
-# ---------------------------------------------------------------------------
-# Mixed-sequence builder: replaces expand_sequence
-# ---------------------------------------------------------------------------
-
-def build_mixed_sequence(
-    seq: Dict,
-    continuous_round_mask: List[bool],
+def build_step_tokens(
+    transition: Dict,
     vocab: Dict,
-    n_q_bins: int,
-    q_bin_min: float,
-    q_bin_max: float,
-) -> Dict:
-    """Build the actual token sequence mixing discrete and continuous rounds.
+    max_actions: int,
+) -> Tuple[List[int], int, int, int]:
+    """Build the discrete token sequence for one transition step.
 
-    Takes a stored discrete sequence (18 tokens/round for |A|=2) and a per-round
-    mask. For continuous rounds, replaces the 3-token thought block with 1 TOK_COT.
-    For discrete rounds, patches the Q_bin placeholder with the real bin value.
+    Returns (token_ids, reward_offset, select_offset, update_offset).
 
-    All position arrays (select, update, thought) are recomputed against the new
-    absolute token offsets in the mixed sequence.
-
-    Parameters
-    ----------
-    seq                   : stored dataset dict (discrete form, from 1_generate_data.py)
-    continuous_round_mask : [n_rounds] bool — True = emit 1 COT, False = emit 3-token block
-    vocab                 : vocabulary dict from build_vocab
-    n_q_bins, q_bin_min, q_bin_max : Q-value discretization params
-
-    Returns
-    -------
-    dict with mixed token sequence and recomputed position arrays:
-        input_ids, reward_values, reward_positions, select_positions,
-        select_targets, update_positions, thought_positions ([n][3], -1 for invalid),
-        thought_targets ([n][3]), continuous_round_mask (as passed), n_steps
+    Token layout:
+      s_t, a_t, R, s_{t+1},
+      [s_{t+1}, a_c, EVAL] * max_actions,
+      SELECT, QCURR, QNEXT, UPDATE
     """
-    n_steps   = seq['n_steps']
-    old_ids   = seq['input_ids']
-    qvc       = seq.get('q_values_for_cot', [])
-
-    old_round_len = (len(old_ids) - 2) // n_steps  # 18 for n_actions=2
-
-    TOK_COT    = vocab['TOK_COT']
     TOK_S      = vocab['TOK_S']
     TOK_A      = vocab['TOK_A']
-    TOK_QBIN   = vocab['TOK_QBIN']
+    TOK_R      = vocab['TOK_R']
+    TOK_EVAL   = vocab['TOK_EVAL']
+    TOK_SELECT = vocab['TOK_SELECT']
+    TOK_QCURR  = vocab['TOK_QCURR']
+    TOK_QNEXT  = vocab['TOK_QNEXT']
+    TOK_UPDATE = vocab['TOK_UPDATE']
 
-    new_ids              = list(old_ids[:2])  # [TOK_NULL, TOK_START]
-    new_reward_values    = []
-    new_reward_positions = []
-    new_select_positions = []
-    new_select_targets   = []
-    new_update_positions = []
-    new_thought_positions = []   # [n_steps][3]
-    new_thought_targets  = []   # [n_steps][3]
+    s      = transition['s']
+    a      = transition['a']
+    s_next = transition['s_next']
 
-    for r in range(n_steps):
-        round_start  = 2 + r * old_round_len
-        round_tokens = old_ids[round_start:round_start + old_round_len]
+    ids = [TOK_S[s], TOK_A[a]]
+    reward_offset = len(ids)
+    ids.append(TOK_R)
+    ids.append(TOK_S[s_next])
 
-        entry = qvc[r]
-        st, at, q_new = entry['st'], entry['at'], entry['q_new']
-        q_bin = discretize_q_value(q_new, n_q_bins, q_bin_min, q_bin_max)
-        q_bin_tok = TOK_QBIN[q_bin]
+    for c in range(max_actions):
+        ids.append(TOK_S[s_next])
+        ids.append(TOK_A[c])
+        ids.append(TOK_EVAL)
 
-        # Phase 1 + Phase 2 scaffold: tokens 0..old_round_len-4 (first 14 tokens for |A|=2)
-        # The last 3 tokens of the stored round are the thought block placeholder.
-        # Layout offsets within the round (for |A|=2, old_round_len=18):
-        #   0..10  : Phase 1 (s_t, a_t, R, s_next, evals, SELECT)
-        #   11..14 : Phase 2 scaffold (ANEXT, QCURR, QNEXT, UPDATE)
-        #   15..17 : thought block placeholder (s_t token, a_t token, TOK_NULL placeholder)
-        scaffold_end = old_round_len - 3  # index of first thought token (15 for |A|=2)
+    select_offset = len(ids)
+    ids.append(TOK_SELECT)
+    ids.append(TOK_QCURR)
+    ids.append(TOK_QNEXT)
+    update_offset = len(ids)
+    ids.append(TOK_UPDATE)
 
-        # Emit Phase 1 + scaffold tokens, fixing position tracking
-        for k in range(scaffold_end):
-            abs_orig = round_start + k
-            pos_new  = len(new_ids)
-
-            # reward position
-            if abs_orig in seq.get('reward_positions', []):
-                new_reward_positions.append(pos_new)
-                r_idx = seq['reward_positions'].index(abs_orig)
-                new_reward_values.append(seq['reward_values'][r_idx])
-
-            # select position
-            if len(seq['select_positions']) > r and abs_orig == seq['select_positions'][r]:
-                new_select_positions.append(pos_new)
-                new_select_targets.append(seq['select_targets'][r])
-
-            # update position
-            if len(seq['update_positions']) > r and abs_orig == seq['update_positions'][r]:
-                new_update_positions.append(pos_new)
-
-            new_ids.append(round_tokens[k])
-
-        # Emit thought block
-        if continuous_round_mask[r]:
-            # Continuous: 1 TOK_COT token
-            cot_pos = len(new_ids)
-            new_ids.append(TOK_COT)
-            new_thought_positions.append([cot_pos, -1, -1])
-            new_thought_targets.append([0, 0, 0])
-        else:
-            # Discrete: 3 tokens [s_t, a_t, Q_bin], with real Q_bin substituted
-            p0 = len(new_ids); new_ids.append(TOK_S[st])
-            p1 = len(new_ids); new_ids.append(TOK_A[at])
-            p2 = len(new_ids); new_ids.append(q_bin_tok)
-            new_thought_positions.append([p0, p1, p2])
-            new_thought_targets.append([TOK_S[st], TOK_A[at], q_bin_tok])
-
-    return {
-        'input_ids':            new_ids,
-        'reward_values':        new_reward_values,
-        'reward_positions':     new_reward_positions,
-        'select_positions':     new_select_positions,
-        'select_targets':       new_select_targets,
-        'update_positions':     new_update_positions,
-        'thought_positions':    new_thought_positions,
-        'thought_targets':      new_thought_targets,
-        'continuous_round_mask': list(continuous_round_mask),
-        'n_steps':              n_steps,
-        'n_actions':            seq.get('n_actions', vocab.get('n_actions_max', 4)),
-    }
+    return ids, reward_offset, select_offset, update_offset
 
 
 # ---------------------------------------------------------------------------
 # Dataset
 # ---------------------------------------------------------------------------
 
-class COCONUTDataset(Dataset):
-    """Wraps the list of sequence dicts produced by 1_generate_data.py.
-
-    Supports curriculum training via the max_steps attribute. With probability
-    0.1 (when stage_idx > 0) a random earlier-stage max_steps is sampled to
-    prevent catastrophic forgetting.
-    """
-
-    def __init__(self, sequences: List[Dict]):
-        self.sequences           = sequences
-        self.max_steps           = None
-        self.stage_idx           = 0
-        self.all_stage_max_steps = STAGE_MAX_STEPS
+class EpisodeDataset(Dataset):
+    def __init__(self, sequences: List[Dict], max_steps: Optional[int] = None):
+        self.sequences = sequences
+        self.max_steps = max_steps
 
     def __len__(self) -> int:
         return len(self.sequences)
 
     def __getitem__(self, idx: int) -> Dict:
         seq = self.sequences[idx]
-        effective = self.max_steps
-        if effective is not None and self.stage_idx > 0 and random.random() < 0.1:
-            effective = random.choice(self.all_stage_max_steps[:self.stage_idx])
-        if effective is not None:
-            seq = truncate_sequence(seq, effective)
+        if self.max_steps is not None:
+            n = min(seq['n_steps'], self.max_steps)
+            return {
+                'transitions': seq['transitions'][:n],
+                'n_steps':     n,
+                'n_states':    seq['n_states'],
+                'n_actions':   seq['n_actions'],
+            }
         return seq
 
 
-# ---------------------------------------------------------------------------
-# Collate function
-# ---------------------------------------------------------------------------
-
-def collate_fn_hao(
-    batch: List[Dict],
-    stage_idx: int,
-    vocab: Dict,
-    n_q_bins: int,
-    q_bin_min: float,
-    q_bin_max: float,
-) -> Dict[str, torch.Tensor]:
-    """Build mixed discrete/continuous sequences, then pad and batch."""
-    frac = HAO_STAGES[stage_idx][2]
-
-    expanded = []
-    for s in batch:
-        n_rounds = s['n_steps']
-        n_cont   = int(math.floor(frac * n_rounds))
-        # First n_cont rounds are continuous, rest are discrete
-        crm = [True] * n_cont + [False] * (n_rounds - n_cont)
-        expanded.append(build_mixed_sequence(s, crm, vocab, n_q_bins, q_bin_min, q_bin_max))
-
-    max_seq   = max(len(s['input_ids']) for s in expanded)
-    max_steps = max(s['n_steps'] for s in expanded)
-
-    def pad_ids(ids, length):
-        return ids + [0] * (length - len(ids))
-
-    def pad_ints(lst, length, pad=-1):
-        return lst + [pad] * (length - len(lst))
-
-    def pad_floats(lst, length, pad=0.0):
-        return lst + [pad] * (length - len(lst))
-
-    input_ids_list         = []
-    reward_values_list     = []
-    reward_positions_list  = []
-    select_positions_list  = []
-    select_targets_list    = []
-    update_positions_list  = []
-    thought_positions_list = []  # [B, max_steps, 3]
-    thought_targets_list   = []  # [B, max_steps, 3]
-    cont_mask_list         = []  # [B, max_steps]
-    n_actions_list         = []  # [B] actual MDP action count per sample
-
-    max_actions_global = vocab.get('n_actions_max', 4)
-
-    for s in expanded:
-        input_ids_list.append(pad_ids(s['input_ids'], max_seq))
-        reward_values_list.append(pad_floats(s['reward_values'], max_steps))
-        reward_positions_list.append(pad_ints(s['reward_positions'], max_steps))
-        select_positions_list.append(pad_ints(s['select_positions'], max_steps))
-        select_targets_list.append(pad_ints(s['select_targets'], max_steps, pad=0))
-        update_positions_list.append(pad_ints(s['update_positions'], max_steps))
-        n_actions_list.append(s.get('n_actions', max_actions_global))
-
-        tp = s['thought_positions']
-        tt = s['thought_targets']
-        cm = s['continuous_round_mask']
-        n_pad = max_steps - len(tp)
-        tp_padded = tp + [[-1, -1, -1]] * n_pad
-        tt_padded = tt + [[0, 0, 0]] * n_pad
-        cm_padded = cm + [False] * n_pad
-        thought_positions_list.append(tp_padded)
-        thought_targets_list.append(tt_padded)
-        cont_mask_list.append(cm_padded)
-
-    return {
-        'input_ids':             torch.tensor(input_ids_list,         dtype=torch.long),
-        'reward_values':         torch.tensor(reward_values_list,     dtype=torch.float32),
-        'reward_positions':      torch.tensor(reward_positions_list,  dtype=torch.long),
-        'select_positions':      torch.tensor(select_positions_list,  dtype=torch.long),
-        'select_targets':        torch.tensor(select_targets_list,    dtype=torch.long),
-        'update_positions':      torch.tensor(update_positions_list,  dtype=torch.long),
-        'thought_positions':     torch.tensor(thought_positions_list, dtype=torch.long),
-        'thought_targets':       torch.tensor(thought_targets_list,   dtype=torch.long),
-        'continuous_round_mask': torch.tensor(cont_mask_list,         dtype=torch.bool),
-        'n_actions_per_sample':  torch.tensor(n_actions_list,         dtype=torch.long),
-    }
+def collate_episodes(batch: List[Dict]) -> List[Dict]:
+    return batch
 
 
 # ---------------------------------------------------------------------------
@@ -356,72 +148,167 @@ def get_warmup_cosine_scheduler(
 
 
 # ---------------------------------------------------------------------------
-# Loss computation
+# Single-episode BPTT forward pass
 # ---------------------------------------------------------------------------
 
-def compute_hao_loss(
-    action_logits:         torch.Tensor,          # [B, n_rounds, max_actions]
-    select_positions:      torch.Tensor,          # [B, n_rounds]  (-1 = pad)
-    select_targets:        torch.Tensor,          # [B, n_rounds]
-    thought_logits:        torch.Tensor,          # [B, n_rounds, 3, vocab_size]
-    thought_positions:     torch.Tensor,          # [B, n_rounds, 3]
-    thought_targets:       torch.Tensor,          # [B, n_rounds, 3]
-    continuous_round_mask: torch.Tensor,          # [B, n_rounds] bool
-    n_actions_per_sample:  Optional[torch.Tensor] = None,  # [B] actual n_actions
-    lambda_thought:        float = 1.0,
-) -> Tuple[torch.Tensor, float, float, float]:
-    """Compute CE_select + lambda * CE_thought.
+def episode_forward(
+    model: COCONUTTransformer,
+    episode: Dict,
+    vocab: Dict,
+    max_actions: int,
+    device: torch.device,
+    truncate_bptt_window: int = 0,
+) -> Tuple[torch.Tensor, float, int]:
+    """Run BPTT through one episode. Returns (loss, accuracy, n_steps).
 
-    CE_select: always active at every SELECT position.
-    CE_thought: active only for discrete rounds (continuous_round_mask == False)
-                at all 3 thought positions that are valid (>= 0).
-
-    n_actions_per_sample: if provided, masks logits for action indices >=
-    each sample's actual n_actions to -inf before CE, so phantom actions
-    (padded up to max_actions) don't affect the loss or accuracy.
-
-    Returns (total_loss, ce_select_val, ce_thought_val, select_accuracy).
+    truncate_bptt_window: if > 0, detach context from the graph every
+    truncate_bptt_window steps to limit memory usage.
     """
-    device = action_logits.device
+    transitions = episode['transitions']
+    n_steps = len(transitions)
+    n_actions_actual = episode.get('n_actions', max_actions)
 
-    # ---- Mask phantom action logits ----
-    if n_actions_per_sample is not None:
-        max_actions = action_logits.shape[-1]
-        action_range = torch.arange(max_actions, device=device)
-        # valid_mask: [B, max_actions] — True for valid action indices
-        valid_mask = action_range.unsqueeze(0) < n_actions_per_sample.unsqueeze(1)
-        # Expand over n_rounds: [B, 1, max_actions] → [B, n_rounds, max_actions]
-        valid_mask = valid_mask.unsqueeze(1).expand_as(action_logits)
-        action_logits = action_logits.masked_fill(~valid_mask, float('-inf'))
+    context = model.get_init_context(1, device)  # [1, |A|, d]
 
-    # ---- CE_select ----
-    valid_sel = (select_positions >= 0)
-    n_valid_sel = valid_sel.sum().item()
+    total_loss = torch.tensor(0.0, device=device)
+    n_correct  = 0
 
-    if n_valid_sel == 0:
-        ce_select = torch.tensor(0.0, device=device, requires_grad=True)
-        acc = 0.0
-    else:
-        logits_sel  = action_logits[valid_sel]
-        targets_sel = select_targets[valid_sel]
-        ce_select = F.cross_entropy(logits_sel, targets_sel)
-        acc = (logits_sel.argmax(dim=-1) == targets_sel).float().mean().item()
+    for t in range(n_steps):
+        tr = transitions[t]
+        token_list, r_off, s_off, u_off = build_step_tokens(tr, vocab, max_actions)
 
-    # ---- CE_thought: discrete rounds only ----
-    # valid = position >= 0 AND round is discrete (not continuous)
-    disc_mask = ~continuous_round_mask.unsqueeze(-1)           # [B, n_rounds, 1] broadcast
-    valid_thought = (thought_positions >= 0) & disc_mask       # [B, n_rounds, 3]
-    n_valid_thought = valid_thought.sum().item()
+        token_ids = torch.tensor([token_list], dtype=torch.long, device=device)
+        reward_val = torch.tensor([tr['r']], dtype=torch.float32, device=device)
+        target = tr['a_star']
 
-    if n_valid_thought == 0:
-        ce_thought = torch.tensor(0.0, device=device, requires_grad=True)
-    else:
-        logits_th  = thought_logits[valid_thought]             # [M, vocab_size]
-        targets_th = thought_targets[valid_thought]            # [M]
-        ce_thought = F.cross_entropy(logits_th, targets_th)
+        if truncate_bptt_window > 0 and t > 0 and t % truncate_bptt_window == 0:
+            context = context.detach()
 
-    total_loss = ce_select + lambda_thought * ce_thought
-    return total_loss, ce_select.item(), ce_thought.item(), acc
+        select_logits, update_hidden = model.forward_step(
+            token_ids=token_ids,
+            reward_value=reward_val,
+            reward_offset=r_off,
+            select_offset=s_off,
+            update_offset=u_off,
+            context=context,
+        )
+
+        if n_actions_actual < max_actions:
+            select_logits[:, n_actions_actual:] = float('-inf')
+
+        target_t = torch.tensor([target], dtype=torch.long, device=device)
+        step_loss = F.cross_entropy(select_logits, target_t)
+        total_loss = total_loss + step_loss
+
+        pred = select_logits[0, :n_actions_actual].argmax().item()
+        if pred == target:
+            n_correct += 1
+
+        a_t = tr['a']
+        new_context = context.clone()
+        new_context[0, a_t, :] = update_hidden[0]
+        context = new_context
+
+    avg_loss = total_loss / n_steps
+    acc = n_correct / n_steps
+    return avg_loss, acc, n_steps
+
+
+# ---------------------------------------------------------------------------
+# Batched BPTT forward pass (processes multiple episodes in parallel)
+# ---------------------------------------------------------------------------
+
+def batched_episode_forward(
+    model: COCONUTTransformer,
+    episodes: List[Dict],
+    vocab: Dict,
+    max_actions: int,
+    device: torch.device,
+    truncate_bptt_window: int = 0,
+) -> Tuple[torch.Tensor, float, int]:
+    """Run BPTT through a batch of episodes in parallel.
+
+    All episodes in the batch are stepped through in lockstep. Episodes
+    shorter than the longest are masked out after they end.
+    """
+    B = len(episodes)
+    max_steps = max(ep['n_steps'] for ep in episodes)
+    step_counts = [len(ep['transitions']) for ep in episodes]
+
+    context = model.get_init_context(B, device)  # [B, |A|, d]
+
+    total_loss = torch.tensor(0.0, device=device)
+    total_correct = 0
+    total_valid   = 0
+
+    for t in range(max_steps):
+        active_mask = [i for i in range(B) if t < step_counts[i]]
+        if not active_mask:
+            break
+
+        batch_tokens = []
+        batch_rewards = []
+        batch_targets = []
+        batch_actions = []
+        batch_n_actions = []
+
+        sample_tr = episodes[active_mask[0]]['transitions'][t]
+        token_list, r_off, s_off, u_off = build_step_tokens(
+            sample_tr, vocab, max_actions
+        )
+        T_disc = len(token_list)
+
+        all_token_lists = []
+        for i in active_mask:
+            tr = episodes[i]['transitions'][t]
+            tl, _, _, _ = build_step_tokens(tr, vocab, max_actions)
+            all_token_lists.append(tl)
+            batch_rewards.append(tr['r'])
+            batch_targets.append(tr['a_star'])
+            batch_actions.append(tr['a'])
+            batch_n_actions.append(episodes[i].get('n_actions', max_actions))
+
+        token_ids = torch.tensor(all_token_lists, dtype=torch.long, device=device)
+        reward_vals = torch.tensor(batch_rewards, dtype=torch.float32, device=device)
+
+        active_ctx = context[active_mask]
+
+        if truncate_bptt_window > 0 and t > 0 and t % truncate_bptt_window == 0:
+            active_ctx = active_ctx.detach()
+            context = context.detach()
+
+        select_logits, update_hidden = model.forward_step(
+            token_ids=token_ids,
+            reward_value=reward_vals,
+            reward_offset=r_off,
+            select_offset=s_off,
+            update_offset=u_off,
+            context=active_ctx,
+        )
+
+        targets_t = torch.tensor(batch_targets, dtype=torch.long, device=device)
+
+        n_act_t = torch.tensor(batch_n_actions, dtype=torch.long, device=device)
+        act_range = torch.arange(max_actions, device=device).unsqueeze(0)
+        phantom_mask = act_range >= n_act_t.unsqueeze(1)
+        select_logits = select_logits.masked_fill(phantom_mask, float('-inf'))
+
+        step_loss = F.cross_entropy(select_logits, targets_t)
+        total_loss = total_loss + step_loss * len(active_mask)
+
+        preds = select_logits.argmax(dim=-1)
+        total_correct += (preds == targets_t).sum().item()
+        total_valid += len(active_mask)
+
+        new_context = context.clone()
+        for j, i in enumerate(active_mask):
+            a_t = batch_actions[j]
+            new_context[i, a_t, :] = update_hidden[j]
+        context = new_context
+
+    avg_loss = total_loss / max(total_valid, 1)
+    acc = total_correct / max(total_valid, 1)
+    return avg_loss, acc, total_valid
 
 
 # ---------------------------------------------------------------------------
@@ -430,43 +317,26 @@ def compute_hao_loss(
 
 @torch.no_grad()
 def evaluate(
-    model:       COCONUTTransformer,
-    val_loader:  DataLoader,
-    device:      torch.device,
+    model: COCONUTTransformer,
+    val_loader: DataLoader,
+    vocab: Dict,
+    max_actions: int,
+    device: torch.device,
     max_batches: Optional[int] = 50,
 ) -> Tuple[float, float]:
-    """Evaluate on validation set. Returns (mean_ce_select, mean_acc)."""
     model.eval()
     ce_total  = 0.0
     acc_total = 0.0
     n_batches = 0
 
-    for batch in val_loader:
+    for episodes in val_loader:
         if max_batches is not None and n_batches >= max_batches:
             break
-        batch = {k: v.to(device) for k, v in batch.items()}
 
-        action_logits, _ = model.forward_hao(
-            input_ids             = batch['input_ids'],
-            reward_values         = batch['reward_values'],
-            reward_positions      = batch['reward_positions'],
-            select_positions      = batch['select_positions'],
-            update_positions      = batch['update_positions'],
-            thought_positions     = batch['thought_positions'],
-            continuous_round_mask = batch['continuous_round_mask'],
+        loss, acc, _ = batched_episode_forward(
+            model, episodes, vocab, max_actions, device,
         )
-
-        valid = (batch['select_positions'] >= 0)
-        n_valid = valid.sum().item()
-        if n_valid > 0:
-            logits  = action_logits[valid]
-            targets = batch['select_targets'][valid]
-            ce  = F.cross_entropy(logits, targets).item()
-            acc = (logits.argmax(-1) == targets).float().mean().item()
-        else:
-            ce, acc = 0.0, 0.0
-
-        ce_total  += ce
+        ce_total  += loss.item()
         acc_total += acc
         n_batches += 1
 
@@ -484,10 +354,9 @@ def train(args) -> None:
     print(f"Device: {device}")
     if device.type == 'cuda':
         print(f"  GPU: {torch.cuda.get_device_name(0)}")
-        print(f"  VRAM: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
-
-    use_coconut = not args.no_coconut
-    print(f"  COCONUT feedback: {'enabled' if use_coconut else 'DISABLED (ablation)'}")
+        print(f"  VRAM: {torch.cuda.get_device_properties(0).total_mem / 1e9:.1f} GB"
+              if hasattr(torch.cuda.get_device_properties(0), 'total_mem')
+              else f"  VRAM: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
 
     # ---- Load dataset ----
     data_path = args.data_path
@@ -497,35 +366,55 @@ def train(args) -> None:
     val_seqs   = checkpoint_data['val']
     cfg_data   = checkpoint_data['config']
     print(f"  train: {len(train_seqs):,}  val: {len(val_seqs):,}")
-    max_states  = cfg_data.get('max_states',  cfg_data.get('n_states',  8))
-    max_actions = cfg_data.get('max_actions', cfg_data.get('n_actions', 4))
+    max_states  = cfg_data.get('max_states', 8)
+    max_actions = cfg_data.get('max_actions', 4)
     print(f"  max_states={max_states}, max_actions={max_actions}")
+
+    n_disc_per_step = 4 + 3 * max_actions + 3  # s,a,R,s' + evals + SELECT,QCURR,QNEXT,UPDATE
+    max_seq_per_step = max_actions + n_disc_per_step
 
     # ---- Model config ----
     model_config = COCONUTConfig(
         max_states  = max_states,
         max_actions = max_actions,
-        n_states    = max_states,
-        n_actions   = max_actions,
         n_layers    = args.n_layers,
         n_heads     = args.n_heads,
         d_model     = args.d_model,
         d_ff        = args.d_ff,
         dropout     = args.dropout,
-        max_seq_len = args.max_seq_len,
+        max_seq_len = max_seq_per_step + 16,
+        use_ffns    = not args.no_ffns,
     )
 
-    vocab = build_vocab(max_states, max_actions, model_config.n_q_bins)
+    vocab = build_vocab(max_states, max_actions)
 
     # ---- Datasets ----
-    train_ds = COCONUTDataset(train_seqs)
-    val_ds   = COCONUTDataset(val_seqs)
+    train_ds = EpisodeDataset(train_seqs, max_steps=args.max_steps)
+    val_ds   = EpisodeDataset(val_seqs, max_steps=args.max_steps)
+
+    train_loader = DataLoader(
+        train_ds,
+        batch_size  = args.batch_size,
+        shuffle     = True,
+        num_workers = args.num_workers,
+        collate_fn  = collate_episodes,
+        pin_memory  = False,
+    )
+    val_loader = DataLoader(
+        val_ds,
+        batch_size  = args.batch_size * 2,
+        shuffle     = False,
+        num_workers = args.num_workers,
+        collate_fn  = collate_episodes,
+        pin_memory  = False,
+    )
 
     # ---- Model ----
     model = COCONUTTransformer(model_config).to(device)
     n_params = model.num_parameters()
     print(f"\nModel parameters: {n_params:,}")
-    print(f"  vocab_size: {model_config.vocab_size} (includes {model_config.n_q_bins} Q-bin tokens)")
+    print(f"  vocab_size: {model_config.vocab_size}")
+    print(f"  use_ffns: {model_config.use_ffns}")
 
     # ---- Optimizer ----
     optimizer = AdamW(
@@ -535,50 +424,46 @@ def train(args) -> None:
         betas        = (0.9, 0.95),
     )
 
+    total_steps = len(train_loader) * args.epochs
+    warmup_steps = min(500, total_steps // 10)
+    scheduler = get_warmup_cosine_scheduler(optimizer, warmup_steps, total_steps)
+
     # ---- AMP scaler ----
     use_amp = (device.type == 'cuda')
-    scaler  = torch.cuda.amp.GradScaler(enabled=use_amp)
+    scaler  = torch.amp.GradScaler('cuda', enabled=use_amp)
 
-    print(f"\nTraining for {args.epochs} epochs")
+    print(f"\nTraining for {args.epochs} epochs (BPTT, continuous context from epoch 1)")
     print(f"  batch_size: {args.batch_size}  |  lr: {args.lr}  |  weight_decay: {args.weight_decay}")
+    print(f"  truncate_bptt: {args.truncate_bptt}")
+    print(f"  max_steps: {args.max_steps}")
     print(f"  AMP: {use_amp}")
-    print(f"  Hao stages: {[(s[0], s[2], s[3]) for s in HAO_STAGES]}")
 
     # ---- Weights & Biases ----
     if args.use_wandb:
         if not HAS_WANDB:
             raise ImportError("wandb is not installed. Run: pip install wandb")
-        run_tags = ["hao-curriculum", "coconut-feedback", "two-phase-layout"]
-        if not use_coconut:
-            run_tags.append("no-coconut-ablation")
         wandb.init(
             project = "coconut-qlearning",
             name    = args.run_name if args.run_name else None,
-            tags    = run_tags,
+            tags    = ["recurrent-context", "bptt"],
             config  = {
-                "architecture":  "COCONUT Two-Phase Transformer",
-                "n_layers":      args.n_layers,
-                "n_heads":       args.n_heads,
-                "d_model":       args.d_model,
-                "d_ff":          args.d_ff,
-                "dropout":       args.dropout,
-                "vocab_size":    model_config.vocab_size,
-                "n_q_bins":      model_config.n_q_bins,
-                "n_params":      n_params,
-                "n_sequences":   cfg_data.get('n_sequences', len(train_seqs) + len(val_seqs)),
-                "max_states":    max_states,
-                "max_actions":   max_actions,
-                "min_states":    cfg_data.get('min_states', max_states),
-                "min_actions":   cfg_data.get('min_actions', max_actions),
-                "reward_distributions": cfg_data.get('reward_distributions', ['peaked']),
-                "transition_concentrations": cfg_data.get('transition_concentrations', ['uniform']),
-                "epochs":        args.epochs,
-                "batch_size":    args.batch_size,
-                "lr":            args.lr,
-                "weight_decay":  args.weight_decay,
-                "use_coconut":   use_coconut,
-                "hao_stages":    [{"last_epoch": s[0], "max_steps": s[1],
-                                   "frac_continuous": s[2]} for s in HAO_STAGES],
+                "architecture":    "Recurrent Context Transformer",
+                "n_layers":        args.n_layers,
+                "n_heads":         args.n_heads,
+                "d_model":         args.d_model,
+                "d_ff":            args.d_ff,
+                "dropout":         args.dropout,
+                "use_ffns":        model_config.use_ffns,
+                "vocab_size":      model_config.vocab_size,
+                "n_params":        n_params,
+                "max_states":      max_states,
+                "max_actions":     max_actions,
+                "epochs":          args.epochs,
+                "batch_size":      args.batch_size,
+                "lr":              args.lr,
+                "weight_decay":    args.weight_decay,
+                "truncate_bptt":   args.truncate_bptt,
+                "max_steps":       args.max_steps,
             }
         )
 
@@ -592,141 +477,45 @@ def train(args) -> None:
 
     best_val_loss  = float('inf')
     global_step    = 0
-    log_ce_sel     = 0.0
-    log_ce_th      = 0.0
+    log_loss       = 0.0
     log_acc        = 0.0
     log_n          = 0
     t0             = time.time()
-    current_stage  = -1
-    frac_continuous = 0.0
 
     training_log = []
-    scheduler    = None
-    train_loader = None
-    val_loader   = None
-
-    def make_loaders(s_idx: int):
-        cfn = partial(collate_fn_hao,
-                      stage_idx  = s_idx,
-                      vocab      = vocab,
-                      n_q_bins   = model_config.n_q_bins,
-                      q_bin_min  = model_config.q_bin_min,
-                      q_bin_max  = model_config.q_bin_max)
-        tl = DataLoader(
-            train_ds,
-            batch_size  = args.batch_size,
-            shuffle     = True,
-            num_workers = args.num_workers,
-            collate_fn  = cfn,
-            pin_memory  = (device.type == 'cuda'),
-        )
-        vl = DataLoader(
-            val_ds,
-            batch_size  = args.batch_size * 2,
-            shuffle     = False,
-            num_workers = args.num_workers,
-            collate_fn  = cfn,
-            pin_memory  = (device.type == 'cuda'),
-        )
-        return tl, vl
 
     print()
 
     for epoch in range(1, args.epochs + 1):
-        # ---- Determine Hao stage ----
-        new_stage = None
-        for i, (last_ep, ms, fc, desc) in enumerate(HAO_STAGES):
-            if epoch <= last_ep:
-                new_stage = i
-                break
-        if new_stage is None:
-            new_stage = len(HAO_STAGES) - 1
-
-        # For --no_coconut: stay at stage 0 (all discrete) forever
-        if not use_coconut:
-            new_stage = 0
-
-        # ---- Stage transition ----
-        if new_stage != current_stage:
-            current_stage   = new_stage
-            frac_continuous = HAO_STAGES[current_stage][2]
-            stage_max_steps = HAO_STAGES[current_stage][1]
-
-            train_ds.max_steps           = stage_max_steps
-            train_ds.stage_idx           = current_stage
-            train_ds.all_stage_max_steps = STAGE_MAX_STEPS
-
-            desc = HAO_STAGES[current_stage][3]
-            print(f"[hao] Stage {current_stage}/{len(HAO_STAGES)-1}: "
-                  f"frac_continuous={frac_continuous:.0%}, max_steps={stage_max_steps} — {desc}")
-
-            # Reset optimizer state (per Hao et al.)
-            if current_stage > 0:
-                optimizer.state.clear()
-                print(f"  -> optimizer state reset")
-
-            train_loader, val_loader = make_loaders(current_stage)
-
-            # Fresh cosine LR schedule for this stage
-            stage_last_ep     = HAO_STAGES[current_stage][0]
-            remaining_epochs  = stage_last_ep - epoch + 1
-            stage_total_steps = len(train_loader) * remaining_epochs
-            stage_warmup      = min(100, stage_total_steps // 10)
-            scheduler = get_warmup_cosine_scheduler(optimizer, stage_warmup, stage_total_steps)
-
         model.train()
 
-        for batch in train_loader:
-            batch = {k: v.to(device, non_blocking=True) for k, v in batch.items()}
-
+        for episodes in train_loader:
             optimizer.zero_grad(set_to_none=True)
 
-            with torch.cuda.amp.autocast(enabled=use_amp):
-                action_logits, thought_logits = model.forward_hao(
-                    input_ids             = batch['input_ids'],
-                    reward_values         = batch['reward_values'],
-                    reward_positions      = batch['reward_positions'],
-                    select_positions      = batch['select_positions'],
-                    update_positions      = batch['update_positions'],
-                    thought_positions     = batch['thought_positions'],
-                    continuous_round_mask = batch['continuous_round_mask'],
-                    truncate_bptt_window  = 5,
-                )
-
-                loss, ce_sel, ce_th, acc = compute_hao_loss(
-                    action_logits,
-                    batch['select_positions'],
-                    batch['select_targets'],
-                    thought_logits,
-                    batch['thought_positions'],
-                    batch['thought_targets'],
-                    batch['continuous_round_mask'],
-                    n_actions_per_sample = batch.get('n_actions_per_sample'),
-                    lambda_thought = 1.0,
+            with torch.amp.autocast('cuda', enabled=use_amp):
+                loss, acc, n_valid = batched_episode_forward(
+                    model, episodes, vocab, max_actions, device,
+                    truncate_bptt_window=args.truncate_bptt,
                 )
 
             scaler.scale(loss).backward()
-
             scaler.unscale_(optimizer)
             nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-
             scaler.step(optimizer)
             scaler.update()
             scheduler.step()
 
             global_step += 1
-            log_ce_sel  += ce_sel
-            log_ce_th   += ce_th
-            log_acc     += acc
-            log_n       += 1
+            log_loss += loss.item()
+            log_acc  += acc
+            log_n    += 1
 
-            # ---- Periodic logging + evaluation ----
             if global_step % args.eval_every == 0:
-                avg_ce_sel = log_ce_sel / log_n
-                avg_ce_th  = log_ce_th  / log_n
-                avg_acc    = log_acc    / log_n
+                avg_loss = log_loss / log_n
+                avg_acc  = log_acc / log_n
 
-                val_ce, val_acc = evaluate(model, val_loader, device)
+                val_ce, val_acc = evaluate(model, val_loader, vocab,
+                                           max_actions, device)
                 model.train()
 
                 elapsed = time.time() - t0
@@ -734,26 +523,22 @@ def train(args) -> None:
 
                 print(
                     f"[ep {epoch:02d} | step {global_step:6d}]  "
-                    f"train: CE_sel={avg_ce_sel:.4f} CE_th={avg_ce_th:.4f} acc={avg_acc*100:.1f}%  |  "
+                    f"train: CE={avg_loss:.4f} acc={avg_acc*100:.1f}%  |  "
                     f"val: CE={val_ce:.4f} acc={val_acc*100:.1f}%  |  "
                     f"lr={lr_now:.2e} t={elapsed:.0f}s"
                 )
 
-                training_log.append((global_step, avg_ce_sel, avg_acc, val_ce, val_acc))
+                training_log.append((global_step, avg_loss, avg_acc, val_ce, val_acc))
 
                 if args.use_wandb:
                     wandb.log({
-                        "train/ce_select":          avg_ce_sel,
-                        "train/ce_thought":         avg_ce_th,
-                        "train/accuracy":           avg_acc,
-                        "val/ce_loss":              val_ce,
-                        "val/accuracy":             val_acc,
-                        "lr":                       lr_now,
-                        "curriculum/stage_idx":     current_stage,
-                        "curriculum/frac_continuous": frac_continuous,
-                        "curriculum/max_steps":     HAO_STAGES[current_stage][1],
-                        "epoch":                    epoch,
-                        "step":                     global_step,
+                        "train/ce_loss":    avg_loss,
+                        "train/accuracy":   avg_acc,
+                        "val/ce_loss":      val_ce,
+                        "val/accuracy":     val_acc,
+                        "lr":               lr_now,
+                        "epoch":            epoch,
+                        "step":             global_step,
                     })
 
                 if val_ce < best_val_loss:
@@ -766,24 +551,17 @@ def train(args) -> None:
                         'val_loss':         best_val_loss,
                         'val_ce_loss':      val_ce,
                         'val_acc':          val_acc,
-                        'use_coconut':      use_coconut,
-                        'stage_idx':        current_stage,
-                        'frac_continuous':  frac_continuous,
                     }, ckpt_path)
                     print(f"  -> Saved best checkpoint (val_ce={best_val_loss:.4f})")
 
-                log_ce_sel = 0.0
-                log_ce_th  = 0.0
-                log_acc    = 0.0
-                log_n      = 0
+                log_loss = 0.0
+                log_acc  = 0.0
+                log_n    = 0
 
         # End-of-epoch evaluation
-        val_ce, val_acc = evaluate(model, val_loader, device)
+        val_ce, val_acc = evaluate(model, val_loader, vocab, max_actions, device)
         model.train()
-        print(
-            f"\n[epoch {epoch:02d} END]  "
-            f"val: CE={val_ce:.4f} acc={val_acc*100:.1f}%\n"
-        )
+        print(f"\n[epoch {epoch:02d} END]  val: CE={val_ce:.4f} acc={val_acc*100:.1f}%\n")
 
         if val_ce < best_val_loss:
             best_val_loss = val_ce
@@ -795,20 +573,16 @@ def train(args) -> None:
                 'val_loss':         best_val_loss,
                 'val_ce_loss':      val_ce,
                 'val_acc':          val_acc,
-                'use_coconut':      use_coconut,
-                'stage_idx':        current_stage,
-                'frac_continuous':  frac_continuous,
             }, ckpt_path)
             print(f"  -> Saved best checkpoint (val_ce={best_val_loss:.4f})")
 
         if args.use_wandb:
             wandb.log({
-                "epoch/val_ce_loss":        val_ce,
-                "epoch/val_accuracy":       val_acc,
-                "epoch/best_val_loss":      best_val_loss,
-                "epoch/curriculum_stage":   current_stage,
-                "epoch":                    epoch,
-                "step":                     global_step,
+                "epoch/val_ce_loss":   val_ce,
+                "epoch/val_accuracy":  val_acc,
+                "epoch/best_val_loss": best_val_loss,
+                "epoch":               epoch,
+                "step":                global_step,
             })
 
     # ---- Save training log ----
@@ -843,7 +617,7 @@ def train(args) -> None:
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Train COCONUT Q-Learning Transformer (two-phase per-round curriculum)')
+        description='Train Recurrent Context Q-Learning Transformer (BPTT)')
 
     # Data
     parser.add_argument('--data_path', type=str,
@@ -859,19 +633,20 @@ def main():
     parser.add_argument('--d_model',     type=int,   default=256)
     parser.add_argument('--d_ff',        type=int,   default=1024)
     parser.add_argument('--dropout',     type=float, default=0.1)
-    parser.add_argument('--max_seq_len', type=int,   default=1280)
+    parser.add_argument('--no_ffns',     action='store_true',
+                        help='Disable FFN layers (attention-only transformer)')
 
     # Training hyperparameters
     parser.add_argument('--epochs',       type=int,   default=25)
-    parser.add_argument('--batch_size',   type=int,   default=128)
+    parser.add_argument('--batch_size',   type=int,   default=32)
     parser.add_argument('--lr',           type=float, default=1e-4)
     parser.add_argument('--weight_decay', type=float, default=1e-2)
     parser.add_argument('--eval_every',   type=int,   default=500)
-    parser.add_argument('--num_workers',  type=int,   default=4)
-
-    # Ablation flag
-    parser.add_argument('--no_coconut', action='store_true',
-                        help='Stay in Stage 0 (fully discrete) forever. Baseline ablation.')
+    parser.add_argument('--num_workers',  type=int,   default=0)
+    parser.add_argument('--max_steps',    type=int,   default=50,
+                        help='Max transitions per episode during training')
+    parser.add_argument('--truncate_bptt', type=int,  default=10,
+                        help='Detach context graph every N steps (0 = full BPTT)')
 
     # W&B
     parser.add_argument('--use_wandb',  action='store_true',

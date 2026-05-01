@@ -110,7 +110,6 @@ echo ""
 #   --d_model 256 \
 #   --d_ff 1024 \
 #   --dropout 0.1 \
-#   --max_seq_len 1280 \
 #   --epochs "$EPOCHS" \
 #   --batch_size "$BATCH_SIZE" \
 #   --lr 1e-4 \
@@ -126,7 +125,7 @@ echo ""
 echo "=== Step 4/4: Evaluation ==="
 echo "Start: $(date)"
 python3 scripts/4_evaluate.py \
-  --checkpoint checkpoints/coconut_transformer_coconut-v4-mixed-20260420-0105.pt \
+  --checkpoint checkpoints/coconut_transformer_coconut-v4-mixed-20260428-0207.pt \
   --figures_dir figures \
   --n_steps 50 \
   --alpha 0.1 \
