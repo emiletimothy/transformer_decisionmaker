@@ -1,0 +1,20 @@
+==================================================
+Job:       compare_ql_transformer (3241882)
+Node:      luthien
+Partition: yss
+CPUs:      4
+Start:     Sat May  2 06:58:45 AM PDT 2026
+==================================================
+GPU: NVIDIA A100 80GB PCIe
+
+Running compare_q_learning_transformer.py
+
+Running Exact Math Continuous Thought Q-Learning for T=500 steps...
+Max Frobenius error between Classical & Transformer over all steps: 1.27e-06
+✅ SUCCESS: The Mathematical Transformer perfectly matched Tabular Q-Learning!
+Figure saved to: /accounts/grad/abdullah_ateyeh/transformer_decisionmaker/tabular_q_learning/figures/coconut_q_learning_4s_2a.png
+
+==================================================
+Done: Sat May  2 06:58:52 AM PDT 2026
+Figure saved to: /accounts/grad/abdullah_ateyeh/transformer_decisionmaker/tabular_q_learning/figures
+==================================================

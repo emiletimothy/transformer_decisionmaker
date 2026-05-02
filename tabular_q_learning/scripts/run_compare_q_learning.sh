@@ -41,7 +41,7 @@ cd "$SCRIPT_DIR"
 python3 compare_q_learning_transformer.py \
   --n_states 4 \
   --n_actions 2 \
-  --T 200 \
+  --T 500 \
   --alpha 0.1 \
   --gamma 0.9 \
   --epsilon 0.1 \

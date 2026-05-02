@@ -19,7 +19,7 @@ def build_paper_sequence(Q_table, s_t, a_t, r_t, s_next, tf):
     # --- Context Segment: rows of Q_t ---
     for a in range(cfg.n_actions):
         tok = torch.zeros(tf.d_model)
-        tok[tf.A[a]] = 1.0; tok[tf.BOS] = 1.0 # id(c_a) = u_a + u_BOS (context marker)
+        tok[tf.A[a]] = 1.0; tok[tf.UPDATE] = 1.0 # id(c_a) = u_a + u_Update (context marker)
         for s in range(cfg.n_states):
             tok[tf.d_TE + tf.S[s]] = Q_table[s, a] # buf1(c_a) = sum Q u_s
         seq.append(tok)
@@ -114,17 +114,20 @@ if __name__ == "__main__":
         Path(args.save_dir).mkdir(parents=True, exist_ok=True)
         save_path = os.path.join(args.save_dir, f"coconut_q_learning_{args.n_states}s_{args.n_actions}a.png")
         
-        fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+        fig, axes = plt.subplots(1, 3, figsize=(18, 5))
         ql_arr, tf_arr = np.array(ql_h), np.array(tf_h)
+        diff_arr = tf_arr - ql_arr
         steps = np.arange(len(ql_h))
-        
+
         for s in range(args.n_states):
             for a in range(args.n_actions):
                 axes[0].plot(steps, ql_arr[:, s, a], label=f"Q(s{s},a{a})")
-                axes[1].plot(steps, tf_arr[:, s, a], linestyle='--')
-                
+                axes[1].plot(steps, tf_arr[:, s, a])
+                axes[2].plot(steps, diff_arr[:, s, a], label=f"Q(s{s},a{a})")
+
         axes[0].set_title("Classical Tabular Q-Learning")
         axes[1].set_title("Continuous Thought (Mathematical) Transformer")
+        axes[2].set_title("Difference (Transformer - Classical)")
         for ax in axes: ax.grid(True)
             
         plt.tight_layout()
