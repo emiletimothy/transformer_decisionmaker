@@ -3,7 +3,7 @@
 #SBATCH --partition=yss,jsteinhardt
 #SBATCH --gpus=A100:1
 #SBATCH --cpus-per-task=8
-#SBATCH --time=12:00:00
+#SBATCH --time=24:00:00
 #SBATCH --output=coconut_experiment%j.out
 #SBATCH --error=coconut_experiment%j.err
 #SBATCH --mail-user=abdullah_ateyeh@berkeley.edu
@@ -18,7 +18,7 @@ export WANDB_API_KEY=wandb_v1_I3I8IPHLFZ77VAmGl7J58ZVRQKl_OKlRNU9j38Hncxd9XzPG3V
 
 # Parse optional overrides
 N_SEQUENCES=50000
-EPOCHS=28
+EPOCHS=40
 BATCH_SIZE=64
 RUN_NAME="coconut-v4-mixed-$(date +%Y%m%d-%H%M)"
 NO_COCONUT=""
@@ -27,6 +27,10 @@ MAX_ACTIONS=4
 MIN_STATES=2
 MIN_ACTIONS=2
 STOCHASTIC_REWARDS=""
+SKIP_DATA=0
+SKIP_TRAIN=0
+SKIP_EVAL=0
+CHECKPOINT_OVERRIDE=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -40,9 +44,21 @@ while [[ $# -gt 0 ]]; do
     --min_states)       MIN_STATES="$2";       shift 2 ;;
     --min_actions)      MIN_ACTIONS="$2";      shift 2 ;;
     --stochastic_rewards) STOCHASTIC_REWARDS="--stochastic_rewards"; shift 1 ;;
+    --skip_data)        SKIP_DATA=1;           shift 1 ;;
+    --skip_train)       SKIP_TRAIN=1;          shift 1 ;;
+    --skip_eval)        SKIP_EVAL=1;           shift 1 ;;
+    --checkpoint)       CHECKPOINT_OVERRIDE="$2"; shift 2 ;;
     *) echo "Unknown argument: $1"; exit 1 ;;
   esac
 done
+
+# Derive the checkpoint path from RUN_NAME (matches 3_train.py's naming).
+# Override with --checkpoint if you want to evaluate a specific file.
+if [[ -n "$CHECKPOINT_OVERRIDE" ]]; then
+  CHECKPOINT_PATH="$CHECKPOINT_OVERRIDE"
+else
+  CHECKPOINT_PATH="checkpoints/coconut_transformer_${RUN_NAME}.pt"
+fi
 
 mkdir -p data checkpoints figures
 
@@ -72,80 +88,97 @@ echo " max_actions  : $MAX_ACTIONS"
 echo " min_states   : $MIN_STATES"
 echo " min_actions  : $MIN_ACTIONS"
 echo " stoch_rewards: ${STOCHASTIC_REWARDS:-false}"
+echo " checkpoint   : $CHECKPOINT_PATH"
 echo "============================================================"
 echo ""
 
-# # ---- Step 1: Data Generation ----
-# echo "=== Step 1/4: Generating training data ==="
-# echo "Start: $(date)"
-# python3 scripts/1_generate_data.py \
-#   --n_sequences "$N_SEQUENCES" \
-#   --max_states "$MAX_STATES" \
-#   --max_actions "$MAX_ACTIONS" \
-#   --min_states "$MIN_STATES" \
-#   --min_actions "$MIN_ACTIONS" \
-#   --min_steps 10 \
-#   --max_steps 50 \
-#   --alpha 0.1 \
-#   --gamma 0.9 \
-#   --seed 42 \
-#   ${STOCHASTIC_REWARDS} \
-#   --output data/coconut_dataset.pt
-# echo "Done: $(date)"
-# echo ""
+# ---- Step 1: Data Generation ----
+if [[ "$SKIP_DATA" -eq 0 ]]; then
+  echo "=== Step 1/4: Generating training data ==="
+  echo "Start: $(date)"
+  python3 scripts/1_generate_data.py \
+    --n_sequences "$N_SEQUENCES" \
+    --max_states "$MAX_STATES" \
+    --max_actions "$MAX_ACTIONS" \
+    --min_states "$MIN_STATES" \
+    --min_actions "$MIN_ACTIONS" \
+    --min_steps 10 \
+    --max_steps 50 \
+    --alpha 0.1 \
+    --gamma 0.9 \
+    --seed 42 \
+    ${STOCHASTIC_REWARDS} \
+    --output data/coconut_dataset.pt
+  echo "Done: $(date)"
+  echo ""
+else
+  echo "=== Step 1/4: SKIPPED (--skip_data) ==="
+  echo ""
+fi
 
-# # ---- Step 2: Model Summary ----
-# echo "=== Step 2/4: Model architecture summary ==="
-# python3 scripts/2_model.py
-# echo ""
-
-# # ---- Step 3: Training ----
-# echo "=== Step 3/4: Training ==="
-# echo "Start: $(date)"
-# python3 scripts/3_train.py \
-#   --data_path data/coconut_dataset.pt \
-#   --checkpoint_dir checkpoints \
-#   --n_layers 4 \
-#   --n_heads 8 \
-#   --d_model 256 \
-#   --d_ff 1024 \
-#   --dropout 0.1 \
-#   --epochs "$EPOCHS" \
-#   --batch_size "$BATCH_SIZE" \
-#   --lr 1e-4 \
-#   --weight_decay 1e-2 \
-#   --eval_every 500 \
-#   --run_name "$RUN_NAME" \
-#   --use_wandb \
-#   ${NO_COCONUT}
-# echo "Done: $(date)"
-# echo ""
-
-# ---- Step 4: Evaluation ----
-echo "=== Step 4/4: Evaluation ==="
-echo "Start: $(date)"
-python3 scripts/4_evaluate.py \
-  --checkpoint checkpoints/coconut_transformer_coconut-v4-mixed-20260428-0207.pt \
-  --figures_dir figures \
-  --n_steps 50 \
-  --alpha 0.1 \
-  --gamma 0.9 \
-  --epsilon 0.2 \
-  --eval_seed 9999 \
-  --n_eval_mdps 10 \
-  --n_probe_train 1000 \
-  --n_probe_eval 100 \
-  --probe_epochs 10 \
-  ${NO_COCONUT}
-echo "Done: $(date)"
+# ---- Step 2: Model Summary ----
+echo "=== Step 2/4: Model architecture summary ==="
+python3 scripts/2_model.py
 echo ""
 
-# echo "============================================================"
-# echo " Pipeline complete."
-# echo " Checkpoint : checkpoints/coconut_transformer.pt"
-# echo " Figures    : figures/action_agreement.png"
-# echo "              figures/probe_scatter.png"
-# echo "              figures/probe_frobenius.png"
-# echo "              figures/training_curves.png"
-# echo "              figures/ablation_accuracy.png"
-# echo "============================================================"
+# ---- Step 3: Training ----
+if [[ "$SKIP_TRAIN" -eq 0 ]]; then
+  echo "=== Step 3/4: Training ==="
+  echo "Start: $(date)"
+  python3 scripts/3_train.py \
+    --data_path data/coconut_dataset.pt \
+    --checkpoint_dir checkpoints \
+    --n_layers 4 \
+    --n_heads 8 \
+    --d_model 256 \
+    --d_ff 1024 \
+    --dropout 0.1 \
+    --epochs "$EPOCHS" \
+    --batch_size "$BATCH_SIZE" \
+    --lr 1e-4 \
+    --weight_decay 1e-2 \
+    --eval_every 500 \
+    --run_name "$RUN_NAME" \
+    --use_wandb \
+    ${NO_COCONUT}
+  echo "Done: $(date)"
+  echo ""
+else
+  echo "=== Step 3/4: SKIPPED (--skip_train) ==="
+  echo ""
+fi
+
+# ---- Step 4: Evaluation ----
+if [[ "$SKIP_EVAL" -eq 0 ]]; then
+  echo "=== Step 4/4: Evaluation ==="
+  echo "Start: $(date)"
+  if [[ ! -f "$CHECKPOINT_PATH" ]]; then
+    echo "ERROR: checkpoint not found at $CHECKPOINT_PATH"
+    echo "  Pass --checkpoint <path> or run training first."
+    exit 1
+  fi
+  python3 scripts/4_evaluate.py \
+    --checkpoint "$CHECKPOINT_PATH" \
+    --figures_dir figures \
+    --n_steps 50 \
+    --alpha 0.1 \
+    --gamma 0.9 \
+    --epsilon 0.2 \
+    --eval_seed 9999 \
+    --n_eval_mdps 10 \
+    --n_probe_train 1000 \
+    --n_probe_eval 100 \
+    --probe_epochs 10 \
+    ${NO_COCONUT}
+  echo "Done: $(date)"
+  echo ""
+else
+  echo "=== Step 4/4: SKIPPED (--skip_eval) ==="
+  echo ""
+fi
+
+echo "============================================================"
+echo " Pipeline complete."
+echo " Checkpoint : $CHECKPOINT_PATH"
+echo " Figures    : figures/"
+echo "============================================================"

@@ -21,16 +21,24 @@ Part 4 — Regret comparison
 Part 5 — Effective α/γ recovery
   Fits (α_eff, γ_eff) per trajectory from context-probe Q-value dynamics.
 
+Part 6 — Reward probe from context delta
+  Trains a linear probe on the residual Δc_{a_t} = update_hidden - context[a_t]
+  to predict the scalar reward r_t at each step. Tests whether the trained
+  model preserves the handwired construction's reward-injection pathway
+  (Layer 4's R/UPDATE head, which writes α·r into c_{a_t}'s buf₁).
+
 Output files:
     figures/action_agreement.png
     figures/probe_scatter.png
     figures/probe_frobenius.png
     figures/attention_heatmap.png
     figures/attention_heatmap.csv
+    figures/attention_full_heatmap_4s2a.png
     figures/training_curves.png
     figures/per_state_agreement.png
     figures/regret.png
     figures/effective_alpha_gamma.png
+    figures/reward_probe.png
 """
 
 import argparse
@@ -190,13 +198,13 @@ def run_action_inference(
     max_actions = config.max_actions
     model.eval()
 
-    context = model.get_init_context(1, device)
+    context = model.get_init_context(1, n_actions, device)
     predicted_actions = []
     context_history = []
 
     with torch.no_grad():
         for t, tr in enumerate(trajectory):
-            token_list, r_off, s_off, u_off = build_step_tokens(tr, vocab, max_actions)
+            token_list, r_off, s_off, u_off = build_step_tokens(tr, vocab, n_actions)
             token_ids = torch.tensor([token_list], dtype=torch.long, device=device)
             reward_val = torch.tensor([tr['r']], dtype=torch.float32, device=device)
 
@@ -267,9 +275,14 @@ def collect_context_probe_data(
     trajectories : list of n_trajectories lists of transition dicts
     """
     model.eval()
-    ctx_list = []
-    q_target_list = []
-    all_trajectories = []
+    max_actions = config.max_actions
+    d_model = config.d_model
+
+    N = n_trajectories * n_steps * n_actions
+    ctx_all = np.empty((N, d_model), dtype=np.float32)
+    q_target_all = np.empty((N, n_states), dtype=np.float32)
+    all_trajectories: List[List[Dict]] = []
+    write_idx = 0
 
     with torch.no_grad():
         for i in range(n_trajectories):
@@ -279,21 +292,39 @@ def collect_context_probe_data(
                 P, R, n_states, n_actions, n_steps=n_steps, seed=seed
             )
 
-            _, context_history = run_action_inference(
-                model, trajectory, vocab, n_actions, config, device,
-            )
+            context = model.get_init_context(1, n_actions, device)
 
-            for t in range(n_steps):
-                ctx_t = context_history[t]  # (max_actions, d_model) — before step t
-                q_t = q_snapshots[t]        # (n_states, n_actions) — after step t
+            for t, tr in enumerate(trajectory):
+                token_list, r_off, s_off, u_off = build_step_tokens(tr, vocab, n_actions)
+                token_ids = torch.tensor([token_list], dtype=torch.long, device=device)
+                reward_val = torch.tensor([tr['r']], dtype=torch.float32, device=device)
 
-                for a in range(n_actions):
-                    ctx_list.append(ctx_t[a])
-                    q_target_list.append(q_t[:, a])
+                _, update_hidden = model.forward_step(
+                    token_ids=token_ids,
+                    reward_value=reward_val,
+                    reward_offset=r_off,
+                    select_offset=s_off,
+                    update_offset=u_off,
+                    context=context,
+                )
+
+                ctx_t = context[0, :n_actions, :].detach().cpu().numpy()
+                q_t = q_snapshots[t]
+
+                ctx_all[write_idx:write_idx + n_actions] = ctx_t
+                q_target_all[write_idx:write_idx + n_actions] = q_t.T
+                write_idx += n_actions
+
+                a_t = tr['a']
+                new_context = context.clone()
+                new_context[0, a_t, :] = update_hidden[0]
+                context = new_context
+
+                del token_ids, reward_val, update_hidden
 
             all_trajectories.append(trajectory)
 
-    return np.stack(ctx_list, axis=0), np.stack(q_target_list, axis=0), all_trajectories
+    return ctx_all, q_target_all, all_trajectories
 
 
 def train_probe(
@@ -475,12 +506,14 @@ def plot_probe_frobenius(
 # ---------------------------------------------------------------------------
 
 def get_token_labels(n_ctx: int, token_ids: List[int], vocab: Dict) -> List[str]:
-    labels = [f'ctx_{i}' for i in range(n_ctx)]
+    """Labels for the flat sequence layout: [BOS, ctx_0..ctx_{n_ctx-1}, rest_of_discrete].
+
+    token_ids is the original discrete sequence whose first element is BOS.
+    """
     inv = {}
     inv[vocab['TOK_NULL']]   = 'NULL'
-    inv[vocab['TOK_START']]  = 'START'
+    inv[vocab['TOK_START']]  = 'BOS'
     inv[vocab['TOK_R']]      = 'R'
-    inv[vocab['TOK_EVAL']]   = 'EVAL'
     inv[vocab['TOK_SELECT']] = 'SEL'
     inv[vocab['TOK_UPDATE']] = 'UPD'
     inv[vocab['TOK_QCURR']]  = 'QCUR'
@@ -489,8 +522,10 @@ def get_token_labels(n_ctx: int, token_ids: List[int], vocab: Dict) -> List[str]
         inv[tok] = f'S{i}'
     for i, tok in enumerate(vocab['TOK_A']):
         inv[tok] = f'A{i}'
-    labels += [inv.get(t, f'?{t}') for t in token_ids]
-    return labels
+
+    bos_label = inv.get(token_ids[0], f'?{token_ids[0]}')
+    rest      = [inv.get(t, f'?{t}') for t in token_ids[1:]]
+    return [bos_label] + [f'ctx_{i}' for i in range(n_ctx)] + rest
 
 
 def plot_attention_heatmap(
@@ -506,11 +541,11 @@ def plot_attention_heatmap(
     model.eval()
 
     tr = trajectory[0]
-    token_list, r_off, s_off, u_off = build_step_tokens(tr, vocab, max_actions)
+    token_list, r_off, s_off, u_off = build_step_tokens(tr, vocab, n_actions)
     token_ids = torch.tensor([token_list], dtype=torch.long, device=device)
     reward_val = torch.tensor([tr['r']], dtype=torch.float32, device=device)
 
-    context = model.get_init_context(1, device)
+    context = model.get_init_context(1, n_actions, device)
 
     with torch.no_grad():
         select_logits, update_hidden, all_attn = model.forward_step(
@@ -523,8 +558,9 @@ def plot_attention_heatmap(
             return_attention=True,
         )
 
-    n_ctx = max_actions
+    n_ctx = n_actions
     labels = get_token_labels(n_ctx, token_list, vocab)
+    # Flat layout: [BOS, ctx_0..ctx_{n_ctx-1}, rest_of_discrete]; total length = n_ctx + len(token_list).
     T = n_ctx + len(token_list)
 
     sel_pos = n_ctx + s_off
@@ -599,6 +635,126 @@ def plot_attention_heatmap(
                     row = [layer_idx + 1, head_idx, lbl] + data[pos].tolist()
                     writer.writerow(row)
     print(f"  Saved: {csv_path}")
+
+
+# ---------------------------------------------------------------------------
+# Full causal-triangle attention heatmap (per layer × head, single sequence)
+# ---------------------------------------------------------------------------
+
+def plot_full_attention_heatmap(
+    model: COCONUTTransformer,
+    trajectory: List[Dict],
+    vocab: Dict,
+    n_actions_actual: int,
+    config: COCONUTConfig,
+    device: torch.device,
+    save_path: str,
+) -> None:
+    """Plot the full T×T causal-attention matrix (triangle pattern), averaged
+    over every transition step in the episode. One subplot per (layer, head).
+
+    Each step has the same token-sequence length, so per-step attention
+    matrices are directly averageable. Per-step token *identities* (S/A token
+    ids) differ across steps, so axis labels reflect the structural slot
+    rather than concrete values for any single step.
+    """
+    max_actions = config.max_actions
+    model.eval()
+    n_steps = len(trajectory)
+
+    n_actions = n_actions_actual
+    sample_tokens, _, _, _ = build_step_tokens(trajectory[0], vocab, n_actions)
+    n_ctx = n_actions
+    T = n_ctx + len(sample_tokens)
+
+    accum: Optional[List[np.ndarray]] = None
+    L: Optional[int] = None
+    H: Optional[int] = None
+
+    context = model.get_init_context(1, n_actions, device)
+
+    with torch.no_grad():
+        for t_idx, tr in enumerate(trajectory):
+            token_list, r_off, s_off, u_off = build_step_tokens(
+                tr, vocab, n_actions
+            )
+            token_ids = torch.tensor([token_list], dtype=torch.long, device=device)
+            reward_val = torch.tensor([tr['r']], dtype=torch.float32, device=device)
+
+            _, upd_h, all_attn = model.forward_step(
+                token_ids=token_ids,
+                reward_value=reward_val,
+                reward_offset=r_off,
+                select_offset=s_off,
+                update_offset=u_off,
+                context=context,
+                return_attention=True,
+            )
+
+            if accum is None:
+                L = len(all_attn)
+                H = all_attn[0].shape[1]
+                accum = [np.zeros((H, T, T), dtype=np.float64) for _ in range(L)]
+
+            for layer_idx in range(L):
+                accum[layer_idx] += all_attn[layer_idx][0].cpu().numpy()
+
+            new_ctx = context.clone()
+            new_ctx[0, tr['a'], :] = upd_h[0]
+            context = new_ctx
+
+    avg_attn = [a / max(n_steps, 1) for a in accum]
+    # Average across heads: one [T, T] map per layer.
+    per_layer = [a.mean(axis=0) for a in avg_attn]
+
+    # Structural slot labels (BOS, then context, then per-step discrete tokens)
+    slot_labels: List[str] = ['BOS']
+    for i in range(n_ctx):
+        slot_labels.append(f'ctx_{i}')
+    A = n_actions
+    slot_labels += ['QCUR', 's_t', 'a_t', 'R', 'QNXT']
+    for c in range(A):
+        slot_labels += ["s'", f'a{c}']
+    slot_labels += ['SEL', 'a*', 'UPD']
+    labels = slot_labels
+
+    cell = max(0.18, 6.0 / max(T, 1))
+    # One subplot per layer (heads averaged).
+    fig, axes = plt.subplots(
+        1, L,
+        figsize=(L * (T * cell + 1.0), T * cell + 1.0),
+        squeeze=False,
+    )
+
+    cmap = plt.cm.viridis
+
+    for layer_idx in range(L):
+        ax = axes[0][layer_idx]
+        data = per_layer[layer_idx]
+        ax.imshow(
+            data, aspect='equal', cmap=cmap,
+            vmin=0.0, vmax=max(float(data.max()), 1e-9),
+            origin='upper', interpolation='nearest',
+        )
+        ax.set_xticks(range(T))
+        ax.set_yticks(range(T))
+        ax.set_xticklabels(labels, rotation=90, fontsize=6)
+        if layer_idx == 0:
+            ax.set_yticklabels(labels, fontsize=6)
+        else:
+            ax.set_yticklabels([])
+        ax.set_title(f'Layer {layer_idx + 1} (heads averaged)', fontsize=10, pad=4)
+
+    fig.suptitle(
+        f'Causal attention (full T×T), averaged over {n_steps} steps and {H} heads — '
+        f'n_actions={n_actions}  '
+        f'(model max_states={config.max_states}, max_actions={max_actions})',
+        fontsize=11, y=1.02,
+    )
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"  Saved: {save_path}")
 
 
 # ---------------------------------------------------------------------------
@@ -721,7 +877,7 @@ def run_transformer_autonomous(
 ) -> np.ndarray:
     max_actions = config.max_actions
     model.eval()
-    context = model.get_init_context(1, device)
+    context = model.get_init_context(1, n_actions, device)
     s = int(rng.integers(n_states))
     rewards = np.zeros(n_steps, dtype=np.float32)
 
@@ -738,7 +894,7 @@ def run_transformer_autonomous(
             rewards[t] = r
 
             tr = {'s': s, 'a': a, 'r': r, 's_next': s_next, 'a_star': 0}
-            token_list, r_off, s_off, u_off = build_step_tokens(tr, vocab, max_actions)
+            token_list, r_off, s_off, u_off = build_step_tokens(tr, vocab, n_actions)
             token_ids = torch.tensor([token_list], dtype=torch.long, device=device)
             reward_val = torch.tensor([r], dtype=torch.float32, device=device)
 
@@ -891,8 +1047,13 @@ def estimate_effective_alpha_gamma(
         y = np.array(ys,  dtype=np.float64)
         X = np.stack([x1s, x2s], axis=1).astype(np.float64)
 
+        # Unconstrained OLS — we want to see the transformer's actual TD-like
+        # dynamics, including cases where the best fit has negative α or γ
+        # (which means the trajectory is not consistent with canonical
+        # Q-learning). Quality is reported via R² downstream.
         betas, _, _, _ = np.linalg.lstsq(X, y, rcond=None)
         alpha_e = float(betas[0])
+        # γ = (α·γ) / α; only well-defined when α is far from zero.
         gamma_e = float(betas[1] / alpha_e) if abs(alpha_e) > 1e-4 else float('nan')
 
         y_pred  = X @ betas
@@ -915,10 +1076,18 @@ def plot_effective_alpha_gamma(
     expert_gamma: float,
     save_path: str,
 ) -> None:
+    # Unconstrained OLS — show the full distribution, no clipping. Out-of-range
+    # fits (α<0, γ<0, γ>1) are real signal: they say the transformer's TD-like
+    # dynamics on that trajectory are not consistent with canonical Q-learning.
     valid = np.isfinite(alpha_eff) & np.isfinite(gamma_eff)
-    a = np.clip(alpha_eff[valid], -0.5, 1.5)
-    g = np.clip(gamma_eff[valid], -0.2, 1.5)
+    a = alpha_eff[valid]
+    g = gamma_eff[valid]
     r = r2_vals[valid]
+
+    n_total   = int(valid.sum())
+    in_region = (a >= 0) & (a <= 1) & (g >= 0) & (g <= 1)
+    n_in_box  = int(in_region.sum())
+    frac_box  = n_in_box / max(n_total, 1)
 
     fig = plt.figure(figsize=(13, 5))
     gs = fig.add_gridspec(1, 3, width_ratios=[2, 1, 1], wspace=0.35)
@@ -928,14 +1097,26 @@ def plot_effective_alpha_gamma(
 
     sc = ax_scatter.scatter(a, g, c=r, cmap='plasma', alpha=0.7, s=30, vmin=0, vmax=1)
     plt.colorbar(sc, ax=ax_scatter, label='Regression R²')
+
+    # Shade the canonical Q-learning region [0,1]×[0,1] so the eye can tell
+    # apart "transformer-like-Q-learning" fits from the rest.
+    ax_scatter.axvspan(0, 1, ymin=0, ymax=1, alpha=0.0)  # placeholder; use Rectangle for clarity
+    from matplotlib.patches import Rectangle
+    ax_scatter.add_patch(Rectangle(
+        (0, 0), 1, 1, linewidth=1.2, edgecolor='black', facecolor='black',
+        alpha=0.06, zorder=0, label=f'Valid Q-learning region [0,1]² ({frac_box:.0%} of fits)'
+    ))
+    ax_scatter.axhline(0, color='gray', linewidth=0.8, linestyle=':', alpha=0.7)
+    ax_scatter.axvline(0, color='gray', linewidth=0.8, linestyle=':', alpha=0.7)
+
     ax_scatter.axvline(expert_alpha, color='red', linewidth=2, linestyle='--',
                        label=f'Expert α = {expert_alpha}')
     ax_scatter.axhline(expert_gamma, color='blue', linewidth=2, linestyle='--',
                        label=f'Expert γ = {expert_gamma}')
     ax_scatter.set_xlabel('α_eff')
     ax_scatter.set_ylabel('γ_eff')
-    ax_scatter.set_title('Fitted (α_eff, γ_eff) per trajectory')
-    ax_scatter.legend(fontsize=8)
+    ax_scatter.set_title('Fitted (α_eff, γ_eff) per trajectory (unconstrained OLS)')
+    ax_scatter.legend(fontsize=8, loc='best')
     ax_scatter.grid(True, alpha=0.3)
 
     ax_alpha.hist(a, bins=20, color='steelblue', edgecolor='white', alpha=0.8)
@@ -998,8 +1179,326 @@ def plot_training_curves(log_path: str, save_path: str) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Part 6: Reward probe from context delta
+# ---------------------------------------------------------------------------
+
+def collect_reward_probe_data(
+    model: COCONUTTransformer,
+    n_trajectories: int,
+    n_states: int,
+    n_actions: int,
+    vocab: Dict,
+    config: COCONUTConfig,
+    device: torch.device,
+    n_steps: int = 50,
+    seed_offset: int = 40000,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Collect (Δc_{a_t}, r_t) pairs per step.
+
+    Δc_{a_t} = update_hidden - context[a_t]   (residual written into the
+    chosen action's slot at step t). One pair per (trajectory, step).
+    """
+    model.eval()
+    d_model = config.d_model
+
+    N = n_trajectories * n_steps
+    delta_all = np.empty((N, d_model), dtype=np.float32)
+    r_all = np.empty(N, dtype=np.float32)
+    write_idx = 0
+
+    with torch.no_grad():
+        for i in range(n_trajectories):
+            seed = seed_offset + i
+            P, R = generate_eval_mdp(n_states, n_actions, seed=seed)
+            trajectory, _ = run_tabular_q_learning(
+                P, R, n_states, n_actions, n_steps=n_steps, seed=seed
+            )
+
+            context = model.get_init_context(1, n_actions, device)
+
+            for t, tr in enumerate(trajectory):
+                token_list, r_off, s_off, u_off = build_step_tokens(tr, vocab, n_actions)
+                token_ids = torch.tensor([token_list], dtype=torch.long, device=device)
+                reward_val = torch.tensor([tr['r']], dtype=torch.float32, device=device)
+
+                _, update_hidden = model.forward_step(
+                    token_ids=token_ids,
+                    reward_value=reward_val,
+                    reward_offset=r_off,
+                    select_offset=s_off,
+                    update_offset=u_off,
+                    context=context,
+                )
+
+                a_t = tr['a']
+                prev_slot = context[0, a_t, :].detach().cpu().numpy()
+                new_slot = update_hidden[0].detach().cpu().numpy()
+                delta_all[write_idx] = new_slot - prev_slot
+                r_all[write_idx] = tr['r']
+                write_idx += 1
+
+                new_context = context.clone()
+                new_context[0, a_t, :] = update_hidden[0]
+                context = new_context
+
+                del token_ids, reward_val, update_hidden
+
+    return delta_all, r_all
+
+
+class RewardProbe(nn.Module):
+    """Linear probe: Δc in R^{d_model} -> scalar reward r."""
+    def __init__(self, d_model: int):
+        super().__init__()
+        self.linear = nn.Linear(d_model, 1)
+
+    def forward(self, h: torch.Tensor) -> torch.Tensor:
+        return self.linear(h).squeeze(-1)
+
+
+def train_reward_probe(
+    probe: RewardProbe,
+    delta_all: np.ndarray,
+    r_all: np.ndarray,
+    device: torch.device,
+    n_epochs: int = 10,
+    batch_size: int = 256,
+    lr: float = 1e-3,
+) -> List[float]:
+    probe.train()
+    optimizer = torch.optim.Adam(probe.parameters(), lr=lr)
+    N = delta_all.shape[0]
+    losses = []
+
+    d_t = torch.tensor(delta_all, dtype=torch.float32, device=device)
+    r_t = torch.tensor(r_all, dtype=torch.float32, device=device)
+
+    for _ in range(n_epochs):
+        perm = torch.randperm(N, device=device)
+        epoch_loss = 0.0
+        n_batches = 0
+        for i in range(0, N, batch_size):
+            idx = perm[i:i + batch_size]
+            pred = probe(d_t[idx])
+            loss = F.mse_loss(pred, r_t[idx])
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            epoch_loss += loss.item()
+            n_batches += 1
+        losses.append(epoch_loss / max(n_batches, 1))
+
+    return losses
+
+
+def evaluate_reward_probe(
+    probe: RewardProbe,
+    delta_all: np.ndarray,
+    r_all: np.ndarray,
+    device: torch.device,
+) -> Tuple[float, float, np.ndarray]:
+    probe.eval()
+    with torch.no_grad():
+        d_t = torch.tensor(delta_all, dtype=torch.float32, device=device)
+        r_pred = probe(d_t).cpu().numpy()
+
+    ss_res = float(np.sum((r_all - r_pred) ** 2))
+    ss_tot = float(np.sum((r_all - r_all.mean()) ** 2)) + 1e-12
+    r2 = float(1.0 - ss_res / ss_tot)
+    mae = float(np.mean(np.abs(r_all - r_pred)))
+    return r2, mae, r_pred
+
+
+def plot_reward_probe(
+    r_true: np.ndarray,
+    r_pred: np.ndarray,
+    r2: float,
+    mae: float,
+    save_path: str,
+) -> None:
+    rng = np.random.default_rng(0)
+    n = len(r_true)
+    idx = rng.choice(n, size=min(10000, n), replace=False)
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5))
+
+    ax1.scatter(r_true[idx], r_pred[idx], alpha=0.2, s=6,
+                color='seagreen', rasterized=True)
+    lo = float(min(r_true.min(), r_pred.min()))
+    hi = float(max(r_true.max(), r_pred.max()))
+    ax1.plot([lo, hi], [lo, hi], 'r--', linewidth=1.5, label='y = x')
+    ax1.set_xlabel('True reward r_t')
+    ax1.set_ylabel('Predicted reward (linear probe on Δc)')
+    ax1.set_title(f'Reward Probe Scatter\nR² = {r2:.4f}  MAE = {mae:.4f}')
+    ax1.legend()
+    ax1.grid(True, alpha=0.3)
+
+    residuals = r_pred - r_true
+    ax2.hist(residuals, bins=40, color='seagreen', edgecolor='white', alpha=0.85)
+    ax2.axvline(0, color='red', linewidth=1.2, linestyle='--')
+    ax2.set_xlabel('Residual (predicted − true)')
+    ax2.set_ylabel('Count')
+    ax2.set_title(f'Residual Distribution\nmean={residuals.mean():+.4f}  std={residuals.std():.4f}')
+    ax2.grid(True, alpha=0.3)
+
+    fig.suptitle('Reward Probe from Context Delta Δc_{a_t}', fontsize=12)
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"  Saved: {save_path}")
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
+def trace_step_log(
+    model: COCONUTTransformer,
+    q_probe: 'ContextQProbe',
+    r_probe: 'RewardProbe',
+    n_states: int,
+    n_actions: int,
+    vocab: Dict,
+    config: COCONUTConfig,
+    device: torch.device,
+    seed: int,
+    n_steps: int,
+    alpha: float,
+    gamma: float,
+    epsilon: float,
+    save_path: str,
+) -> None:
+    """Write a per-step text log comparing model context updates to the
+    oracle tabular Q-learning update for a single MDP."""
+    np.set_printoptions(precision=4, suppress=True, linewidth=140)
+
+    P, R = generate_eval_mdp(n_states, n_actions, seed=seed)
+    trajectory, q_snaps = run_tabular_q_learning(
+        P, R, n_states, n_actions, n_steps=n_steps,
+        alpha=alpha, gamma=gamma, epsilon=epsilon, seed=seed,
+    )
+    # q_snaps[t] is the Q table AFTER step t's oracle update.
+    q_before_all = np.concatenate(
+        [np.zeros((1, n_states, n_actions), dtype=np.float32), q_snaps[:-1]], axis=0,
+    )
+
+    lines: List[str] = []
+    lines.append("=" * 90)
+    lines.append(f"PER-STEP TRACE  |  seed={seed}  n_states={n_states}  "
+                 f"n_actions={n_actions}  n_steps={n_steps}")
+    lines.append(f"alpha={alpha}  gamma={gamma}  epsilon={epsilon}")
+    lines.append("=" * 90)
+    lines.append("")
+    lines.append("MDP transition probabilities P[s, a, s']:")
+    for s in range(n_states):
+        for a in range(n_actions):
+            lines.append(f"  P[s={s}, a={a}] = {P[s, a]}")
+    lines.append("")
+    lines.append("MDP reward matrix R[s, a]:")
+    for s in range(n_states):
+        lines.append(f"  R[s={s}] = {R[s]}")
+    lines.append("")
+
+    model.eval()
+    context = model.get_init_context(1, n_actions, device)
+    prev_delta_per_action: Dict[int, np.ndarray] = {}
+
+    with torch.no_grad():
+        for t, tr in enumerate(trajectory):
+            s, a, r, s_next = tr['s'], tr['a'], tr['r'], tr['s_next']
+
+            # ---- Oracle Q-learning update ----
+            Q_before = q_before_all[t]
+            Q_after = q_snaps[t]
+            q_sa_before = float(Q_before[s, a])
+            max_q_next = float(Q_before[s_next].max())
+            td_target = r + gamma * max_q_next
+            td_error = td_target - q_sa_before
+            q_sa_after = float(Q_after[s, a])
+            a_star_oracle = int(np.argmax(Q_after[s_next]))
+
+            # ---- Model forward step ----
+            token_list, r_off, s_off, u_off = build_step_tokens(tr, vocab, n_actions)
+            token_ids = torch.tensor([token_list], dtype=torch.long, device=device)
+            reward_val = torch.tensor([r], dtype=torch.float32, device=device)
+
+            select_logits, update_hidden = model.forward_step(
+                token_ids=token_ids,
+                reward_value=reward_val,
+                reward_offset=r_off,
+                select_offset=s_off,
+                update_offset=u_off,
+                context=context,
+            )
+            if n_actions < config.max_actions:
+                select_logits[:, n_actions:] = float('-inf')
+            model_action = int(select_logits[0].argmax().item())
+
+            ctx_before_a = context[0, a, :].detach().cpu().numpy()
+            ctx_after_a = update_hidden[0].detach().cpu().numpy()
+            delta = ctx_after_a - ctx_before_a
+            delta_norm = float(np.linalg.norm(delta))
+            ctx_before_norm = float(np.linalg.norm(ctx_before_a))
+            ctx_after_norm = float(np.linalg.norm(ctx_after_a))
+
+            cos_prev = None
+            if a in prev_delta_per_action:
+                pd = prev_delta_per_action[a]
+                denom = float(np.linalg.norm(pd) * delta_norm)
+                if denom > 1e-12:
+                    cos_prev = float(np.dot(pd, delta) / denom)
+            prev_delta_per_action[a] = delta.copy()
+
+            # ---- Probes ----
+            delta_t = torch.from_numpy(delta).unsqueeze(0).to(device)
+            r_hat = float(r_probe(delta_t).item())
+
+            ctx_before_t = torch.from_numpy(ctx_before_a).unsqueeze(0).to(device)
+            ctx_after_t = torch.from_numpy(ctx_after_a).unsqueeze(0).to(device)
+            q_pred_before = q_probe(ctx_before_t)[0].cpu().numpy()  # (n_states,)
+            q_pred_after = q_probe(ctx_after_t)[0].cpu().numpy()
+            q_oracle_col_before = Q_before[:, a]
+            q_oracle_col_after = Q_after[:, a]
+
+            # ---- Write step block ----
+            lines.append(f"--- Step {t:3d} ---")
+            lines.append(f"  Transition: s={s}  a={a}  r={r:+.4f}  s'={s_next}")
+            lines.append(f"  ORACLE Q-learning:")
+            lines.append(f"    Q[s={s},a={a}] before = {q_sa_before:+.4f}")
+            lines.append(f"    max_a Q[s'={s_next},a] = {max_q_next:+.4f}")
+            lines.append(f"    TD target = r + gamma * max = {td_target:+.4f}")
+            lines.append(f"    TD error  = target - Q_before = {td_error:+.4f}")
+            lines.append(f"    Q[s={s},a={a}] after  = {q_sa_after:+.4f}  "
+                         f"(delta = {q_sa_after - q_sa_before:+.4f})")
+            lines.append(f"    argmax_a Q[s'={s_next}] = a*={a_star_oracle}")
+            lines.append(f"  MODEL action choice this step: a_hat={model_action}  "
+                         f"(oracle a*={tr['a_star']})")
+            lines.append(f"  MODEL context update (slot a={a}):")
+            lines.append(f"    ||c[a]|| before = {ctx_before_norm:.4f}   "
+                         f"after = {ctx_after_norm:.4f}   ||delta_c|| = {delta_norm:.4f}")
+            if cos_prev is not None:
+                lines.append(f"    cosine(delta_c_t, delta_c_prev for same a) = {cos_prev:+.4f}")
+            lines.append(f"    reward probe on delta_c: r_hat = {r_hat:+.4f}   "
+                         f"(true r = {r:+.4f}   |err| = {abs(r_hat - r):.4f})")
+            lines.append(f"    Q-probe on c[a={a}]   BEFORE: pred Q[:,{a}] = {q_pred_before}")
+            lines.append(f"                                    oracle Q[:,{a}] = {q_oracle_col_before}")
+            lines.append(f"    Q-probe on c[a={a}]   AFTER : pred Q[:,{a}] = {q_pred_after}")
+            lines.append(f"                                    oracle Q[:,{a}] = {q_oracle_col_after}")
+            lines.append("")
+
+            # advance context
+            new_context = context.clone()
+            new_context[0, a, :] = update_hidden[0]
+            context = new_context
+
+    lines.append("=" * 90)
+    lines.append("End of trace.")
+    lines.append("=" * 90)
+
+    with open(save_path, 'w') as f:
+        f.write("\n".join(lines))
+    print(f"  Wrote step-trace log to {save_path}")
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -1180,6 +1679,27 @@ def main():
         save_path=os.path.join(args.figures_dir, 'attention_heatmap.png'),
     )
 
+    # ---- Full T×T causal attention on a fixed 4-state, 2-action sequence ----
+    fixed_S, fixed_A = 4, 2
+    if config.max_states >= fixed_S and config.max_actions >= fixed_A:
+        print(f"\n  Full causal-attention heatmap on fixed "
+              f"{fixed_S}-state / {fixed_A}-action MDP ...")
+        P_fix, R_fix = generate_eval_mdp(fixed_S, fixed_A, seed=_attn_seed + 1)
+        traj_fix, _ = run_tabular_q_learning(
+            P_fix, R_fix, fixed_S, fixed_A,
+            n_steps=args.n_steps, alpha=args.alpha, gamma=args.gamma,
+            epsilon=args.epsilon, seed=_attn_seed + 1,
+        )
+        plot_full_attention_heatmap(
+            model, traj_fix, vocab, fixed_A, config, device,
+            save_path=os.path.join(args.figures_dir,
+                                   'attention_full_heatmap_4s2a.png'),
+        )
+    else:
+        print(f"\n  Skipping full-attention heatmap: model max_states="
+              f"{config.max_states}, max_actions={config.max_actions} "
+              f"< required {fixed_S}/{fixed_A}.")
+
     # -----------------------------------------------------------------------
     # Per-distribution agreement heatmap
     # -----------------------------------------------------------------------
@@ -1268,6 +1788,61 @@ def main():
         expert_alpha=args.alpha, expert_gamma=args.gamma,
         save_path=os.path.join(args.figures_dir, 'effective_alpha_gamma.png'),
     )
+
+    # -----------------------------------------------------------------------
+    # Part 6: Reward probe from context delta
+    # -----------------------------------------------------------------------
+    print(f"\n{'=' * 60}")
+    print("Part 6: Reward probe from context delta")
+    print(f"{'=' * 60}")
+
+    print(f"\nCollecting reward-probe training data ({args.n_probe_train} trajectories) ...")
+    delta_tr, r_tr = collect_reward_probe_data(
+        model, args.n_probe_train, n_states, n_actions, vocab,
+        config, device, n_steps=args.n_steps, seed_offset=40000,
+    )
+    print(f"  delta: {delta_tr.shape}, r: {r_tr.shape}")
+
+    print(f"\nCollecting reward-probe eval data ({args.n_probe_eval} trajectories) ...")
+    delta_ev, r_ev = collect_reward_probe_data(
+        model, args.n_probe_eval, n_states, n_actions, vocab,
+        config, device, n_steps=args.n_steps, seed_offset=50000,
+    )
+
+    print(f"\nTraining reward probe ...")
+    r_probe = RewardProbe(config.d_model).to(device)
+    r_losses = train_reward_probe(
+        r_probe, delta_tr, r_tr, device, n_epochs=args.probe_epochs,
+    )
+    print(f"  MSE per epoch: {['%.4f' % l for l in r_losses]}")
+
+    r2_r, mae_r, r_pred = evaluate_reward_probe(r_probe, delta_ev, r_ev, device)
+    print(f"  Eval: R²={r2_r:.4f}  MAE={mae_r:.4f}")
+
+    plot_reward_probe(
+        r_ev, r_pred, r2=r2_r, mae=mae_r,
+        save_path=os.path.join(args.figures_dir, 'reward_probe.png'),
+    )
+
+    # -----------------------------------------------------------------------
+    # Part 6b: Per-step trace logs (1-2 single MDPs)
+    # -----------------------------------------------------------------------
+    print(f"\n{'=' * 60}")
+    print("Part 6b: Per-step trace logs")
+    print(f"{'=' * 60}")
+    trace_dir = os.path.join(args.figures_dir, 'step_traces')
+    os.makedirs(trace_dir, exist_ok=True)
+    trace_seeds = [args.eval_seed, args.eval_seed + 1]
+    for tseed in trace_seeds:
+        out_path = os.path.join(trace_dir, f'step_trace_seed{tseed}.txt')
+        trace_step_log(
+            model=model, q_probe=probe, r_probe=r_probe,
+            n_states=n_states, n_actions=n_actions, vocab=vocab,
+            config=config, device=device,
+            seed=tseed, n_steps=args.n_steps,
+            alpha=args.alpha, gamma=args.gamma, epsilon=args.epsilon,
+            save_path=out_path,
+        )
 
     # -----------------------------------------------------------------------
     # Training curves

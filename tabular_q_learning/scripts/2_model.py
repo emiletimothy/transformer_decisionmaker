@@ -7,10 +7,15 @@ context tokens carrying forward all historical knowledge. The network
 outputs action logits at the SELECT position and a new context vector
 at the UPDATE position.
 
-Token sequence per step t (prepended context is continuous, not embedded):
-  [c_1^(t), ..., c_{|A|}^(t), s_t, a_t, R, s_{t+1},
-   s_{t+1} a_1 EVAL, ..., s_{t+1} a_{|A|} EVAL,
-   SELECT, QCURR, QNEXT, UPDATE]
+Token sequence per step t (BOS first, then continuous context, then discrete):
+  [BOS,
+   c_1^(t), ..., c_{|A|}^(t),
+   QCURR, s_t, a_t, R, QNEXT,
+   s_{t+1} a_1, ..., s_{t+1} a_{|A|},
+   SELECT, a*, UPDATE]
+
+The number of context tokens equals the number of actions in the current
+MDP (|A|), not max_actions — context size is dynamic per batch.
 
 Attention constraint: tokens at step t attend only to tokens within step t
 and the |A| context tokens. No cross-step attention (enforced by processing
@@ -49,7 +54,7 @@ class COCONUTConfig:
 
     @property
     def vocab_size(self) -> int:
-        return 2 + self.max_states + self.max_actions + 6
+        return 2 + self.max_states + self.max_actions + 5
 
     def to_dict(self) -> Dict:
         d = asdict(self)
@@ -74,12 +79,11 @@ def build_vocab(max_states: int, max_actions: int) -> Dict[str, object]:
         'TOK_S':         list(range(2, 2 + max_states)),
         'TOK_A':         list(range(2 + max_states, 2 + max_states + max_actions)),
         'TOK_R':         TOK_R,
-        'TOK_EVAL':      TOK_R + 1,
-        'TOK_SELECT':    TOK_R + 2,
-        'TOK_QCURR':     TOK_R + 3,
-        'TOK_QNEXT':     TOK_R + 4,
-        'TOK_UPDATE':    TOK_R + 5,
-        'vocab_size':    2 + max_states + max_actions + 6,
+        'TOK_SELECT':    TOK_R + 1,
+        'TOK_QCURR':     TOK_R + 2,
+        'TOK_QNEXT':     TOK_R + 3,
+        'TOK_UPDATE':    TOK_R + 4,
+        'vocab_size':    2 + max_states + max_actions + 5,
         'n_actions_max': max_actions,
     }
 
@@ -233,25 +237,33 @@ class COCONUTTransformer(nn.Module):
                 nn.init.ones_(module.weight)
                 nn.init.zeros_(module.bias)
 
-    def get_init_context(self, batch_size: int, device: torch.device) -> torch.Tensor:
-        """Return fixed zero context tokens: (batch, n_actions, d_model)."""
-        return torch.zeros(batch_size, self.n_actions, self.d_model, device=device)
+    def get_init_context(
+        self, batch_size: int, n_actions: int, device: torch.device
+    ) -> torch.Tensor:
+        """Return fixed zero context tokens: (batch, n_actions, d_model).
+
+        n_actions is the MDP's actual action count for this batch (dynamic).
+        """
+        return torch.zeros(batch_size, n_actions, self.d_model, device=device)
 
     def _embed_step_tokens(
         self,
         token_ids: torch.Tensor,
         reward_value: torch.Tensor,
         reward_offset: int,
-        context_len: int,
+        n_ctx: int,
     ) -> torch.Tensor:
         """Embed discrete tokens for one step with positional encoding.
 
-        Positions are offset by context_len so context tokens occupy
-        positions 0..context_len-1 and discrete tokens start at context_len.
+        token_ids[:, 0] is BOS at flat position 0; remaining discrete tokens
+        occupy positions n_ctx+1 .. n_ctx+T-1 (context tokens take 1..n_ctx).
         """
         B, T = token_ids.shape
         device = token_ids.device
-        positions = torch.arange(context_len, context_len + T, device=device)
+        positions = torch.empty(T, dtype=torch.long, device=device)
+        positions[0] = 0
+        if T > 1:
+            positions[1:] = torch.arange(n_ctx + 1, n_ctx + T, device=device)
         positions = positions.unsqueeze(0).expand(B, -1)
         x = self.tok_emb(token_ids) + self.pos_emb(positions)
 
@@ -293,13 +305,17 @@ class COCONUTTransformer(nn.Module):
         n_ctx = context.shape[1]
 
         x_disc = self._embed_step_tokens(
-            token_ids, reward_value, reward_offset, context_len=n_ctx
+            token_ids, reward_value, reward_offset, n_ctx=n_ctx
         )
 
-        ctx_pos = torch.arange(n_ctx, device=context.device).unsqueeze(0).expand(B, -1)
+        # Context tokens occupy flat positions 1..n_ctx (BOS is at 0).
+        ctx_pos = torch.arange(1, n_ctx + 1, device=context.device).unsqueeze(0).expand(B, -1)
         context_with_pos = context + self.pos_emb(ctx_pos)
 
-        x = torch.cat([context_with_pos, x_disc], dim=1)  # [B, n_ctx + T_disc, d]
+        # Sequence: [BOS, ctx_1..ctx_{n_ctx}, rest_of_discrete]
+        bos_emb = x_disc[:, :1, :]
+        rest    = x_disc[:, 1:, :]
+        x = torch.cat([bos_emb, context_with_pos, rest], dim=1)  # [B, 1 + n_ctx + (T_disc-1), d]
         x = self.emb_drop(x)
 
         all_attn = []
@@ -359,18 +375,19 @@ def print_model_summary(config: COCONUTConfig) -> None:
 
     B = 2
     n_actions = config.max_actions
-    n_disc = 4 + 3 * n_actions + 3  # s,a,R,s' + evals + SELECT,QCURR,QNEXT,UPDATE
+    # BOS, QCURR, s, a, R, QNEXT, [s', a_c]*|A|, SELECT, a*, UPDATE
+    n_disc = 9 + 2 * n_actions
     dummy_ids = torch.randint(0, config.vocab_size, (B, n_disc))
     dummy_rv  = torch.rand(B)
-    dummy_ctx = torch.randn(B, n_actions, config.d_model)
+    dummy_ctx = torch.randn(B, n_actions, config.d_model)  # |context| = MDP n_actions
 
     model.eval()
     with torch.no_grad():
         sel_logits, upd_hidden = model.forward_step(
             token_ids=dummy_ids,
             reward_value=dummy_rv,
-            reward_offset=2,
-            select_offset=4 + 3 * n_actions,
+            reward_offset=4,
+            select_offset=6 + 2 * n_actions,
             update_offset=n_disc - 1,
             context=dummy_ctx,
         )

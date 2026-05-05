@@ -12,22 +12,21 @@ distributions to eliminate implicit biases in training.
 
 Vocabulary layout (vocab_size = 2 + max_states + max_actions + 5):
     TOK_NULL   = 0
-    TOK_START  = 1
+    TOK_START  = 1   (BOS)
     TOK_S      = [2, ..., 2 + max_states - 1]
     TOK_A      = [2 + max_states, ..., 2 + max_states + max_actions - 1]
     TOK_R      = 2 + max_states + max_actions
-    TOK_EVAL   = TOK_R + 1
-    TOK_SELECT = TOK_R + 2
-    TOK_QCURR  = TOK_R + 3
-    TOK_QNEXT  = TOK_R + 4
-    TOK_UPDATE = TOK_R + 5
+    TOK_SELECT = TOK_R + 1
+    TOK_QCURR  = TOK_R + 2
+    TOK_QNEXT  = TOK_R + 3
+    TOK_UPDATE = TOK_R + 4
 
-Per-step token sequence (formatted at collation time):
-  Context tokens: c_1, c_2, ..., c_{|A|}  (continuous, prepended)
-  Current step:   s_t, a_t, R, s_{t+1}
-  Eval workspace: [s_{t+1}, a_c, EVAL] * |A|
-  SELECT
-  TD workspace:   QCURR, QNEXT, UPDATE
+Per-step token sequence (formatted at collation time, length 3|A| + 9):
+  Context tokens: c_1, c_2, ..., c_{|A|}    (continuous, prepended)
+  Phase 1:        BOS, QCURR, s_t, a_t, R, QNEXT,
+                  (s_{t+1}, a_1), ..., (s_{t+1}, a_{|A|}),
+                  SELECT
+  Phase 2:        a*, UPDATE
 
 Output per episode:
     transitions  : List[dict]  — {s, a, r, s_next, a_star} per step
@@ -78,19 +77,17 @@ def build_vocab(max_states: int, max_actions: int) -> Dict[str, object]:
     TOK_S      = list(range(2, 2 + max_states))
     TOK_A      = list(range(2 + max_states, 2 + max_states + max_actions))
     TOK_R      = 2 + max_states + max_actions
-    TOK_EVAL   = TOK_R + 1
-    TOK_SELECT = TOK_R + 2
-    TOK_QCURR  = TOK_R + 3
-    TOK_QNEXT  = TOK_R + 4
-    TOK_UPDATE = TOK_R + 5
-    vocab_size = 2 + max_states + max_actions + 6
+    TOK_SELECT = TOK_R + 1
+    TOK_QCURR  = TOK_R + 2
+    TOK_QNEXT  = TOK_R + 3
+    TOK_UPDATE = TOK_R + 4
+    vocab_size = 2 + max_states + max_actions + 5
     return {
         'TOK_NULL':      TOK_NULL,
         'TOK_START':     TOK_START,
         'TOK_S':         TOK_S,
         'TOK_A':         TOK_A,
         'TOK_R':         TOK_R,
-        'TOK_EVAL':      TOK_EVAL,
         'TOK_SELECT':    TOK_SELECT,
         'TOK_QCURR':     TOK_QCURR,
         'TOK_QNEXT':     TOK_QNEXT,
@@ -361,7 +358,7 @@ def main():
     print(f"  NULL={vocab['TOK_NULL']}  START={vocab['TOK_START']}")
     print(f"  S={vocab['TOK_S']}")
     print(f"  A={vocab['TOK_A']}")
-    print(f"  R={vocab['TOK_R']}  EVAL={vocab['TOK_EVAL']}  SELECT={vocab['TOK_SELECT']}")
+    print(f"  R={vocab['TOK_R']}  SELECT={vocab['TOK_SELECT']}")
     print(f"  QCURR={vocab['TOK_QCURR']}  QNEXT={vocab['TOK_QNEXT']}  UPDATE={vocab['TOK_UPDATE']}")
 
     all_seqs = generate_dataset(
