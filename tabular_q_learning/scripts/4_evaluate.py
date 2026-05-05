@@ -37,6 +37,7 @@ Output files:
     figures/training_curves.png
     figures/per_state_agreement.png
     figures/regret.png
+    figures/long_horizon.png
     figures/effective_alpha_gamma.png
     figures/reward_probe.png
 """
@@ -51,6 +52,16 @@ from typing import Dict, List, Optional, Tuple
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+
+plt.rcParams.update({
+    'font.size':         13,
+    'axes.titlesize':    15,
+    'axes.labelsize':    14,
+    'xtick.labelsize':   12,
+    'ytick.labelsize':   12,
+    'legend.fontsize':   12,
+    'figure.titlesize':  16,
+})
 import numpy as np
 import torch
 import torch.nn as nn
@@ -82,6 +93,33 @@ build_step_tokens = _mod3.build_step_tokens
 # ---------------------------------------------------------------------------
 # MDP + tabular Q-learning
 # ---------------------------------------------------------------------------
+
+def generate_linear_chain_mdp(
+    n_states: int,
+    n_actions: int,
+) -> Tuple[np.ndarray, np.ndarray, str]:
+    """Easy-to-track MDP: deterministic linear chain with rewards increasing
+    in state index. Action 0 advances (s -> s+1, wraps at terminal); all other
+    actions stay put. Reward depends only on state, growing 0 -> 1.
+
+    The optimal policy is to always choose action 0, so attention should
+    consistently favor a0's slot.
+    """
+    P = np.zeros((n_states, n_actions, n_states), dtype=np.float32)
+    for s in range(n_states):
+        nxt = min(s + 1, n_states - 1)
+        P[s, 0, nxt] = 1.0
+        for a in range(1, n_actions):
+            P[s, a, s] = 1.0
+    state_rewards = np.linspace(0.0, 1.0, n_states, dtype=np.float32)
+    R = np.broadcast_to(state_rewards[:, None], (n_states, n_actions)).copy()
+    desc = (
+        f'Linear {n_states}-state chain, {n_actions} actions: action 0 '
+        f'advances s->s+1, others stay; rewards grow linearly 0->1 with '
+        f'state index (a0 is optimal everywhere).'
+    )
+    return P, R, desc
+
 
 def generate_eval_mdp(
     n_states: int,
@@ -649,6 +687,7 @@ def plot_full_attention_heatmap(
     config: COCONUTConfig,
     device: torch.device,
     save_path: str,
+    mdp_description: Optional[str] = None,
 ) -> None:
     """Plot the full T×T causal-attention matrix (triangle pattern), averaged
     over every transition step in the episode. One subplot per (layer, head).
@@ -704,8 +743,8 @@ def plot_full_attention_heatmap(
             context = new_ctx
 
     avg_attn = [a / max(n_steps, 1) for a in accum]
-    # Average across heads: one [T, T] map per layer.
-    per_layer = [a.mean(axis=0) for a in avg_attn]
+    # Max across heads: one [T, T] map per layer (preserves specialist heads).
+    per_layer = [a.max(axis=0) for a in avg_attn]
 
     # Structural slot labels (BOS, then context, then per-step discrete tokens)
     slot_labels: List[str] = ['BOS']
@@ -738,19 +777,24 @@ def plot_full_attention_heatmap(
         )
         ax.set_xticks(range(T))
         ax.set_yticks(range(T))
-        ax.set_xticklabels(labels, rotation=90, fontsize=6)
+        ax.set_xticklabels(labels, rotation=90, fontsize=11)
         if layer_idx == 0:
-            ax.set_yticklabels(labels, fontsize=6)
+            ax.set_yticklabels(labels, fontsize=11)
         else:
             ax.set_yticklabels([])
-        ax.set_title(f'Layer {layer_idx + 1} (heads averaged)', fontsize=10, pad=4)
+        ax.set_title(f'Layer {layer_idx + 1} (max over heads)', fontsize=14, pad=4)
 
-    fig.suptitle(
-        f'Causal attention (full T×T), averaged over {n_steps} steps and {H} heads — '
-        f'n_actions={n_actions}  '
-        f'(model max_states={config.max_states}, max_actions={max_actions})',
-        fontsize=11, y=1.02,
+    title_main = (
+        f'Causal attention (full T×T), mean over {n_steps} steps, '
+        f'max over {H} heads'
     )
+    if mdp_description:
+        fig.suptitle(
+            f'{title_main}\nMDP: {mdp_description}',
+            fontsize=13, y=1.02,
+        )
+    else:
+        fig.suptitle(title_main, fontsize=14, y=1.02)
     plt.tight_layout()
     plt.savefig(save_path, dpi=150, bbox_inches='tight')
     plt.close()
@@ -786,13 +830,17 @@ def plot_per_distribution_agreement(
         agreements_array has shape (n_mdps, n_steps) with per-step 0/1 agreement.
     """
     bin_edges = np.linspace(0, n_steps, n_bins + 1, dtype=int)
-    phase_labels = _BIN_PHASE_LABELS[:n_bins] if n_bins <= len(_BIN_PHASE_LABELS) else [
-        f'Bin {i+1}' for i in range(n_bins)
-    ]
-    bin_labels = [
-        f'{phase}\nt={bin_edges[i]+1}–{bin_edges[i+1]}'
-        for i, phase in enumerate(phase_labels)
-    ]
+    use_phase = n_bins <= len(_BIN_PHASE_LABELS)
+    if use_phase:
+        bin_labels = [
+            f'{_BIN_PHASE_LABELS[i]}\nt={bin_edges[i]+1}–{bin_edges[i+1]}'
+            for i in range(n_bins)
+        ]
+    else:
+        bin_labels = [
+            f't={bin_edges[i]+1}–{bin_edges[i+1]}'
+            for i in range(n_bins)
+        ]
 
     n_dists = len(dist_data)
     agree_matrix = np.full((n_dists, n_bins), np.nan)
@@ -804,22 +852,32 @@ def plot_per_distribution_agreement(
 
     row_labels = [label for label, _ in dist_data]
 
-    fig, ax = plt.subplots(figsize=(max(6, n_bins * 2.5), max(3, n_dists * 0.9)))
+    cell_w = 2.5 if use_phase else 1.8
+    fig_w = min(24.0, max(8.0, n_bins * cell_w + 4.0))
+    fig_h = max(3.5, n_dists * 0.8)
+    fig, ax = plt.subplots(figsize=(fig_w, fig_h))
     im = ax.imshow(agree_matrix, aspect='auto', cmap='RdYlGn', vmin=0, vmax=1)
-    plt.colorbar(im, ax=ax, label='Greedy action agreement')
+    cbar = plt.colorbar(im, ax=ax)
+    cbar.set_label('Greedy action agreement', fontsize=14)
+    cbar.ax.tick_params(labelsize=12)
     ax.set_xticks(range(n_bins))
-    ax.set_xticklabels(bin_labels, rotation=0, ha='center')
+    rotation = 0 if use_phase else 45
+    ha = 'center' if use_phase else 'right'
+    ax.set_xticklabels(bin_labels, rotation=rotation, ha=ha, fontsize=12)
     ax.set_yticks(range(n_dists))
-    ax.set_yticklabels(row_labels)
-    ax.set_xlabel('Episode timestep bin')
-    ax.set_ylabel('Reward distribution')
-    ax.set_title('Action Agreement by Reward Distribution and Timestep Phase')
+    ax.set_yticklabels(row_labels, fontsize=13)
+    ax.set_xlabel('Episode timestep bin', fontsize=14)
+    ax.set_ylabel('Reward distribution', fontsize=14)
+    ax.set_title('Action Agreement by Reward Distribution and Timestep Phase',
+                 fontsize=15)
+    cell_fontsize = 11 if n_bins <= 8 else (9 if n_bins <= 16 else 7)
     for r in range(n_dists):
         for b in range(n_bins):
             val = agree_matrix[r, b]
             if not np.isnan(val):
                 ax.text(b, r, f'{val:.2f}', ha='center', va='center',
-                        fontsize=9, color='black' if 0.3 < val < 0.85 else 'white')
+                        fontsize=cell_fontsize,
+                        color='black' if 0.3 < val < 0.85 else 'white')
     plt.tight_layout()
     plt.savefig(save_path, dpi=150, bbox_inches='tight')
     plt.close()
@@ -919,10 +977,127 @@ def run_transformer_autonomous(
     return rewards
 
 
+def value_iteration(
+    P: np.ndarray,
+    R: np.ndarray,
+    gamma: float,
+    tol: float = 1e-8,
+    max_iter: int = 10000,
+) -> np.ndarray:
+    n_states, n_actions = R.shape
+    V = np.zeros(n_states, dtype=np.float64)
+    for _ in range(max_iter):
+        Q = R + gamma * (P @ V)
+        V_new = Q.max(axis=1)
+        if np.max(np.abs(V_new - V)) < tol:
+            V = V_new
+            break
+        V = V_new
+    Q = R + gamma * (P @ V)
+    return Q.astype(np.float32)
+
+
+def run_optimal_autonomous(
+    P: np.ndarray,
+    R: np.ndarray,
+    n_states: int,
+    n_actions: int,
+    n_steps: int,
+    gamma: float,
+    rng: np.random.Generator,
+) -> np.ndarray:
+    Q_star = value_iteration(P, R, gamma)
+    s = int(rng.integers(n_states))
+    rewards = np.zeros(n_steps, dtype=np.float32)
+    for t in range(n_steps):
+        best = float(np.max(Q_star[s]))
+        ties = [ac for ac in range(n_actions) if Q_star[s, ac] == best]
+        a = int(rng.choice(ties))
+        rewards[t] = float(R[s, a])
+        s = int(rng.choice(n_states, p=P[s, a]))
+    return rewards
+
+
+def plot_long_horizon(
+    cumrew_transformer: np.ndarray,
+    cumrew_optimal: np.ndarray,
+    cumrew_epsgreedy: np.ndarray,
+    train_horizon: int,
+    n_mdps: int,
+    save_path: str,
+) -> None:
+    """Two panels: cumulative reward and per-step normalized reward (rolling
+    mean) over a horizon longer than the training horizon. A vertical line
+    marks the end of the training horizon to highlight any degradation.
+    """
+    n_steps = cumrew_transformer.shape[1]
+    steps = np.arange(1, n_steps + 1)
+
+    inst_t = np.diff(cumrew_transformer, axis=1, prepend=0.0)
+    inst_o = np.diff(cumrew_optimal, axis=1, prepend=0.0)
+    inst_e = np.diff(cumrew_epsgreedy, axis=1, prepend=0.0)
+
+    win = max(5, n_steps // 20)
+    kernel = np.ones(win) / win
+
+    def _roll(x):
+        return np.stack([np.convolve(row, kernel, mode='same') for row in x],
+                        axis=0)
+
+    roll_t = _roll(inst_t)
+    roll_o = _roll(inst_o)
+    roll_e = _roll(inst_e)
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+
+    series = [
+        ('Optimal (value iter.)', cumrew_optimal, 'black'),
+        ('Transformer', cumrew_transformer, 'steelblue'),
+        ('ε-greedy Q (ε=0.2)', cumrew_epsgreedy, 'forestgreen'),
+    ]
+    for label, data, color in series:
+        mean = data.mean(axis=0)
+        std = data.std(axis=0)
+        ax1.plot(steps, mean, color=color, linewidth=2, label=label)
+        ax1.fill_between(steps, mean - std, mean + std, alpha=0.15, color=color)
+    ax1.axvline(train_horizon, color='red', linestyle='--', linewidth=1.5,
+                alpha=0.7, label=f'Training horizon (t={train_horizon})')
+    ax1.set_xlabel('Timestep')
+    ax1.set_ylabel('Cumulative Reward')
+    ax1.set_title(f'Cumulative Reward over {n_steps} steps '
+                  f'(mean ± std, {n_mdps} MDPs)')
+    ax1.legend(fontsize=9)
+    ax1.grid(True, alpha=0.3)
+
+    roll_series = [
+        ('Optimal', roll_o, 'black'),
+        ('Transformer', roll_t, 'steelblue'),
+        ('ε-greedy Q', roll_e, 'forestgreen'),
+    ]
+    for label, data, color in roll_series:
+        mean = data.mean(axis=0)
+        ax2.plot(steps, mean, color=color, linewidth=2, label=label)
+    ax2.axvline(train_horizon, color='red', linestyle='--', linewidth=1.5,
+                alpha=0.7, label=f'Training horizon (t={train_horizon})')
+    ax2.set_xlabel('Timestep')
+    ax2.set_ylabel(f'Per-step reward (rolling mean, window={win})')
+    ax2.set_title('Per-step reward beyond training horizon')
+    ax2.legend(fontsize=9)
+    ax2.grid(True, alpha=0.3)
+
+    plt.suptitle('Long-Horizon Generalization Past Training Cutoff',
+                 fontsize=13)
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"  Saved: {save_path}")
+
+
 def plot_regret(
     cumrew_transformer: np.ndarray,
     cumrew_greedy: np.ndarray,
     cumrew_epsgreedy: np.ndarray,
+    cumrew_optimal: np.ndarray,
     n_mdps: int,
     save_path: str,
 ) -> None:
@@ -931,11 +1106,14 @@ def plot_regret(
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
 
-    for label, data, color in [
+    series = [
+        ('Optimal (value iter.)', cumrew_optimal, 'black'),
         ('Transformer', cumrew_transformer, 'steelblue'),
         ('Greedy Q (ε=0)', cumrew_greedy, 'darkorange'),
         ('ε-greedy Q (ε=0.2)', cumrew_epsgreedy, 'forestgreen'),
-    ]:
+    ]
+
+    for label, data, color in series:
         mean = data.mean(axis=0)
         std = data.std(axis=0)
         ax1.plot(steps, mean, color=color, linewidth=2, label=label)
@@ -947,13 +1125,13 @@ def plot_regret(
     ax1.legend(fontsize=9)
     ax1.grid(True, alpha=0.3)
 
-    regret_vs_greedy = cumrew_greedy - cumrew_transformer
-    regret_vs_epsgreedy = cumrew_epsgreedy - cumrew_transformer
+    regret_series = [
+        ('Transformer', cumrew_optimal - cumrew_transformer, 'steelblue'),
+        ('Greedy Q (ε=0)', cumrew_optimal - cumrew_greedy, 'darkorange'),
+        ('ε-greedy Q (ε=0.2)', cumrew_optimal - cumrew_epsgreedy, 'forestgreen'),
+    ]
 
-    for label, data, color in [
-        ('vs Greedy Q (ε=0)', regret_vs_greedy, 'darkorange'),
-        ('vs ε-greedy Q (ε=0.2)', regret_vs_epsgreedy, 'forestgreen'),
-    ]:
+    for label, data, color in regret_series:
         mean = data.mean(axis=0)
         std = data.std(axis=0)
         ax2.plot(steps, mean, color=color, linewidth=2, label=label)
@@ -961,8 +1139,8 @@ def plot_regret(
 
     ax2.axhline(0, color='gray', linestyle=':', linewidth=1, alpha=0.5)
     ax2.set_xlabel('Timestep')
-    ax2.set_ylabel('Regret (baseline − transformer)')
-    ax2.set_title(f'Regret vs Q-Learning Baselines')
+    ax2.set_ylabel('Regret (optimal − agent)')
+    ax2.set_title('Regret vs Optimal Policy')
     ax2.legend(fontsize=9)
     ax2.grid(True, alpha=0.3)
 
@@ -1509,6 +1687,9 @@ def main():
     parser.add_argument('--figures_dir', type=str,
                         default=os.path.join(_script_dir, '..', 'figures'))
     parser.add_argument('--n_steps',       type=int,   default=50)
+    parser.add_argument('--long_horizon_steps', type=int, default=200,
+                        help='Steps for the long-horizon evaluation that '
+                             'tests behavior past the training horizon.')
     parser.add_argument('--alpha',         type=float, default=0.1)
     parser.add_argument('--gamma',         type=float, default=0.9)
     parser.add_argument('--epsilon',       type=float, default=0.2)
@@ -1684,7 +1865,7 @@ def main():
     if config.max_states >= fixed_S and config.max_actions >= fixed_A:
         print(f"\n  Full causal-attention heatmap on fixed "
               f"{fixed_S}-state / {fixed_A}-action MDP ...")
-        P_fix, R_fix = generate_eval_mdp(fixed_S, fixed_A, seed=_attn_seed + 1)
+        P_fix, R_fix, mdp_desc = generate_linear_chain_mdp(fixed_S, fixed_A)
         traj_fix, _ = run_tabular_q_learning(
             P_fix, R_fix, fixed_S, fixed_A,
             n_steps=args.n_steps, alpha=args.alpha, gamma=args.gamma,
@@ -1694,6 +1875,7 @@ def main():
             model, traj_fix, vocab, fixed_A, config, device,
             save_path=os.path.join(args.figures_dir,
                                    'attention_full_heatmap_4s2a.png'),
+            mdp_description=mdp_desc,
         )
     else:
         print(f"\n  Skipping full-attention heatmap: model max_states="
@@ -1712,7 +1894,7 @@ def main():
     plot_per_distribution_agreement(
         dist_data, args.n_steps,
         os.path.join(args.figures_dir, 'per_state_agreement.png'),
-        n_bins=3,
+        n_bins=max(1, args.n_steps // 10),
     )
 
     # -----------------------------------------------------------------------
@@ -1725,6 +1907,7 @@ def main():
     all_cumrew_transformer = []
     all_cumrew_greedy = []
     all_cumrew_epsgreedy = []
+    all_cumrew_optimal = []
 
     for seed_i, seed in enumerate(eval_seeds):
         print(f"  Regret MDP {seed_i+1}/{args.n_eval_mdps} (seed={seed}) ...", flush=True)
@@ -1733,6 +1916,7 @@ def main():
         rng_t = np.random.default_rng(seed + 100)
         rng_g = np.random.default_rng(seed + 100)
         rng_e = np.random.default_rng(seed + 100)
+        rng_o = np.random.default_rng(seed + 100)
 
         rew_t = run_transformer_autonomous(
             model, P, R, n_states, n_actions, args.n_steps,
@@ -1746,25 +1930,74 @@ def main():
             P, R, n_states, n_actions, args.n_steps,
             alpha=args.alpha, gamma=args.gamma, epsilon=args.epsilon, rng=rng_e,
         )
+        rew_o = run_optimal_autonomous(
+            P, R, n_states, n_actions, args.n_steps,
+            gamma=args.gamma, rng=rng_o,
+        )
 
         all_cumrew_transformer.append(np.cumsum(rew_t))
         all_cumrew_greedy.append(np.cumsum(rew_g))
         all_cumrew_epsgreedy.append(np.cumsum(rew_e))
+        all_cumrew_optimal.append(np.cumsum(rew_o))
 
     cumrew_t = np.stack(all_cumrew_transformer, axis=0)
     cumrew_g = np.stack(all_cumrew_greedy, axis=0)
     cumrew_e = np.stack(all_cumrew_epsgreedy, axis=0)
+    cumrew_o = np.stack(all_cumrew_optimal, axis=0)
 
     print(f"\n  Final cumulative reward (mean over {args.n_eval_mdps} MDPs):")
+    print(f"    Optimal:        {cumrew_o[:, -1].mean():.2f} ± {cumrew_o[:, -1].std():.2f}")
     print(f"    Transformer:    {cumrew_t[:, -1].mean():.2f} ± {cumrew_t[:, -1].std():.2f}")
     print(f"    Greedy Q (ε=0): {cumrew_g[:, -1].mean():.2f} ± {cumrew_g[:, -1].std():.2f}")
     print(f"    ε-greedy Q:     {cumrew_e[:, -1].mean():.2f} ± {cumrew_e[:, -1].std():.2f}")
 
     plot_regret(
-        cumrew_t, cumrew_g, cumrew_e,
+        cumrew_t, cumrew_g, cumrew_e, cumrew_o,
         n_mdps=args.n_eval_mdps,
         save_path=os.path.join(args.figures_dir, 'regret.png'),
     )
+
+    # -----------------------------------------------------------------------
+    # Part 4b: Long-horizon evaluation (past the training horizon)
+    # -----------------------------------------------------------------------
+    if args.long_horizon_steps > args.n_steps:
+        print(f"\n{'=' * 60}")
+        print(f"Part 4b: Long-horizon eval "
+              f"({args.long_horizon_steps} steps, train horizon={args.n_steps})")
+        print(f"{'=' * 60}")
+        long_t, long_e, long_o = [], [], []
+        for seed_i, seed in enumerate(eval_seeds):
+            print(f"  Long-horizon MDP {seed_i+1}/{args.n_eval_mdps} "
+                  f"(seed={seed}) ...", flush=True)
+            P, R = generate_eval_mdp(n_states, n_actions, seed=seed)
+            rng_t = np.random.default_rng(seed + 100)
+            rng_e = np.random.default_rng(seed + 100)
+            rng_o = np.random.default_rng(seed + 100)
+            rew_t = run_transformer_autonomous(
+                model, P, R, n_states, n_actions, args.long_horizon_steps,
+                vocab, config, device, epsilon=0.0, rng=rng_t,
+            )
+            rew_e = run_q_learner_autonomous(
+                P, R, n_states, n_actions, args.long_horizon_steps,
+                alpha=args.alpha, gamma=args.gamma, epsilon=args.epsilon,
+                rng=rng_e,
+            )
+            rew_o = run_optimal_autonomous(
+                P, R, n_states, n_actions, args.long_horizon_steps,
+                gamma=args.gamma, rng=rng_o,
+            )
+            long_t.append(np.cumsum(rew_t))
+            long_e.append(np.cumsum(rew_e))
+            long_o.append(np.cumsum(rew_o))
+
+        plot_long_horizon(
+            np.stack(long_t, axis=0),
+            np.stack(long_o, axis=0),
+            np.stack(long_e, axis=0),
+            train_horizon=args.n_steps,
+            n_mdps=args.n_eval_mdps,
+            save_path=os.path.join(args.figures_dir, 'long_horizon.png'),
+        )
 
     # -----------------------------------------------------------------------
     # Part 5: Effective alpha/gamma recovery
