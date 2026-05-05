@@ -487,20 +487,21 @@ def plot_probe_scatter(
     idx = rng.choice(len(q_t), size=min(10000, len(q_t)), replace=False)
 
     fig, ax = plt.subplots(figsize=(7, 7))
-    ax.scatter(q_t[idx], q_p[idx], alpha=0.2, s=4, color='steelblue',
+    ax.scatter(q_t[idx], q_p[idx], alpha=0.35, s=10, color='steelblue',
                rasterized=True, edgecolors='none')
     lo = min(q_t.min(), q_p.min())
     hi = max(q_t.max(), q_p.max())
     ax.plot([lo, hi], [lo, hi], 'r--', linewidth=1.5, label='y = x')
-    ax.set_xlim(lo, hi)
-    ax.set_ylim(lo, hi)
-    ax.set_aspect('equal', adjustable='box')
-    ax.set_xlabel('Q tabular', fontsize=7)
-    ax.set_ylabel('Q probe (context token)', fontsize=7)
-    ax.tick_params(axis='both', labelsize=7)
+    ax.set_xlim(q_t.min(), q_t.max())
+    y_lo, y_hi = q_p.min(), q_p.max()
+    y_pad = 0.02 * (y_hi - y_lo)
+    ax.set_ylim(y_lo - y_pad, y_hi + y_pad)
+    ax.set_xlabel('Q tabular', fontsize=10)
+    ax.set_ylabel('Q probe (context token)', fontsize=10)
+    ax.tick_params(axis='both', labelsize=9)
     ax.set_title(f'Context Token Probe: Q-Values vs True  (R$^2$ = {r2:.4f})',
-                 fontsize=9)
-    ax.legend(fontsize=7, loc='upper left')
+                 fontsize=12)
+    ax.legend(fontsize=10, loc='upper left')
     ax.grid(True, alpha=0.3)
     plt.subplots_adjust(left=0.10, right=0.98, top=0.94, bottom=0.10)
     plt.savefig(save_path, dpi=150, bbox_inches='tight', pad_inches=0.05)
@@ -862,20 +863,20 @@ def plot_per_distribution_agreement(
     fig, ax = plt.subplots(figsize=(10, 7))
     im = ax.imshow(agree_matrix, aspect='auto', cmap='RdYlGn', vmin=0, vmax=1)
     cbar = plt.colorbar(im, ax=ax)
-    cbar.set_label('Greedy action agreement', fontsize=7)
-    cbar.ax.tick_params(labelsize=7)
+    cbar.set_label('Greedy action agreement', fontsize=16)
+    cbar.ax.tick_params(labelsize=14)
     ax.set_xticks(range(n_bins))
     rotation = 0 if use_phase else 45
     ha = 'center' if use_phase else 'right'
-    ax.set_xticklabels(bin_labels, rotation=rotation, ha=ha, fontsize=7)
+    ax.set_xticklabels(bin_labels, rotation=rotation, ha=ha, fontsize=15)
     ax.set_yticks(range(n_dists))
-    ax.set_yticklabels(row_labels, fontsize=7)
-    ax.set_xlabel('Episode timestep bin', fontsize=7)
-    ax.set_ylabel('Reward distribution', fontsize=7)
-    ax.tick_params(axis='both', labelsize=7)
+    ax.set_yticklabels(row_labels, fontsize=15)
+    ax.set_xlabel('Episode timestep bin', fontsize=17)
+    ax.set_ylabel('Reward distribution', fontsize=17)
+    ax.tick_params(axis='both', labelsize=15)
     ax.set_title('Action Agreement by Reward Distribution and Timestep Phase',
-                 fontsize=9)
-    cell_fontsize = 11 if n_bins <= 8 else (9 if n_bins <= 16 else 7)
+                 fontsize=18)
+    cell_fontsize = 18 if n_bins <= 8 else (15 if n_bins <= 16 else 12)
     for r in range(n_dists):
         for b in range(n_bins):
             val = agree_matrix[r, b]
