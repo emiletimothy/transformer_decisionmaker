@@ -441,7 +441,7 @@ def plot_action_agreement(
     ood_colours = ['darkorange', 'crimson', 'forestgreen', 'purple', 'saddlebrown']
     ood_styles = ['--', '-.', ':', (0, (3, 1, 1, 1)), (0, (5, 1))]
 
-    fig, ax = plt.subplots(figsize=(12, 5))
+    fig, ax = plt.subplots(figsize=(16, 10))
     ax.plot(steps, aa_mean_id, color='steelblue', linewidth=2.5,
             label='In-distribution (ID)')
     ax.fill_between(steps, aa_mean_id - aa_std_id, aa_mean_id + aa_std_id,
@@ -457,8 +457,9 @@ def plot_action_agreement(
 
     ax.axhline(y=1.0, color='gray', linestyle=':', linewidth=1, alpha=0.5,
                label='Perfect agreement')
-    ax.set_xlabel('Timestep')
-    ax.set_ylabel('Greedy Action Agreement')
+    ax.set_xlabel('Timestep', fontsize=7)
+    ax.set_ylabel('Greedy Action Agreement', fontsize=7)
+    ax.tick_params(axis='both', labelsize=7)
     ax.set_ylim(-0.05, 1.1)
     suffix = f' ({label_suffix})' if label_suffix else ''
     ax.set_title(
@@ -486,17 +487,23 @@ def plot_probe_scatter(
     idx = rng.choice(len(q_t), size=min(10000, len(q_t)), replace=False)
 
     fig, ax = plt.subplots(figsize=(7, 7))
-    ax.scatter(q_t[idx], q_p[idx], alpha=0.1, s=3, color='steelblue', rasterized=True)
+    ax.scatter(q_t[idx], q_p[idx], alpha=0.2, s=4, color='steelblue',
+               rasterized=True, edgecolors='none')
     lo = min(q_t.min(), q_p.min())
     hi = max(q_t.max(), q_p.max())
     ax.plot([lo, hi], [lo, hi], 'r--', linewidth=1.5, label='y = x')
-    ax.set_xlabel('Q tabular')
-    ax.set_ylabel('Q probe (context token)')
-    ax.set_title(f'Context Token Probe: Q-Values vs True\nR2 = {r2:.4f}')
-    ax.legend()
+    ax.set_xlim(lo, hi)
+    ax.set_ylim(lo, hi)
+    ax.set_aspect('equal', adjustable='box')
+    ax.set_xlabel('Q tabular', fontsize=7)
+    ax.set_ylabel('Q probe (context token)', fontsize=7)
+    ax.tick_params(axis='both', labelsize=7)
+    ax.set_title(f'Context Token Probe: Q-Values vs True  (R$^2$ = {r2:.4f})',
+                 fontsize=9)
+    ax.legend(fontsize=7, loc='upper left')
     ax.grid(True, alpha=0.3)
-    plt.tight_layout()
-    plt.savefig(save_path, dpi=150, bbox_inches='tight')
+    plt.subplots_adjust(left=0.10, right=0.98, top=0.94, bottom=0.10)
+    plt.savefig(save_path, dpi=150, bbox_inches='tight', pad_inches=0.05)
     plt.close()
     print(f"  Saved: {save_path}")
 
@@ -852,24 +859,22 @@ def plot_per_distribution_agreement(
 
     row_labels = [label for label, _ in dist_data]
 
-    cell_w = 2.5 if use_phase else 1.8
-    fig_w = min(24.0, max(8.0, n_bins * cell_w + 4.0))
-    fig_h = max(3.5, n_dists * 0.8)
-    fig, ax = plt.subplots(figsize=(fig_w, fig_h))
+    fig, ax = plt.subplots(figsize=(10, 7))
     im = ax.imshow(agree_matrix, aspect='auto', cmap='RdYlGn', vmin=0, vmax=1)
     cbar = plt.colorbar(im, ax=ax)
-    cbar.set_label('Greedy action agreement', fontsize=14)
-    cbar.ax.tick_params(labelsize=12)
+    cbar.set_label('Greedy action agreement', fontsize=7)
+    cbar.ax.tick_params(labelsize=7)
     ax.set_xticks(range(n_bins))
     rotation = 0 if use_phase else 45
     ha = 'center' if use_phase else 'right'
-    ax.set_xticklabels(bin_labels, rotation=rotation, ha=ha, fontsize=12)
+    ax.set_xticklabels(bin_labels, rotation=rotation, ha=ha, fontsize=7)
     ax.set_yticks(range(n_dists))
-    ax.set_yticklabels(row_labels, fontsize=13)
-    ax.set_xlabel('Episode timestep bin', fontsize=14)
-    ax.set_ylabel('Reward distribution', fontsize=14)
+    ax.set_yticklabels(row_labels, fontsize=7)
+    ax.set_xlabel('Episode timestep bin', fontsize=7)
+    ax.set_ylabel('Reward distribution', fontsize=7)
+    ax.tick_params(axis='both', labelsize=7)
     ax.set_title('Action Agreement by Reward Distribution and Timestep Phase',
-                 fontsize=15)
+                 fontsize=9)
     cell_fontsize = 11 if n_bins <= 8 else (9 if n_bins <= 16 else 7)
     for r in range(n_dists):
         for b in range(n_bins):
