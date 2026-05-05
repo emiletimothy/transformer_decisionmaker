@@ -57,44 +57,46 @@ build_vocab        = _mod.build_vocab
 def build_step_tokens(
     transition: Dict,
     vocab: Dict,
-    max_actions: int,
+    n_actions: int,
 ) -> Tuple[List[int], int, int, int]:
     """Build the discrete token sequence for one transition step.
 
     Returns (token_ids, reward_offset, select_offset, update_offset).
 
-    Token layout:
-      s_t, a_t, R, s_{t+1},
-      [s_{t+1}, a_c, EVAL] * max_actions,
-      SELECT, QCURR, QNEXT, UPDATE
+    Token layout (length 2*n_actions + 9):
+      BOS, QCURR, s_t, a_t, R, QNEXT,
+      [s_{t+1}, a_c] * n_actions,
+      SELECT, a*, UPDATE
+
+    The number of [s', a_c] pairs equals the MDP's actual n_actions, not the
+    model's max_actions. The model also gets n_actions context tokens.
     """
+    TOK_START  = vocab['TOK_START']
     TOK_S      = vocab['TOK_S']
     TOK_A      = vocab['TOK_A']
     TOK_R      = vocab['TOK_R']
-    TOK_EVAL   = vocab['TOK_EVAL']
     TOK_SELECT = vocab['TOK_SELECT']
     TOK_QCURR  = vocab['TOK_QCURR']
     TOK_QNEXT  = vocab['TOK_QNEXT']
     TOK_UPDATE = vocab['TOK_UPDATE']
 
-    s      = transition['s']
-    a      = transition['a']
-    s_next = transition['s_next']
+    s       = transition['s']
+    a       = transition['a']
+    s_next  = transition['s_next']
+    a_star  = transition['a_star']
 
-    ids = [TOK_S[s], TOK_A[a]]
+    ids = [TOK_START, TOK_QCURR, TOK_S[s], TOK_A[a]]
     reward_offset = len(ids)
     ids.append(TOK_R)
-    ids.append(TOK_S[s_next])
+    ids.append(TOK_QNEXT)
 
-    for c in range(max_actions):
+    for c in range(n_actions):
         ids.append(TOK_S[s_next])
         ids.append(TOK_A[c])
-        ids.append(TOK_EVAL)
 
     select_offset = len(ids)
     ids.append(TOK_SELECT)
-    ids.append(TOK_QCURR)
-    ids.append(TOK_QNEXT)
+    ids.append(TOK_A[a_star])
     update_offset = len(ids)
     ids.append(TOK_UPDATE)
 
@@ -128,6 +130,85 @@ class EpisodeDataset(Dataset):
 
 def collate_episodes(batch: List[Dict]) -> List[Dict]:
     return batch
+
+
+# ---------------------------------------------------------------------------
+# Curriculum batch sampler
+# ---------------------------------------------------------------------------
+
+class CurriculumBatchSampler:
+    """Yields batches whose episodes all share the same n_actions.
+
+    A curriculum gradually grows the set of allowed n_actions:
+      stage 0: only the smallest action count
+      stage 1: smallest + next
+      ...
+      final stage: all action counts
+    Update the active stage with `set_stage` between epochs.
+    """
+
+    def __init__(self, sequences: List[Dict], batch_size: int, shuffle: bool = True,
+                 drop_last: bool = True):
+        self.batch_size = batch_size
+        self.shuffle    = shuffle
+        self.drop_last  = drop_last
+
+        self.groups: Dict[int, List[int]] = {}
+        for idx, seq in enumerate(sequences):
+            n_a = seq['n_actions']
+            self.groups.setdefault(n_a, []).append(idx)
+
+        self.action_levels = sorted(self.groups.keys())
+        self.active = set(self.action_levels)
+
+    def set_stage(self, allowed: List[int]) -> None:
+        self.active = set(allowed)
+
+    def all_levels(self) -> List[int]:
+        return list(self.action_levels)
+
+    def __iter__(self):
+        rng = random.Random()
+        batches: List[List[int]] = []
+        for n_a in self.action_levels:
+            if n_a not in self.active:
+                continue
+            indices = list(self.groups[n_a])
+            if self.shuffle:
+                rng.shuffle(indices)
+            for i in range(0, len(indices), self.batch_size):
+                batch = indices[i:i + self.batch_size]
+                if self.drop_last and len(batch) < self.batch_size:
+                    continue
+                batches.append(batch)
+        if self.shuffle:
+            rng.shuffle(batches)
+        return iter(batches)
+
+    def __len__(self) -> int:
+        n = 0
+        for n_a in self.action_levels:
+            if n_a not in self.active:
+                continue
+            sz = len(self.groups[n_a])
+            n += sz // self.batch_size if self.drop_last else (sz + self.batch_size - 1) // self.batch_size
+        return n
+
+
+def curriculum_stage_for_epoch(epoch: int, total_epochs: int,
+                               action_levels: List[int]) -> List[int]:
+    """Return allowed action counts for a given epoch.
+
+    Splits training into len(action_levels) curriculum stages: stage k
+    introduces action_levels[0..k]. The first 1/N of training uses only the
+    smallest action count, by 2/N includes the next, etc.
+    """
+    n_stages = len(action_levels)
+    if n_stages <= 1:
+        return list(action_levels)
+    frac = (epoch - 1) / max(total_epochs - 1, 1)
+    k = min(n_stages - 1, int(frac * n_stages))
+    return list(action_levels[:k + 1])
 
 
 # ---------------------------------------------------------------------------
@@ -168,14 +249,14 @@ def episode_forward(
     n_steps = len(transitions)
     n_actions_actual = episode.get('n_actions', max_actions)
 
-    context = model.get_init_context(1, device)  # [1, |A|, d]
+    context = model.get_init_context(1, n_actions_actual, device)  # [1, n_actions, d]
 
     total_loss = torch.tensor(0.0, device=device)
     n_correct  = 0
 
     for t in range(n_steps):
         tr = transitions[t]
-        token_list, r_off, s_off, u_off = build_step_tokens(tr, vocab, max_actions)
+        token_list, r_off, s_off, u_off = build_step_tokens(tr, vocab, n_actions_actual)
 
         token_ids = torch.tensor([token_list], dtype=torch.long, device=device)
         reward_val = torch.tensor([tr['r']], dtype=torch.float32, device=device)
@@ -235,7 +316,16 @@ def batched_episode_forward(
     max_steps = max(ep['n_steps'] for ep in episodes)
     step_counts = [len(ep['transitions']) for ep in episodes]
 
-    context = model.get_init_context(B, device)  # [B, |A|, d]
+    # All episodes in a batch must share the same n_actions (enforced by the
+    # CurriculumBatchSampler grouping below).
+    n_actions_batch = episodes[0].get('n_actions', max_actions)
+    for ep in episodes:
+        assert ep.get('n_actions', max_actions) == n_actions_batch, (
+            "All episodes in a batch must have the same n_actions; "
+            "use the curriculum batch sampler."
+        )
+
+    context = model.get_init_context(B, n_actions_batch, device)  # [B, n_actions, d]
 
     total_loss = torch.tensor(0.0, device=device)
     total_correct = 0
@@ -254,19 +344,19 @@ def batched_episode_forward(
 
         sample_tr = episodes[active_mask[0]]['transitions'][t]
         token_list, r_off, s_off, u_off = build_step_tokens(
-            sample_tr, vocab, max_actions
+            sample_tr, vocab, n_actions_batch
         )
         T_disc = len(token_list)
 
         all_token_lists = []
         for i in active_mask:
             tr = episodes[i]['transitions'][t]
-            tl, _, _, _ = build_step_tokens(tr, vocab, max_actions)
+            tl, _, _, _ = build_step_tokens(tr, vocab, n_actions_batch)
             all_token_lists.append(tl)
             batch_rewards.append(tr['r'])
             batch_targets.append(tr['a_star'])
             batch_actions.append(tr['a'])
-            batch_n_actions.append(episodes[i].get('n_actions', max_actions))
+            batch_n_actions.append(n_actions_batch)
 
         token_ids = torch.tensor(all_token_lists, dtype=torch.long, device=device)
         reward_vals = torch.tensor(batch_rewards, dtype=torch.float32, device=device)
@@ -370,7 +460,8 @@ def train(args) -> None:
     max_actions = cfg_data.get('max_actions', 4)
     print(f"  max_states={max_states}, max_actions={max_actions}")
 
-    n_disc_per_step = 4 + 3 * max_actions + 3  # s,a,R,s' + evals + SELECT,QCURR,QNEXT,UPDATE
+    # BOS, QCURR, s, a, R, QNEXT, [s', a_c]*|A|, SELECT, a*, UPDATE
+    n_disc_per_step = 2 * max_actions + 9
     max_seq_per_step = max_actions + n_disc_per_step
 
     # ---- Model config ----
@@ -392,21 +483,27 @@ def train(args) -> None:
     train_ds = EpisodeDataset(train_seqs, max_steps=args.max_steps)
     val_ds   = EpisodeDataset(val_seqs, max_steps=args.max_steps)
 
+    train_sampler = CurriculumBatchSampler(
+        train_seqs, batch_size=args.batch_size, shuffle=True, drop_last=True,
+    )
+    val_sampler = CurriculumBatchSampler(
+        val_seqs, batch_size=args.batch_size * 2, shuffle=False, drop_last=False,
+    )
+    print(f"  curriculum action levels: {train_sampler.all_levels()}")
+
     train_loader = DataLoader(
         train_ds,
-        batch_size  = args.batch_size,
-        shuffle     = True,
-        num_workers = args.num_workers,
-        collate_fn  = collate_episodes,
-        pin_memory  = False,
+        batch_sampler = train_sampler,
+        num_workers   = args.num_workers,
+        collate_fn    = collate_episodes,
+        pin_memory    = False,
     )
     val_loader = DataLoader(
         val_ds,
-        batch_size  = args.batch_size * 2,
-        shuffle     = False,
-        num_workers = args.num_workers,
-        collate_fn  = collate_episodes,
-        pin_memory  = False,
+        batch_sampler = val_sampler,
+        num_workers   = args.num_workers,
+        collate_fn    = collate_episodes,
+        pin_memory    = False,
     )
 
     # ---- Model ----
@@ -488,6 +585,13 @@ def train(args) -> None:
 
     for epoch in range(1, args.epochs + 1):
         model.train()
+
+        # Curriculum: gradually introduce larger n_actions
+        allowed = curriculum_stage_for_epoch(
+            epoch, args.epochs, train_sampler.all_levels()
+        )
+        train_sampler.set_stage(allowed)
+        print(f"[ep {epoch:02d}] curriculum stage: n_actions in {allowed}")
 
         for episodes in train_loader:
             optimizer.zero_grad(set_to_none=True)

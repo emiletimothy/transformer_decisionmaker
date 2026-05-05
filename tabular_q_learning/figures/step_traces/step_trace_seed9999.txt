@@ -1,0 +1,998 @@
+==========================================================================================
+PER-STEP TRACE  |  seed=9999  n_states=8  n_actions=4  n_steps=50
+alpha=0.1  gamma=0.9  epsilon=0.2
+==========================================================================================
+
+MDP transition probabilities P[s, a, s']:
+  P[s=0, a=0] = [0.1189 0.1936 0.0713 0.2841 0.0538 0.0975 0.0549 0.1258]
+  P[s=0, a=1] = [0.0336 0.2434 0.162  0.1739 0.0772 0.0132 0.1642 0.1325]
+  P[s=0, a=2] = [0.2974 0.0266 0.1047 0.3219 0.0021 0.0256 0.1843 0.0374]
+  P[s=0, a=3] = [0.0016 0.192  0.091  0.4154 0.0138 0.0994 0.1487 0.0382]
+  P[s=1, a=0] = [0.0399 0.1409 0.1796 0.0811 0.0051 0.5466 0.0015 0.0053]
+  P[s=1, a=1] = [0.0084 0.0438 0.4534 0.0125 0.1009 0.2685 0.0665 0.046 ]
+  P[s=1, a=2] = [0.0866 0.1001 0.0285 0.5829 0.0391 0.0399 0.0826 0.0403]
+  P[s=1, a=3] = [0.0333 0.0499 0.0023 0.0561 0.0755 0.3384 0.2165 0.2281]
+  P[s=2, a=0] = [0.3677 0.0831 0.1729 0.0179 0.0112 0.09   0.0843 0.173 ]
+  P[s=2, a=1] = [0.1092 0.1734 0.1147 0.0499 0.3563 0.0604 0.0488 0.0873]
+  P[s=2, a=2] = [0.0841 0.0068 0.006  0.1061 0.0667 0.224  0.3577 0.1486]
+  P[s=2, a=3] = [0.2276 0.1446 0.0319 0.0651 0.1358 0.2325 0.0184 0.1441]
+  P[s=3, a=0] = [0.0873 0.1278 0.2567 0.0132 0.1052 0.0127 0.065  0.3321]
+  P[s=3, a=1] = [0.0212 0.0514 0.3463 0.0976 0.025  0.1502 0.0402 0.2682]
+  P[s=3, a=2] = [0.1064 0.0199 0.2094 0.077  0.1203 0.0704 0.3036 0.0931]
+  P[s=3, a=3] = [0.1739 0.023  0.1732 0.0377 0.139  0.4437 0.0041 0.0054]
+  P[s=4, a=0] = [0.0193 0.0734 0.1531 0.3402 0.1546 0.0356 0.1112 0.1126]
+  P[s=4, a=1] = [0.043  0.1507 0.2823 0.0222 0.1682 0.0312 0.0457 0.2567]
+  P[s=4, a=2] = [0.1082 0.0105 0.326  0.2073 0.0125 0.1177 0.1677 0.05  ]
+  P[s=4, a=3] = [0.0798 0.0071 0.0801 0.1408 0.0539 0.2608 0.1212 0.2563]
+  P[s=5, a=0] = [0.1191 0.3564 0.0135 0.0442 0.0458 0.0359 0.3755 0.0096]
+  P[s=5, a=1] = [0.005  0.041  0.0133 0.0008 0.0483 0.5091 0.0837 0.2988]
+  P[s=5, a=2] = [0.034  0.361  0.1427 0.0117 0.0502 0.282  0.085  0.0334]
+  P[s=5, a=3] = [0.3204 0.2502 0.1438 0.1547 0.0118 0.0521 0.0351 0.0319]
+  P[s=6, a=0] = [0.119  0.1337 0.0591 0.1084 0.0043 0.309  0.1191 0.1474]
+  P[s=6, a=1] = [0.4502 0.0509 0.0077 0.0545 0.0019 0.3191 0.033  0.0828]
+  P[s=6, a=2] = [0.2479 0.1773 0.1803 0.0734 0.0127 0.0628 0.1419 0.1037]
+  P[s=6, a=3] = [0.1089 0.101  0.1059 0.0669 0.0442 0.0111 0.1266 0.4354]
+  P[s=7, a=0] = [0.2348 0.1128 0.0186 0.086  0.0126 0.2837 0.18   0.0714]
+  P[s=7, a=1] = [0.114  0.0532 0.1525 0.2544 0.1567 0.0488 0.0578 0.1625]
+  P[s=7, a=2] = [0.0395 0.1424 0.0122 0.2075 0.2504 0.0883 0.1989 0.0609]
+  P[s=7, a=3] = [0.1127 0.2608 0.2235 0.0206 0.0602 0.0118 0.236  0.0745]
+
+MDP reward matrix R[s, a]:
+  R[s=0] = [0.6006 0.934  0.6779 0.4298]
+  R[s=1] = [0.6178 0.7677 0.7299 0.4134]
+  R[s=2] = [0.2914 0.1327 0.7886 0.6451]
+  R[s=3] = [0.3801 0.4325 0.5889 0.3786]
+  R[s=4] = [0.576  0.5799 0.3009 0.2526]
+  R[s=5] = [0.6117 0.8046 0.2822 0.739 ]
+  R[s=6] = [0.4758 0.2649 0.1317 0.4616]
+  R[s=7] = [0.7198 0.5141 0.8556 0.5097]
+
+--- Step   0 ---
+  Transition: s=1  a=2  r=+0.7299  s'=3
+  ORACLE Q-learning:
+    Q[s=1,a=2] before = +0.0000
+    max_a Q[s'=3,a] = +0.0000
+    TD target = r + gamma * max = +0.7299
+    TD error  = target - Q_before = +0.7299
+    Q[s=1,a=2] after  = +0.0730  (delta = +0.0730)
+    argmax_a Q[s'=3] = a*=0
+  MODEL action choice this step: a_hat=1  (oracle a*=2)
+  MODEL context update (slot a=2):
+    ||c[a]|| before = 0.0000   after = 16.2459   ||delta_c|| = 16.2459
+    reward probe on delta_c: r_hat = +0.6963   (true r = +0.7299   |err| = 0.0336)
+    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [0.0008 0.001  0.0015 0.0003 0.0001 0.0011 0.001  0.0016]
+                                    oracle Q[:,2] = [0. 0. 0. 0. 0. 0. 0. 0.]
+    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [-0.0259  0.0727  0.0002  0.0152 -0.0075  0.0188  0.0182 -0.0141]
+                                    oracle Q[:,2] = [0.    0.073 0.    0.    0.    0.    0.    0.   ]
+
+--- Step   1 ---
+  Transition: s=3  a=0  r=+0.3801  s'=7
+  ORACLE Q-learning:
+    Q[s=3,a=0] before = +0.0000
+    max_a Q[s'=7,a] = +0.0000
+    TD target = r + gamma * max = +0.3801
+    TD error  = target - Q_before = +0.3801
+    Q[s=3,a=0] after  = +0.0380  (delta = +0.0380)
+    argmax_a Q[s'=7] = a*=0
+  MODEL action choice this step: a_hat=2  (oracle a*=0)
+  MODEL context update (slot a=0):
+    ||c[a]|| before = 0.0000   after = 16.2055   ||delta_c|| = 16.2055
+    reward probe on delta_c: r_hat = +0.3365   (true r = +0.3801   |err| = 0.0436)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [0.0008 0.001  0.0015 0.0003 0.0001 0.0011 0.001  0.0016]
+                                    oracle Q[:,0] = [0. 0. 0. 0. 0. 0. 0. 0.]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [ 0.0158  0.0085 -0.0202  0.0447 -0.0145  0.0024  0.0381 -0.0121]
+                                    oracle Q[:,0] = [0.    0.    0.    0.038 0.    0.    0.    0.   ]
+
+--- Step   2 ---
+  Transition: s=7  a=1  r=+0.5141  s'=5
+  ORACLE Q-learning:
+    Q[s=7,a=1] before = +0.0000
+    max_a Q[s'=5,a] = +0.0000
+    TD target = r + gamma * max = +0.5141
+    TD error  = target - Q_before = +0.5141
+    Q[s=7,a=1] after  = +0.0514  (delta = +0.0514)
+    argmax_a Q[s'=5] = a*=0
+  MODEL action choice this step: a_hat=3  (oracle a*=0)
+  MODEL context update (slot a=1):
+    ||c[a]|| before = 0.0000   after = 16.1935   ||delta_c|| = 16.1935
+    reward probe on delta_c: r_hat = +0.5470   (true r = +0.5141   |err| = 0.0328)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [0.0008 0.001  0.0015 0.0003 0.0001 0.0011 0.001  0.0016]
+                                    oracle Q[:,1] = [0. 0. 0. 0. 0. 0. 0. 0.]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0459  0.032  -0.0115 -0.0724  0.018  -0.0307 -0.0715  0.1168]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.     0.     0.     0.0514]
+
+--- Step   3 ---
+  Transition: s=5  a=0  r=+0.6117  s'=6
+  ORACLE Q-learning:
+    Q[s=5,a=0] before = +0.0000
+    max_a Q[s'=6,a] = +0.0000
+    TD target = r + gamma * max = +0.6117
+    TD error  = target - Q_before = +0.6117
+    Q[s=5,a=0] after  = +0.0612  (delta = +0.0612)
+    argmax_a Q[s'=6] = a*=0
+  MODEL action choice this step: a_hat=1  (oracle a*=0)
+  MODEL context update (slot a=0):
+    ||c[a]|| before = 16.2055   after = 16.2973   ||delta_c|| = 14.8423
+    cosine(delta_c_t, delta_c_prev for same a) = -0.4517
+    reward probe on delta_c: r_hat = +0.7600   (true r = +0.6117   |err| = 0.1483)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [ 0.0158  0.0085 -0.0202  0.0447 -0.0145  0.0024  0.0381 -0.0121]
+                                    oracle Q[:,0] = [0.    0.    0.    0.038 0.    0.    0.    0.   ]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [0.0266 0.0113 0.0325 0.0474 0.006  0.0447 0.0811 0.0451]
+                                    oracle Q[:,0] = [0.     0.     0.     0.038  0.     0.0612 0.     0.    ]
+
+--- Step   4 ---
+  Transition: s=6  a=1  r=+0.2649  s'=0
+  ORACLE Q-learning:
+    Q[s=6,a=1] before = +0.0000
+    max_a Q[s'=0,a] = +0.0000
+    TD target = r + gamma * max = +0.2649
+    TD error  = target - Q_before = +0.2649
+    Q[s=6,a=1] after  = +0.0265  (delta = +0.0265)
+    argmax_a Q[s'=0] = a*=0
+  MODEL action choice this step: a_hat=3  (oracle a*=3)
+  MODEL context update (slot a=1):
+    ||c[a]|| before = 16.1935   after = 16.2879   ||delta_c|| = 11.4333
+    cosine(delta_c_t, delta_c_prev for same a) = -0.3447
+    reward probe on delta_c: r_hat = +0.3606   (true r = +0.2649   |err| = 0.0957)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0459  0.032  -0.0115 -0.0724  0.018  -0.0307 -0.0715  0.1168]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.     0.     0.     0.0514]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0251  0.0892  0.0254 -0.0273  0.0096 -0.0577 -0.059   0.1072]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.     0.     0.0265 0.0514]
+
+--- Step   5 ---
+  Transition: s=0  a=2  r=+0.6779  s'=0
+  ORACLE Q-learning:
+    Q[s=0,a=2] before = +0.0000
+    max_a Q[s'=0,a] = +0.0000
+    TD target = r + gamma * max = +0.6779
+    TD error  = target - Q_before = +0.6779
+    Q[s=0,a=2] after  = +0.0678  (delta = +0.0678)
+    argmax_a Q[s'=0] = a*=2
+  MODEL action choice this step: a_hat=2  (oracle a*=2)
+  MODEL context update (slot a=2):
+    ||c[a]|| before = 16.2459   after = 16.3797   ||delta_c|| = 12.5060
+    cosine(delta_c_t, delta_c_prev for same a) = -0.3742
+    reward probe on delta_c: r_hat = +0.6097   (true r = +0.6779   |err| = 0.0682)
+    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [-0.0259  0.0727  0.0002  0.0152 -0.0075  0.0188  0.0182 -0.0141]
+                                    oracle Q[:,2] = [0.    0.073 0.    0.    0.    0.    0.    0.   ]
+    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [0.054  0.0489 0.0091 0.048  0.0274 0.0074 0.0106 0.0139]
+                                    oracle Q[:,2] = [0.0678 0.073  0.     0.     0.     0.     0.     0.    ]
+
+--- Step   6 ---
+  Transition: s=0  a=2  r=+0.6779  s'=0
+  ORACLE Q-learning:
+    Q[s=0,a=2] before = +0.0678
+    max_a Q[s'=0,a] = +0.0678
+    TD target = r + gamma * max = +0.7389
+    TD error  = target - Q_before = +0.6711
+    Q[s=0,a=2] after  = +0.1349  (delta = +0.0671)
+    argmax_a Q[s'=0] = a*=2
+  MODEL action choice this step: a_hat=2  (oracle a*=2)
+  MODEL context update (slot a=2):
+    ||c[a]|| before = 16.3797   after = 16.4641   ||delta_c|| = 5.7281
+    cosine(delta_c_t, delta_c_prev for same a) = +0.4654
+    reward probe on delta_c: r_hat = +0.5676   (true r = +0.6779   |err| = 0.1103)
+    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [0.054  0.0489 0.0091 0.048  0.0274 0.0074 0.0106 0.0139]
+                                    oracle Q[:,2] = [0.0678 0.073  0.     0.     0.     0.     0.     0.    ]
+    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.1738  0.0766 -0.0078  0.0225 -0.0114 -0.0309 -0.0032 -0.0043]
+                                    oracle Q[:,2] = [0.1349 0.073  0.     0.     0.     0.     0.     0.    ]
+
+--- Step   7 ---
+  Transition: s=0  a=2  r=+0.6779  s'=0
+  ORACLE Q-learning:
+    Q[s=0,a=2] before = +0.1349
+    max_a Q[s'=0,a] = +0.1349
+    TD target = r + gamma * max = +0.7993
+    TD error  = target - Q_before = +0.6644
+    Q[s=0,a=2] after  = +0.2013  (delta = +0.0664)
+    argmax_a Q[s'=0] = a*=2
+  MODEL action choice this step: a_hat=2  (oracle a*=2)
+  MODEL context update (slot a=2):
+    ||c[a]|| before = 16.4641   after = 16.5145   ||delta_c|| = 3.3847
+    cosine(delta_c_t, delta_c_prev for same a) = +0.9045
+    reward probe on delta_c: r_hat = +0.5738   (true r = +0.6779   |err| = 0.1041)
+    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.1738  0.0766 -0.0078  0.0225 -0.0114 -0.0309 -0.0032 -0.0043]
+                                    oracle Q[:,2] = [0.1349 0.073  0.     0.     0.     0.     0.     0.    ]
+    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.2526  0.0888  0.0003  0.0258 -0.0116 -0.0526 -0.0027 -0.009 ]
+                                    oracle Q[:,2] = [0.2013 0.073  0.     0.     0.     0.     0.     0.    ]
+
+--- Step   8 ---
+  Transition: s=0  a=3  r=+0.4298  s'=3
+  ORACLE Q-learning:
+    Q[s=0,a=3] before = +0.0000
+    max_a Q[s'=3,a] = +0.0380
+    TD target = r + gamma * max = +0.4640
+    TD error  = target - Q_before = +0.4640
+    Q[s=0,a=3] after  = +0.0464  (delta = +0.0464)
+    argmax_a Q[s'=3] = a*=0
+  MODEL action choice this step: a_hat=0  (oracle a*=0)
+  MODEL context update (slot a=3):
+    ||c[a]|| before = 0.0000   after = 16.3443   ||delta_c|| = 16.3443
+    reward probe on delta_c: r_hat = +0.4196   (true r = +0.4298   |err| = 0.0101)
+    Q-probe on c[a=3]   BEFORE: pred Q[:,3] = [0.0008 0.001  0.0015 0.0003 0.0001 0.0011 0.001  0.0016]
+                                    oracle Q[:,3] = [0. 0. 0. 0. 0. 0. 0. 0.]
+    Q-probe on c[a=3]   AFTER : pred Q[:,3] = [-0.0134 -0.0295 -0.027   0.0773 -0.07   -0.0287 -0.0289  0.0127]
+                                    oracle Q[:,3] = [0.0464 0.     0.     0.     0.     0.     0.     0.    ]
+
+--- Step   9 ---
+  Transition: s=3  a=0  r=+0.3801  s'=2
+  ORACLE Q-learning:
+    Q[s=3,a=0] before = +0.0380
+    max_a Q[s'=2,a] = +0.0000
+    TD target = r + gamma * max = +0.3801
+    TD error  = target - Q_before = +0.3421
+    Q[s=3,a=0] after  = +0.0722  (delta = +0.0342)
+    argmax_a Q[s'=2] = a*=0
+  MODEL action choice this step: a_hat=2  (oracle a*=3)
+  MODEL context update (slot a=0):
+    ||c[a]|| before = 16.2973   after = 16.3116   ||delta_c|| = 7.8167
+    cosine(delta_c_t, delta_c_prev for same a) = -0.2231
+    reward probe on delta_c: r_hat = +0.4446   (true r = +0.3801   |err| = 0.0645)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [0.0266 0.0113 0.0325 0.0474 0.006  0.0447 0.0811 0.0451]
+                                    oracle Q[:,0] = [0.     0.     0.     0.038  0.     0.0612 0.     0.    ]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [-0.0002  0.0071 -0.0078  0.1188 -0.0633  0.0492  0.0024  0.0176]
+                                    oracle Q[:,0] = [0.     0.     0.     0.0722 0.     0.0612 0.     0.    ]
+
+--- Step  10 ---
+  Transition: s=2  a=3  r=+0.6451  s'=1
+  ORACLE Q-learning:
+    Q[s=2,a=3] before = +0.0000
+    max_a Q[s'=1,a] = +0.0730
+    TD target = r + gamma * max = +0.7108
+    TD error  = target - Q_before = +0.7108
+    Q[s=2,a=3] after  = +0.0711  (delta = +0.0711)
+    argmax_a Q[s'=1] = a*=2
+  MODEL action choice this step: a_hat=2  (oracle a*=2)
+  MODEL context update (slot a=3):
+    ||c[a]|| before = 16.3443   after = 16.3548   ||delta_c|| = 18.6854
+    cosine(delta_c_t, delta_c_prev for same a) = -0.5711
+    reward probe on delta_c: r_hat = +0.7112   (true r = +0.6451   |err| = 0.0662)
+    Q-probe on c[a=3]   BEFORE: pred Q[:,3] = [-0.0134 -0.0295 -0.027   0.0773 -0.07   -0.0287 -0.0289  0.0127]
+                                    oracle Q[:,3] = [0.0464 0.     0.     0.     0.     0.     0.     0.    ]
+    Q-probe on c[a=3]   AFTER : pred Q[:,3] = [ 0.0158  0.0052  0.1088  0.0745 -0.018  -0.0491  0.0018 -0.0414]
+                                    oracle Q[:,3] = [0.0464 0.     0.0711 0.     0.     0.     0.     0.    ]
+
+--- Step  11 ---
+  Transition: s=1  a=2  r=+0.7299  s'=0
+  ORACLE Q-learning:
+    Q[s=1,a=2] before = +0.0730
+    max_a Q[s'=0,a] = +0.2013
+    TD target = r + gamma * max = +0.9111
+    TD error  = target - Q_before = +0.8381
+    Q[s=1,a=2] after  = +0.1568  (delta = +0.0838)
+    argmax_a Q[s'=0] = a*=2
+  MODEL action choice this step: a_hat=2  (oracle a*=2)
+  MODEL context update (slot a=2):
+    ||c[a]|| before = 16.5145   after = 16.5288   ||delta_c|| = 5.4993
+    cosine(delta_c_t, delta_c_prev for same a) = -0.0611
+    reward probe on delta_c: r_hat = +0.6285   (true r = +0.7299   |err| = 0.1014)
+    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.2526  0.0888  0.0003  0.0258 -0.0116 -0.0526 -0.0027 -0.009 ]
+                                    oracle Q[:,2] = [0.2013 0.073  0.     0.     0.     0.     0.     0.    ]
+    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.2073  0.1994  0.023   0.0479  0.0044 -0.0281  0.0064 -0.0374]
+                                    oracle Q[:,2] = [0.2013 0.1568 0.     0.     0.     0.     0.     0.    ]
+
+--- Step  12 ---
+  Transition: s=0  a=2  r=+0.6779  s'=3
+  ORACLE Q-learning:
+    Q[s=0,a=2] before = +0.2013
+    max_a Q[s'=3,a] = +0.0722
+    TD target = r + gamma * max = +0.7429
+    TD error  = target - Q_before = +0.5416
+    Q[s=0,a=2] after  = +0.2555  (delta = +0.0542)
+    argmax_a Q[s'=3] = a*=0
+  MODEL action choice this step: a_hat=0  (oracle a*=0)
+  MODEL context update (slot a=2):
+    ||c[a]|| before = 16.5288   after = 16.5695   ||delta_c|| = 6.4675
+    cosine(delta_c_t, delta_c_prev for same a) = -0.1575
+    reward probe on delta_c: r_hat = +0.4456   (true r = +0.6779   |err| = 0.2323)
+    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.2073  0.1994  0.023   0.0479  0.0044 -0.0281  0.0064 -0.0374]
+                                    oracle Q[:,2] = [0.2013 0.1568 0.     0.     0.     0.     0.     0.    ]
+    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.2446  0.213  -0.0011  0.0076 -0.0046 -0.0317 -0.0104  0.0111]
+                                    oracle Q[:,2] = [0.2555 0.1568 0.     0.     0.     0.     0.     0.    ]
+
+--- Step  13 ---
+  Transition: s=3  a=0  r=+0.3801  s'=2
+  ORACLE Q-learning:
+    Q[s=3,a=0] before = +0.0722
+    max_a Q[s'=2,a] = +0.0711
+    TD target = r + gamma * max = +0.4441
+    TD error  = target - Q_before = +0.3719
+    Q[s=3,a=0] after  = +0.1094  (delta = +0.0372)
+    argmax_a Q[s'=2] = a*=3
+  MODEL action choice this step: a_hat=3  (oracle a*=3)
+  MODEL context update (slot a=0):
+    ||c[a]|| before = 16.3116   after = 16.3856   ||delta_c|| = 6.2855
+    cosine(delta_c_t, delta_c_prev for same a) = +0.1509
+    reward probe on delta_c: r_hat = +0.3931   (true r = +0.3801   |err| = 0.0130)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [-0.0002  0.0071 -0.0078  0.1188 -0.0633  0.0492  0.0024  0.0176]
+                                    oracle Q[:,0] = [0.     0.     0.     0.0722 0.     0.0612 0.     0.    ]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [ 0.0021  0.0078 -0.0036  0.1422 -0.0603  0.0427 -0.0221  0.0109]
+                                    oracle Q[:,0] = [0.     0.     0.     0.1094 0.     0.0612 0.     0.    ]
+
+--- Step  14 ---
+  Transition: s=2  a=3  r=+0.6451  s'=5
+  ORACLE Q-learning:
+    Q[s=2,a=3] before = +0.0711
+    max_a Q[s'=5,a] = +0.0612
+    TD target = r + gamma * max = +0.7001
+    TD error  = target - Q_before = +0.6291
+    Q[s=2,a=3] after  = +0.1340  (delta = +0.0629)
+    argmax_a Q[s'=5] = a*=0
+  MODEL action choice this step: a_hat=0  (oracle a*=0)
+  MODEL context update (slot a=3):
+    ||c[a]|| before = 16.3548   after = 16.4460   ||delta_c|| = 9.7346
+    cosine(delta_c_t, delta_c_prev for same a) = -0.2173
+    reward probe on delta_c: r_hat = +0.6220   (true r = +0.6451   |err| = 0.0231)
+    Q-probe on c[a=3]   BEFORE: pred Q[:,3] = [ 0.0158  0.0052  0.1088  0.0745 -0.018  -0.0491  0.0018 -0.0414]
+                                    oracle Q[:,3] = [0.0464 0.     0.0711 0.     0.     0.     0.     0.    ]
+    Q-probe on c[a=3]   AFTER : pred Q[:,3] = [ 0.0391 -0.011   0.2066  0.0036 -0.0182 -0.0638 -0.0343  0.0032]
+                                    oracle Q[:,3] = [0.0464 0.     0.134  0.     0.     0.     0.     0.    ]
+
+--- Step  15 ---
+  Transition: s=5  a=0  r=+0.6117  s'=1
+  ORACLE Q-learning:
+    Q[s=5,a=0] before = +0.0612
+    max_a Q[s'=1,a] = +0.1568
+    TD target = r + gamma * max = +0.7528
+    TD error  = target - Q_before = +0.6917
+    Q[s=5,a=0] after  = +0.1303  (delta = +0.0692)
+    argmax_a Q[s'=1] = a*=2
+  MODEL action choice this step: a_hat=2  (oracle a*=2)
+  MODEL context update (slot a=0):
+    ||c[a]|| before = 16.3856   after = 16.3861   ||delta_c|| = 7.6413
+    cosine(delta_c_t, delta_c_prev for same a) = -0.2324
+    reward probe on delta_c: r_hat = +0.6850   (true r = +0.6117   |err| = 0.0733)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [ 0.0021  0.0078 -0.0036  0.1422 -0.0603  0.0427 -0.0221  0.0109]
+                                    oracle Q[:,0] = [0.     0.     0.     0.1094 0.     0.0612 0.     0.    ]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [-0.0151  0.0458  0.0024  0.1191  0.0178  0.1394 -0.0316  0.0444]
+                                    oracle Q[:,0] = [0.     0.     0.     0.1094 0.     0.1303 0.     0.    ]
+
+--- Step  16 ---
+  Transition: s=1  a=2  r=+0.7299  s'=3
+  ORACLE Q-learning:
+    Q[s=1,a=2] before = +0.1568
+    max_a Q[s'=3,a] = +0.1094
+    TD target = r + gamma * max = +0.8284
+    TD error  = target - Q_before = +0.6716
+    Q[s=1,a=2] after  = +0.2240  (delta = +0.0672)
+    argmax_a Q[s'=3] = a*=0
+  MODEL action choice this step: a_hat=0  (oracle a*=0)
+  MODEL context update (slot a=2):
+    ||c[a]|| before = 16.5695   after = 16.5670   ||delta_c|| = 3.0793
+    cosine(delta_c_t, delta_c_prev for same a) = -0.4814
+    reward probe on delta_c: r_hat = +0.5043   (true r = +0.7299   |err| = 0.2256)
+    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.2446  0.213  -0.0011  0.0076 -0.0046 -0.0317 -0.0104  0.0111]
+                                    oracle Q[:,2] = [0.2555 0.1568 0.     0.     0.     0.     0.     0.    ]
+    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.2109  0.2423  0.0268  0.0402 -0.0073 -0.0202  0.0251  0.0006]
+                                    oracle Q[:,2] = [0.2555 0.224  0.     0.     0.     0.     0.     0.    ]
+
+--- Step  17 ---
+  Transition: s=3  a=0  r=+0.3801  s'=1
+  ORACLE Q-learning:
+    Q[s=3,a=0] before = +0.1094
+    max_a Q[s'=1,a] = +0.2240
+    TD target = r + gamma * max = +0.5817
+    TD error  = target - Q_before = +0.4723
+    Q[s=3,a=0] after  = +0.1566  (delta = +0.0472)
+    argmax_a Q[s'=1] = a*=2
+  MODEL action choice this step: a_hat=2  (oracle a*=2)
+  MODEL context update (slot a=0):
+    ||c[a]|| before = 16.3861   after = 16.4104   ||delta_c|| = 3.9763
+    cosine(delta_c_t, delta_c_prev for same a) = -0.5552
+    reward probe on delta_c: r_hat = +0.4802   (true r = +0.3801   |err| = 0.1001)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [-0.0151  0.0458  0.0024  0.1191  0.0178  0.1394 -0.0316  0.0444]
+                                    oracle Q[:,0] = [0.     0.     0.     0.1094 0.     0.1303 0.     0.    ]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [ 0.0248  0.0596  0.011   0.1737  0.0066  0.1027 -0.0168  0.0668]
+                                    oracle Q[:,0] = [0.     0.     0.     0.1566 0.     0.1303 0.     0.    ]
+
+--- Step  18 ---
+  Transition: s=1  a=2  r=+0.7299  s'=0
+  ORACLE Q-learning:
+    Q[s=1,a=2] before = +0.2240
+    max_a Q[s'=0,a] = +0.2555
+    TD target = r + gamma * max = +0.9599
+    TD error  = target - Q_before = +0.7359
+    Q[s=1,a=2] after  = +0.2975  (delta = +0.0736)
+    argmax_a Q[s'=0] = a*=2
+  MODEL action choice this step: a_hat=2  (oracle a*=2)
+  MODEL context update (slot a=2):
+    ||c[a]|| before = 16.5670   after = 16.5594   ||delta_c|| = 5.6399
+    cosine(delta_c_t, delta_c_prev for same a) = +0.3958
+    reward probe on delta_c: r_hat = +0.5284   (true r = +0.7299   |err| = 0.2015)
+    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.2109  0.2423  0.0268  0.0402 -0.0073 -0.0202  0.0251  0.0006]
+                                    oracle Q[:,2] = [0.2555 0.224  0.     0.     0.     0.     0.     0.    ]
+    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.1787  0.276   0.0513  0.0506  0.0121 -0.004   0.0218  0.0185]
+                                    oracle Q[:,2] = [0.2555 0.2975 0.     0.     0.     0.     0.     0.    ]
+
+--- Step  19 ---
+  Transition: s=0  a=2  r=+0.6779  s'=3
+  ORACLE Q-learning:
+    Q[s=0,a=2] before = +0.2555
+    max_a Q[s'=3,a] = +0.1566
+    TD target = r + gamma * max = +0.8189
+    TD error  = target - Q_before = +0.5634
+    Q[s=0,a=2] after  = +0.3118  (delta = +0.0563)
+    argmax_a Q[s'=3] = a*=0
+  MODEL action choice this step: a_hat=0  (oracle a*=0)
+  MODEL context update (slot a=2):
+    ||c[a]|| before = 16.5594   after = 16.5824   ||delta_c|| = 5.9471
+    cosine(delta_c_t, delta_c_prev for same a) = -0.9314
+    reward probe on delta_c: r_hat = +0.4712   (true r = +0.6779   |err| = 0.2067)
+    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.1787  0.276   0.0513  0.0506  0.0121 -0.004   0.0218  0.0185]
+                                    oracle Q[:,2] = [0.2555 0.2975 0.     0.     0.     0.     0.     0.    ]
+    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.216   0.2755  0.0242  0.019   0.0081 -0.0065  0.0149  0.0281]
+                                    oracle Q[:,2] = [0.3118 0.2975 0.     0.     0.     0.     0.     0.    ]
+
+--- Step  20 ---
+  Transition: s=3  a=0  r=+0.3801  s'=7
+  ORACLE Q-learning:
+    Q[s=3,a=0] before = +0.1566
+    max_a Q[s'=7,a] = +0.0514
+    TD target = r + gamma * max = +0.4264
+    TD error  = target - Q_before = +0.2698
+    Q[s=3,a=0] after  = +0.1836  (delta = +0.0270)
+    argmax_a Q[s'=7] = a*=1
+  MODEL action choice this step: a_hat=1  (oracle a*=1)
+  MODEL context update (slot a=0):
+    ||c[a]|| before = 16.4104   after = 16.4714   ||delta_c|| = 6.8566
+    cosine(delta_c_t, delta_c_prev for same a) = +0.1319
+    reward probe on delta_c: r_hat = +0.4635   (true r = +0.3801   |err| = 0.0834)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [ 0.0248  0.0596  0.011   0.1737  0.0066  0.1027 -0.0168  0.0668]
+                                    oracle Q[:,0] = [0.     0.     0.     0.1566 0.     0.1303 0.     0.    ]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [ 0.0102  0.0301 -0.0047  0.2361 -0.0038  0.1195 -0.0127  0.0468]
+                                    oracle Q[:,0] = [0.     0.     0.     0.1836 0.     0.1303 0.     0.    ]
+
+--- Step  21 ---
+  Transition: s=7  a=1  r=+0.5141  s'=7
+  ORACLE Q-learning:
+    Q[s=7,a=1] before = +0.0514
+    max_a Q[s'=7,a] = +0.0514
+    TD target = r + gamma * max = +0.5604
+    TD error  = target - Q_before = +0.5090
+    Q[s=7,a=1] after  = +0.1023  (delta = +0.0509)
+    argmax_a Q[s'=7] = a*=1
+  MODEL action choice this step: a_hat=1  (oracle a*=1)
+  MODEL context update (slot a=1):
+    ||c[a]|| before = 16.2879   after = 16.3596   ||delta_c|| = 12.9203
+    cosine(delta_c_t, delta_c_prev for same a) = -0.3230
+    reward probe on delta_c: r_hat = +0.5312   (true r = +0.5141   |err| = 0.0171)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0251  0.0892  0.0254 -0.0273  0.0096 -0.0577 -0.059   0.1072]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.     0.     0.0265 0.0514]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0158  0.0308 -0.0046 -0.033  -0.0474 -0.0473  0.0187  0.1692]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.     0.     0.0265 0.1023]
+
+--- Step  22 ---
+  Transition: s=7  a=1  r=+0.5141  s'=4
+  ORACLE Q-learning:
+    Q[s=7,a=1] before = +0.1023
+    max_a Q[s'=4,a] = +0.0000
+    TD target = r + gamma * max = +0.5141
+    TD error  = target - Q_before = +0.4118
+    Q[s=7,a=1] after  = +0.1435  (delta = +0.0412)
+    argmax_a Q[s'=4] = a*=0
+  MODEL action choice this step: a_hat=0  (oracle a*=1)
+  MODEL context update (slot a=1):
+    ||c[a]|| before = 16.3596   after = 16.3515   ||delta_c|| = 7.8331
+    cosine(delta_c_t, delta_c_prev for same a) = -0.2997
+    reward probe on delta_c: r_hat = +0.5984   (true r = +0.5141   |err| = 0.0843)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0158  0.0308 -0.0046 -0.033  -0.0474 -0.0473  0.0187  0.1692]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.     0.     0.0265 0.1023]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.02    0.0326 -0.0199 -0.0143  0.0224 -0.0378  0.0123  0.2224]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.     0.     0.0265 0.1435]
+
+--- Step  23 ---
+  Transition: s=4  a=1  r=+0.5799  s'=2
+  ORACLE Q-learning:
+    Q[s=4,a=1] before = +0.0000
+    max_a Q[s'=2,a] = +0.1340
+    TD target = r + gamma * max = +0.7005
+    TD error  = target - Q_before = +0.7005
+    Q[s=4,a=1] after  = +0.0701  (delta = +0.0701)
+    argmax_a Q[s'=2] = a*=3
+  MODEL action choice this step: a_hat=3  (oracle a*=3)
+  MODEL context update (slot a=1):
+    ||c[a]|| before = 16.3515   after = 16.4301   ||delta_c|| = 12.0672
+    cosine(delta_c_t, delta_c_prev for same a) = -0.1410
+    reward probe on delta_c: r_hat = +0.6229   (true r = +0.5799   |err| = 0.0429)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.02    0.0326 -0.0199 -0.0143  0.0224 -0.0378  0.0123  0.2224]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.     0.     0.0265 0.1435]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0315  0.0738  0.0224 -0.0187  0.1182 -0.0568 -0.0067  0.1823]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.     0.0265 0.1435]
+
+--- Step  24 ---
+  Transition: s=2  a=3  r=+0.6451  s'=3
+  ORACLE Q-learning:
+    Q[s=2,a=3] before = +0.1340
+    max_a Q[s'=3,a] = +0.1836
+    TD target = r + gamma * max = +0.8103
+    TD error  = target - Q_before = +0.6764
+    Q[s=2,a=3] after  = +0.2016  (delta = +0.0676)
+    argmax_a Q[s'=3] = a*=0
+  MODEL action choice this step: a_hat=0  (oracle a*=0)
+  MODEL context update (slot a=3):
+    ||c[a]|| before = 16.4460   after = 16.4767   ||delta_c|| = 6.1100
+    cosine(delta_c_t, delta_c_prev for same a) = +0.2005
+    reward probe on delta_c: r_hat = +0.5741   (true r = +0.6451   |err| = 0.0710)
+    Q-probe on c[a=3]   BEFORE: pred Q[:,3] = [ 0.0391 -0.011   0.2066  0.0036 -0.0182 -0.0638 -0.0343  0.0032]
+                                    oracle Q[:,3] = [0.0464 0.     0.134  0.     0.     0.     0.     0.    ]
+    Q-probe on c[a=3]   AFTER : pred Q[:,3] = [ 0.0659 -0.0036  0.2767  0.0079 -0.0275 -0.0795 -0.0253  0.0025]
+                                    oracle Q[:,3] = [0.0464 0.     0.2016 0.     0.     0.     0.     0.    ]
+
+--- Step  25 ---
+  Transition: s=3  a=0  r=+0.3801  s'=2
+  ORACLE Q-learning:
+    Q[s=3,a=0] before = +0.1836
+    max_a Q[s'=2,a] = +0.2016
+    TD target = r + gamma * max = +0.5616
+    TD error  = target - Q_before = +0.3780
+    Q[s=3,a=0] after  = +0.2214  (delta = +0.0378)
+    argmax_a Q[s'=2] = a*=3
+  MODEL action choice this step: a_hat=3  (oracle a*=3)
+  MODEL context update (slot a=0):
+    ||c[a]|| before = 16.4714   after = 16.4689   ||delta_c|| = 4.8202
+    cosine(delta_c_t, delta_c_prev for same a) = -0.4786
+    reward probe on delta_c: r_hat = +0.5032   (true r = +0.3801   |err| = 0.1230)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [ 0.0102  0.0301 -0.0047  0.2361 -0.0038  0.1195 -0.0127  0.0468]
+                                    oracle Q[:,0] = [0.     0.     0.     0.1836 0.     0.1303 0.     0.    ]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [ 0.0199  0.0253 -0.0086  0.2427  0.003   0.1059 -0.0221  0.0161]
+                                    oracle Q[:,0] = [0.     0.     0.     0.2214 0.     0.1303 0.     0.    ]
+
+--- Step  26 ---
+  Transition: s=2  a=3  r=+0.6451  s'=5
+  ORACLE Q-learning:
+    Q[s=2,a=3] before = +0.2016
+    max_a Q[s'=5,a] = +0.1303
+    TD target = r + gamma * max = +0.7624
+    TD error  = target - Q_before = +0.5608
+    Q[s=2,a=3] after  = +0.2577  (delta = +0.0561)
+    argmax_a Q[s'=5] = a*=0
+  MODEL action choice this step: a_hat=0  (oracle a*=0)
+  MODEL context update (slot a=3):
+    ||c[a]|| before = 16.4767   after = 16.4881   ||delta_c|| = 4.6210
+    cosine(delta_c_t, delta_c_prev for same a) = -0.6492
+    reward probe on delta_c: r_hat = +0.5956   (true r = +0.6451   |err| = 0.0495)
+    Q-probe on c[a=3]   BEFORE: pred Q[:,3] = [ 0.0659 -0.0036  0.2767  0.0079 -0.0275 -0.0795 -0.0253  0.0025]
+                                    oracle Q[:,3] = [0.0464 0.     0.2016 0.     0.     0.     0.     0.    ]
+    Q-probe on c[a=3]   AFTER : pred Q[:,3] = [ 0.0599 -0.0082  0.3323  0.0144 -0.0052 -0.0743 -0.0074  0.0045]
+                                    oracle Q[:,3] = [0.0464 0.     0.2577 0.     0.     0.     0.     0.    ]
+
+--- Step  27 ---
+  Transition: s=5  a=0  r=+0.6117  s'=0
+  ORACLE Q-learning:
+    Q[s=5,a=0] before = +0.1303
+    max_a Q[s'=0,a] = +0.3118
+    TD target = r + gamma * max = +0.8924
+    TD error  = target - Q_before = +0.7620
+    Q[s=5,a=0] after  = +0.2065  (delta = +0.0762)
+    argmax_a Q[s'=0] = a*=2
+  MODEL action choice this step: a_hat=2  (oracle a*=2)
+  MODEL context update (slot a=0):
+    ||c[a]|| before = 16.4689   after = 16.4741   ||delta_c|| = 6.6983
+    cosine(delta_c_t, delta_c_prev for same a) = -0.5054
+    reward probe on delta_c: r_hat = +0.6202   (true r = +0.6117   |err| = 0.0085)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [ 0.0199  0.0253 -0.0086  0.2427  0.003   0.1059 -0.0221  0.0161]
+                                    oracle Q[:,0] = [0.     0.     0.     0.2214 0.     0.1303 0.     0.    ]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [ 0.0198  0.0407  0.0037  0.2039  0.0344  0.1734 -0.0065  0.0353]
+                                    oracle Q[:,0] = [0.     0.     0.     0.2214 0.     0.2065 0.     0.    ]
+
+--- Step  28 ---
+  Transition: s=0  a=2  r=+0.6779  s'=0
+  ORACLE Q-learning:
+    Q[s=0,a=2] before = +0.3118
+    max_a Q[s'=0,a] = +0.3118
+    TD target = r + gamma * max = +0.9586
+    TD error  = target - Q_before = +0.6467
+    Q[s=0,a=2] after  = +0.3765  (delta = +0.0647)
+    argmax_a Q[s'=0] = a*=2
+  MODEL action choice this step: a_hat=2  (oracle a*=2)
+  MODEL context update (slot a=2):
+    ||c[a]|| before = 16.5824   after = 16.5899   ||delta_c|| = 5.6553
+    cosine(delta_c_t, delta_c_prev for same a) = -0.8019
+    reward probe on delta_c: r_hat = +0.5090   (true r = +0.6779   |err| = 0.1690)
+    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.216   0.2755  0.0242  0.019   0.0081 -0.0065  0.0149  0.0281]
+                                    oracle Q[:,2] = [0.3118 0.2975 0.     0.     0.     0.     0.     0.    ]
+    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.2452  0.2206  0.0589  0.053   0.0044 -0.0027  0.039   0.0374]
+                                    oracle Q[:,2] = [0.3765 0.2975 0.     0.     0.     0.     0.     0.    ]
+
+--- Step  29 ---
+  Transition: s=0  a=2  r=+0.6779  s'=7
+  ORACLE Q-learning:
+    Q[s=0,a=2] before = +0.3765
+    max_a Q[s'=7,a] = +0.1435
+    TD target = r + gamma * max = +0.8071
+    TD error  = target - Q_before = +0.4305
+    Q[s=0,a=2] after  = +0.4196  (delta = +0.0431)
+    argmax_a Q[s'=7] = a*=1
+  MODEL action choice this step: a_hat=1  (oracle a*=1)
+  MODEL context update (slot a=2):
+    ||c[a]|| before = 16.5899   after = 16.6207   ||delta_c|| = 5.7759
+    cosine(delta_c_t, delta_c_prev for same a) = -0.5432
+    reward probe on delta_c: r_hat = +0.5063   (true r = +0.6779   |err| = 0.1717)
+    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.2452  0.2206  0.0589  0.053   0.0044 -0.0027  0.039   0.0374]
+                                    oracle Q[:,2] = [0.3765 0.2975 0.     0.     0.     0.     0.     0.    ]
+    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [0.277  0.2263 0.0491 0.0832 0.0121 0.0051 0.0349 0.045 ]
+                                    oracle Q[:,2] = [0.4196 0.2975 0.     0.     0.     0.     0.     0.    ]
+
+--- Step  30 ---
+  Transition: s=7  a=1  r=+0.5141  s'=2
+  ORACLE Q-learning:
+    Q[s=7,a=1] before = +0.1435
+    max_a Q[s'=2,a] = +0.2577
+    TD target = r + gamma * max = +0.7460
+    TD error  = target - Q_before = +0.6025
+    Q[s=7,a=1] after  = +0.2037  (delta = +0.0603)
+    argmax_a Q[s'=2] = a*=3
+  MODEL action choice this step: a_hat=3  (oracle a*=3)
+  MODEL context update (slot a=1):
+    ||c[a]|| before = 16.4301   after = 16.4328   ||delta_c|| = 5.5474
+    cosine(delta_c_t, delta_c_prev for same a) = -0.7116
+    reward probe on delta_c: r_hat = +0.4131   (true r = +0.5141   |err| = 0.1011)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0315  0.0738  0.0224 -0.0187  0.1182 -0.0568 -0.0067  0.1823]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.     0.0265 0.1435]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0413 -0.0045 -0.0062 -0.0162  0.1169 -0.0575 -0.0027  0.2195]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.     0.0265 0.2037]
+
+--- Step  31 ---
+  Transition: s=2  a=0  r=+0.2914  s'=7
+  ORACLE Q-learning:
+    Q[s=2,a=0] before = +0.0000
+    max_a Q[s'=7,a] = +0.2037
+    TD target = r + gamma * max = +0.4748
+    TD error  = target - Q_before = +0.4748
+    Q[s=2,a=0] after  = +0.0475  (delta = +0.0475)
+    argmax_a Q[s'=7] = a*=1
+  MODEL action choice this step: a_hat=1  (oracle a*=1)
+  MODEL context update (slot a=0):
+    ||c[a]|| before = 16.4741   after = 16.5201   ||delta_c|| = 7.0472
+    cosine(delta_c_t, delta_c_prev for same a) = -0.5496
+    reward probe on delta_c: r_hat = +0.4119   (true r = +0.2914   |err| = 0.1205)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [ 0.0198  0.0407  0.0037  0.2039  0.0344  0.1734 -0.0065  0.0353]
+                                    oracle Q[:,0] = [0.     0.     0.     0.2214 0.     0.2065 0.     0.    ]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [-0.0047  0.0404  0.0242  0.2328 -0.007   0.1513  0.0277  0.0342]
+                                    oracle Q[:,0] = [0.     0.     0.0475 0.2214 0.     0.2065 0.     0.    ]
+
+--- Step  32 ---
+  Transition: s=7  a=1  r=+0.5141  s'=2
+  ORACLE Q-learning:
+    Q[s=7,a=1] before = +0.2037
+    max_a Q[s'=2,a] = +0.2577
+    TD target = r + gamma * max = +0.7460
+    TD error  = target - Q_before = +0.5423
+    Q[s=7,a=1] after  = +0.2580  (delta = +0.0542)
+    argmax_a Q[s'=2] = a*=3
+  MODEL action choice this step: a_hat=3  (oracle a*=3)
+  MODEL context update (slot a=1):
+    ||c[a]|| before = 16.4328   after = 16.4331   ||delta_c|| = 2.3945
+    cosine(delta_c_t, delta_c_prev for same a) = +0.5812
+    reward probe on delta_c: r_hat = +0.5230   (true r = +0.5141   |err| = 0.0089)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0413 -0.0045 -0.0062 -0.0162  0.1169 -0.0575 -0.0027  0.2195]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.     0.0265 0.2037]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0407 -0.0068  0.0034  0.0094  0.0839 -0.0428  0.0107  0.2473]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.     0.0265 0.258 ]
+
+--- Step  33 ---
+  Transition: s=2  a=3  r=+0.6451  s'=5
+  ORACLE Q-learning:
+    Q[s=2,a=3] before = +0.2577
+    max_a Q[s'=5,a] = +0.2065
+    TD target = r + gamma * max = +0.8310
+    TD error  = target - Q_before = +0.5733
+    Q[s=2,a=3] after  = +0.3150  (delta = +0.0573)
+    argmax_a Q[s'=5] = a*=0
+  MODEL action choice this step: a_hat=0  (oracle a*=0)
+  MODEL context update (slot a=3):
+    ||c[a]|| before = 16.4881   after = 16.5023   ||delta_c|| = 2.0669
+    cosine(delta_c_t, delta_c_prev for same a) = +0.0785
+    reward probe on delta_c: r_hat = +0.5076   (true r = +0.6451   |err| = 0.1375)
+    Q-probe on c[a=3]   BEFORE: pred Q[:,3] = [ 0.0599 -0.0082  0.3323  0.0144 -0.0052 -0.0743 -0.0074  0.0045]
+                                    oracle Q[:,3] = [0.0464 0.     0.2577 0.     0.     0.     0.     0.    ]
+    Q-probe on c[a=3]   AFTER : pred Q[:,3] = [ 0.063  -0.0024  0.3472  0.0301  0.0035 -0.0564  0.007   0.0082]
+                                    oracle Q[:,3] = [0.0464 0.     0.315  0.     0.     0.     0.     0.    ]
+
+--- Step  34 ---
+  Transition: s=5  a=0  r=+0.6117  s'=6
+  ORACLE Q-learning:
+    Q[s=5,a=0] before = +0.2065
+    max_a Q[s'=6,a] = +0.0265
+    TD target = r + gamma * max = +0.6356
+    TD error  = target - Q_before = +0.4290
+    Q[s=5,a=0] after  = +0.2494  (delta = +0.0429)
+    argmax_a Q[s'=6] = a*=1
+  MODEL action choice this step: a_hat=1  (oracle a*=1)
+  MODEL context update (slot a=0):
+    ||c[a]|| before = 16.5201   after = 16.5239   ||delta_c|| = 3.8593
+    cosine(delta_c_t, delta_c_prev for same a) = -0.3921
+    reward probe on delta_c: r_hat = +0.6678   (true r = +0.6117   |err| = 0.0561)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [-0.0047  0.0404  0.0242  0.2328 -0.007   0.1513  0.0277  0.0342]
+                                    oracle Q[:,0] = [0.     0.     0.0475 0.2214 0.     0.2065 0.     0.    ]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [0.0038 0.0275 0.0361 0.2018 0.0279 0.1896 0.0317 0.0558]
+                                    oracle Q[:,0] = [0.     0.     0.0475 0.2214 0.     0.2494 0.     0.    ]
+
+--- Step  35 ---
+  Transition: s=6  a=1  r=+0.2649  s'=5
+  ORACLE Q-learning:
+    Q[s=6,a=1] before = +0.0265
+    max_a Q[s'=5,a] = +0.2494
+    TD target = r + gamma * max = +0.4894
+    TD error  = target - Q_before = +0.4629
+    Q[s=6,a=1] after  = +0.0728  (delta = +0.0463)
+    argmax_a Q[s'=5] = a*=0
+  MODEL action choice this step: a_hat=0  (oracle a*=0)
+  MODEL context update (slot a=1):
+    ||c[a]|| before = 16.4331   after = 16.4261   ||delta_c|| = 8.1430
+    cosine(delta_c_t, delta_c_prev for same a) = +0.0837
+    reward probe on delta_c: r_hat = +0.4469   (true r = +0.2649   |err| = 0.1820)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0407 -0.0068  0.0034  0.0094  0.0839 -0.0428  0.0107  0.2473]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.     0.0265 0.258 ]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0264  0.029   0.0256  0.0033  0.0776 -0.0207  0.0547  0.2387]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.     0.0728 0.258 ]
+
+--- Step  36 ---
+  Transition: s=5  a=1  r=+0.8046  s'=7
+  ORACLE Q-learning:
+    Q[s=5,a=1] before = +0.0000
+    max_a Q[s'=7,a] = +0.2580
+    TD target = r + gamma * max = +1.0368
+    TD error  = target - Q_before = +1.0368
+    Q[s=5,a=1] after  = +0.1037  (delta = +0.1037)
+    argmax_a Q[s'=7] = a*=1
+  MODEL action choice this step: a_hat=1  (oracle a*=1)
+  MODEL context update (slot a=1):
+    ||c[a]|| before = 16.4261   after = 16.4793   ||delta_c|| = 9.3165
+    cosine(delta_c_t, delta_c_prev for same a) = -0.5797
+    reward probe on delta_c: r_hat = +0.7739   (true r = +0.8046   |err| = 0.0307)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0264  0.029   0.0256  0.0033  0.0776 -0.0207  0.0547  0.2387]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.     0.0728 0.258 ]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0539  0.0273  0.0337 -0.0114  0.0374  0.0669  0.1265  0.25  ]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.1037 0.0728 0.258 ]
+
+--- Step  37 ---
+  Transition: s=7  a=1  r=+0.5141  s'=3
+  ORACLE Q-learning:
+    Q[s=7,a=1] before = +0.2580
+    max_a Q[s'=3,a] = +0.2214
+    TD target = r + gamma * max = +0.7134
+    TD error  = target - Q_before = +0.4554
+    Q[s=7,a=1] after  = +0.3035  (delta = +0.0455)
+    argmax_a Q[s'=3] = a*=0
+  MODEL action choice this step: a_hat=0  (oracle a*=0)
+  MODEL context update (slot a=1):
+    ||c[a]|| before = 16.4793   after = 16.4544   ||delta_c|| = 6.1417
+    cosine(delta_c_t, delta_c_prev for same a) = -0.5892
+    reward probe on delta_c: r_hat = +0.4123   (true r = +0.5141   |err| = 0.1019)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0539  0.0273  0.0337 -0.0114  0.0374  0.0669  0.1265  0.25  ]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.1037 0.0728 0.258 ]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0304  0.0304  0.0351 -0.0048  0.0738  0.0774  0.1186  0.3257]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.1037 0.0728 0.3035]
+
+--- Step  38 ---
+  Transition: s=3  a=0  r=+0.3801  s'=2
+  ORACLE Q-learning:
+    Q[s=3,a=0] before = +0.2214
+    max_a Q[s'=2,a] = +0.3150
+    TD target = r + gamma * max = +0.6636
+    TD error  = target - Q_before = +0.4422
+    Q[s=3,a=0] after  = +0.2656  (delta = +0.0442)
+    argmax_a Q[s'=2] = a*=3
+  MODEL action choice this step: a_hat=3  (oracle a*=3)
+  MODEL context update (slot a=0):
+    ||c[a]|| before = 16.5239   after = 16.5206   ||delta_c|| = 4.7201
+    cosine(delta_c_t, delta_c_prev for same a) = -0.3896
+    reward probe on delta_c: r_hat = +0.3990   (true r = +0.3801   |err| = 0.0189)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [0.0038 0.0275 0.0361 0.2018 0.0279 0.1896 0.0317 0.0558]
+                                    oracle Q[:,0] = [0.     0.     0.0475 0.2214 0.     0.2494 0.     0.    ]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [0.0197 0.0306 0.049  0.2286 0.0189 0.1956 0.0243 0.0788]
+                                    oracle Q[:,0] = [0.     0.     0.0475 0.2656 0.     0.2494 0.     0.    ]
+
+--- Step  39 ---
+  Transition: s=2  a=3  r=+0.6451  s'=7
+  ORACLE Q-learning:
+    Q[s=2,a=3] before = +0.3150
+    max_a Q[s'=7,a] = +0.3035
+    TD target = r + gamma * max = +0.9182
+    TD error  = target - Q_before = +0.6032
+    Q[s=2,a=3] after  = +0.3753  (delta = +0.0603)
+    argmax_a Q[s'=7] = a*=1
+  MODEL action choice this step: a_hat=1  (oracle a*=1)
+  MODEL context update (slot a=3):
+    ||c[a]|| before = 16.5023   after = 16.5369   ||delta_c|| = 7.0057
+    cosine(delta_c_t, delta_c_prev for same a) = -0.0356
+    reward probe on delta_c: r_hat = +0.5249   (true r = +0.6451   |err| = 0.1202)
+    Q-probe on c[a=3]   BEFORE: pred Q[:,3] = [ 0.063  -0.0024  0.3472  0.0301  0.0035 -0.0564  0.007   0.0082]
+                                    oracle Q[:,3] = [0.0464 0.     0.315  0.     0.     0.     0.     0.    ]
+    Q-probe on c[a=3]   AFTER : pred Q[:,3] = [ 0.0761  0.0069  0.3546  0.0503  0.0081 -0.021   0.032   0.0233]
+                                    oracle Q[:,3] = [0.0464 0.     0.3753 0.     0.     0.     0.     0.    ]
+
+--- Step  40 ---
+  Transition: s=7  a=1  r=+0.5141  s'=4
+  ORACLE Q-learning:
+    Q[s=7,a=1] before = +0.3035
+    max_a Q[s'=4,a] = +0.0701
+    TD target = r + gamma * max = +0.5772
+    TD error  = target - Q_before = +0.2736
+    Q[s=7,a=1] after  = +0.3309  (delta = +0.0274)
+    argmax_a Q[s'=4] = a*=1
+  MODEL action choice this step: a_hat=1  (oracle a*=1)
+  MODEL context update (slot a=1):
+    ||c[a]|| before = 16.4544   after = 16.4371   ||delta_c|| = 6.2431
+    cosine(delta_c_t, delta_c_prev for same a) = -0.5933
+    reward probe on delta_c: r_hat = +0.5281   (true r = +0.5141   |err| = 0.0140)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0304  0.0304  0.0351 -0.0048  0.0738  0.0774  0.1186  0.3257]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.1037 0.0728 0.3035]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0667 -0.0111  0.0322  0.0271  0.0815  0.0739  0.1203  0.3242]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.1037 0.0728 0.3309]
+
+--- Step  41 ---
+  Transition: s=4  a=1  r=+0.5799  s'=2
+  ORACLE Q-learning:
+    Q[s=4,a=1] before = +0.0701
+    max_a Q[s'=2,a] = +0.3753
+    TD target = r + gamma * max = +0.9178
+    TD error  = target - Q_before = +0.8477
+    Q[s=4,a=1] after  = +0.1548  (delta = +0.0848)
+    argmax_a Q[s'=2] = a*=3
+  MODEL action choice this step: a_hat=3  (oracle a*=3)
+  MODEL context update (slot a=1):
+    ||c[a]|| before = 16.4371   after = 16.4924   ||delta_c|| = 7.7261
+    cosine(delta_c_t, delta_c_prev for same a) = -0.5136
+    reward probe on delta_c: r_hat = +0.5267   (true r = +0.5799   |err| = 0.0533)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0667 -0.0111  0.0322  0.0271  0.0815  0.0739  0.1203  0.3242]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.1037 0.0728 0.3309]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [0.0479 0.0186 0.0497 0.0138 0.1597 0.0148 0.0556 0.2332]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.1548 0.1037 0.0728 0.3309]
+
+--- Step  42 ---
+  Transition: s=2  a=3  r=+0.6451  s'=3
+  ORACLE Q-learning:
+    Q[s=2,a=3] before = +0.3753
+    max_a Q[s'=3,a] = +0.2656
+    TD target = r + gamma * max = +0.8842
+    TD error  = target - Q_before = +0.5088
+    Q[s=2,a=3] after  = +0.4262  (delta = +0.0509)
+    argmax_a Q[s'=3] = a*=0
+  MODEL action choice this step: a_hat=0  (oracle a*=0)
+  MODEL context update (slot a=3):
+    ||c[a]|| before = 16.5369   after = 16.5341   ||delta_c|| = 5.1946
+    cosine(delta_c_t, delta_c_prev for same a) = -0.6922
+    reward probe on delta_c: r_hat = +0.5372   (true r = +0.6451   |err| = 0.1079)
+    Q-probe on c[a=3]   BEFORE: pred Q[:,3] = [ 0.0761  0.0069  0.3546  0.0503  0.0081 -0.021   0.032   0.0233]
+                                    oracle Q[:,3] = [0.0464 0.     0.3753 0.     0.     0.     0.     0.    ]
+    Q-probe on c[a=3]   AFTER : pred Q[:,3] = [ 0.0892  0.029   0.3544  0.0352  0.0167 -0.0291  0.0369  0.0395]
+                                    oracle Q[:,3] = [0.0464 0.     0.4262 0.     0.     0.     0.     0.    ]
+
+--- Step  43 ---
+  Transition: s=3  a=2  r=+0.5889  s'=6
+  ORACLE Q-learning:
+    Q[s=3,a=2] before = +0.0000
+    max_a Q[s'=6,a] = +0.0728
+    TD target = r + gamma * max = +0.6544
+    TD error  = target - Q_before = +0.6544
+    Q[s=3,a=2] after  = +0.0654  (delta = +0.0654)
+    argmax_a Q[s'=6] = a*=1
+  MODEL action choice this step: a_hat=3  (oracle a*=1)
+  MODEL context update (slot a=2):
+    ||c[a]|| before = 16.6207   after = 16.6335   ||delta_c|| = 5.5850
+    cosine(delta_c_t, delta_c_prev for same a) = +0.1432
+    reward probe on delta_c: r_hat = +0.3373   (true r = +0.5889   |err| = 0.2516)
+    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [0.277  0.2263 0.0491 0.0832 0.0121 0.0051 0.0349 0.045 ]
+                                    oracle Q[:,2] = [0.4196 0.2975 0.     0.     0.     0.     0.     0.    ]
+    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [0.2314 0.2023 0.0531 0.1046 0.0056 0.0038 0.0039 0.0303]
+                                    oracle Q[:,2] = [0.4196 0.2975 0.     0.0654 0.     0.     0.     0.    ]
+
+--- Step  44 ---
+  Transition: s=6  a=1  r=+0.2649  s'=5
+  ORACLE Q-learning:
+    Q[s=6,a=1] before = +0.0728
+    max_a Q[s'=5,a] = +0.2494
+    TD target = r + gamma * max = +0.4894
+    TD error  = target - Q_before = +0.4166
+    Q[s=6,a=1] after  = +0.1144  (delta = +0.0417)
+    argmax_a Q[s'=5] = a*=0
+  MODEL action choice this step: a_hat=0  (oracle a*=0)
+  MODEL context update (slot a=1):
+    ||c[a]|| before = 16.4924   after = 16.4617   ||delta_c|| = 8.3009
+    cosine(delta_c_t, delta_c_prev for same a) = -0.3139
+    reward probe on delta_c: r_hat = +0.3846   (true r = +0.2649   |err| = 0.1196)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [0.0479 0.0186 0.0497 0.0138 0.1597 0.0148 0.0556 0.2332]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.1548 0.1037 0.0728 0.3309]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [0.059  0.0221 0.0362 0.0209 0.1817 0.0202 0.0988 0.2388]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.1548 0.1037 0.1144 0.3309]
+
+--- Step  45 ---
+  Transition: s=5  a=0  r=+0.6117  s'=4
+  ORACLE Q-learning:
+    Q[s=5,a=0] before = +0.2494
+    max_a Q[s'=4,a] = +0.1548
+    TD target = r + gamma * max = +0.7511
+    TD error  = target - Q_before = +0.5016
+    Q[s=5,a=0] after  = +0.2996  (delta = +0.0502)
+    argmax_a Q[s'=4] = a*=1
+  MODEL action choice this step: a_hat=1  (oracle a*=1)
+  MODEL context update (slot a=0):
+    ||c[a]|| before = 16.5206   after = 16.5032   ||delta_c|| = 4.6633
+    cosine(delta_c_t, delta_c_prev for same a) = -0.7599
+    reward probe on delta_c: r_hat = +0.6359   (true r = +0.6117   |err| = 0.0242)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [0.0197 0.0306 0.049  0.2286 0.0189 0.1956 0.0243 0.0788]
+                                    oracle Q[:,0] = [0.     0.     0.0475 0.2656 0.     0.2494 0.     0.    ]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [0.0175 0.0329 0.0474 0.1943 0.0386 0.2228 0.027  0.0961]
+                                    oracle Q[:,0] = [0.     0.     0.0475 0.2656 0.     0.2996 0.     0.    ]
+
+--- Step  46 ---
+  Transition: s=4  a=0  r=+0.5760  s'=4
+  ORACLE Q-learning:
+    Q[s=4,a=0] before = +0.0000
+    max_a Q[s'=4,a] = +0.1548
+    TD target = r + gamma * max = +0.7153
+    TD error  = target - Q_before = +0.7153
+    Q[s=4,a=0] after  = +0.0715  (delta = +0.0715)
+    argmax_a Q[s'=4] = a*=1
+  MODEL action choice this step: a_hat=1  (oracle a*=1)
+  MODEL context update (slot a=0):
+    ||c[a]|| before = 16.5032   after = 16.5119   ||delta_c|| = 2.4678
+    cosine(delta_c_t, delta_c_prev for same a) = -0.1690
+    reward probe on delta_c: r_hat = +0.4715   (true r = +0.5760   |err| = 0.1044)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [0.0175 0.0329 0.0474 0.1943 0.0386 0.2228 0.027  0.0961]
+                                    oracle Q[:,0] = [0.     0.     0.0475 0.2656 0.     0.2996 0.     0.    ]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [0.0311 0.0432 0.0397 0.1826 0.0429 0.2279 0.0546 0.107 ]
+                                    oracle Q[:,0] = [0.     0.     0.0475 0.2656 0.0715 0.2996 0.     0.    ]
+
+--- Step  47 ---
+  Transition: s=4  a=1  r=+0.5799  s'=7
+  ORACLE Q-learning:
+    Q[s=4,a=1] before = +0.1548
+    max_a Q[s'=7,a] = +0.3309
+    TD target = r + gamma * max = +0.8777
+    TD error  = target - Q_before = +0.7229
+    Q[s=4,a=1] after  = +0.2271  (delta = +0.0723)
+    argmax_a Q[s'=7] = a*=1
+  MODEL action choice this step: a_hat=1  (oracle a*=1)
+  MODEL context update (slot a=1):
+    ||c[a]|| before = 16.4617   after = 16.4990   ||delta_c|| = 7.4087
+    cosine(delta_c_t, delta_c_prev for same a) = -0.7527
+    reward probe on delta_c: r_hat = +0.6324   (true r = +0.5799   |err| = 0.0524)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [0.059  0.0221 0.0362 0.0209 0.1817 0.0202 0.0988 0.2388]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.1548 0.1037 0.1144 0.3309]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [0.0775 0.0241 0.0365 0.0249 0.2244 0.043  0.1674 0.2443]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.2271 0.1037 0.1144 0.3309]
+
+--- Step  48 ---
+  Transition: s=7  a=1  r=+0.5141  s'=0
+  ORACLE Q-learning:
+    Q[s=7,a=1] before = +0.3309
+    max_a Q[s'=0,a] = +0.4196
+    TD target = r + gamma * max = +0.8917
+    TD error  = target - Q_before = +0.5608
+    Q[s=7,a=1] after  = +0.3870  (delta = +0.0561)
+    argmax_a Q[s'=0] = a*=2
+  MODEL action choice this step: a_hat=2  (oracle a*=2)
+  MODEL context update (slot a=1):
+    ||c[a]|| before = 16.4990   after = 16.4863   ||delta_c|| = 5.6720
+    cosine(delta_c_t, delta_c_prev for same a) = -0.5399
+    reward probe on delta_c: r_hat = +0.4702   (true r = +0.5141   |err| = 0.0439)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [0.0775 0.0241 0.0365 0.0249 0.2244 0.043  0.1674 0.2443]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.2271 0.1037 0.1144 0.3309]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0621 -0.0075  0.0395  0.0269  0.2139  0.0313  0.1171  0.2543]
+                                    oracle Q[:,1] = [0.     0.     0.     0.     0.2271 0.1037 0.1144 0.387 ]
+
+--- Step  49 ---
+  Transition: s=0  a=2  r=+0.6779  s'=2
+  ORACLE Q-learning:
+    Q[s=0,a=2] before = +0.4196
+    max_a Q[s'=2,a] = +0.4262
+    TD target = r + gamma * max = +1.0615
+    TD error  = target - Q_before = +0.6420
+    Q[s=0,a=2] after  = +0.4838  (delta = +0.0642)
+    argmax_a Q[s'=2] = a*=3
+  MODEL action choice this step: a_hat=3  (oracle a*=3)
+  MODEL context update (slot a=2):
+    ||c[a]|| before = 16.6335   after = 16.6078   ||delta_c|| = 7.0321
+    cosine(delta_c_t, delta_c_prev for same a) = -0.4952
+    reward probe on delta_c: r_hat = +0.6487   (true r = +0.6779   |err| = 0.0292)
+    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [0.2314 0.2023 0.0531 0.1046 0.0056 0.0038 0.0039 0.0303]
+                                    oracle Q[:,2] = [0.4196 0.2975 0.     0.0654 0.     0.     0.     0.    ]
+    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.288   0.145   0.0612  0.0791 -0.01   -0.0146  0.0251 -0.015 ]
+                                    oracle Q[:,2] = [0.4838 0.2975 0.     0.0654 0.     0.     0.     0.    ]
+
+==========================================================================================
+End of trace.
+==========================================================================================
