@@ -487,7 +487,7 @@ def plot_probe_scatter(
     rng = np.random.default_rng(0)
     idx = rng.choice(len(q_t), size=min(10000, len(q_t)), replace=False)
 
-    fig, ax = plt.subplots(figsize=(7, 11))
+    fig, ax = plt.subplots(figsize=(6, 5))
     ax.scatter(q_t[idx], q_p[idx], alpha=0.35, s=10, color='steelblue',
                rasterized=True, edgecolors='none')
     lo = min(q_t.min(), q_p.min())
@@ -861,23 +861,20 @@ def plot_per_distribution_agreement(
 
     row_labels = [label for label, _ in dist_data]
 
-    fig, ax = plt.subplots(figsize=(10, 7))
+    fig, ax = plt.subplots(figsize=(6, 5))
     im = ax.imshow(agree_matrix, aspect='auto', cmap='RdYlGn', vmin=0, vmax=1)
-    cbar = plt.colorbar(im, ax=ax)
-    cbar.set_label('Greedy action agreement', fontsize=16)
-    cbar.ax.tick_params(labelsize=14)
     ax.set_xticks(range(n_bins))
     rotation = 0 if use_phase else 45
     ha = 'center' if use_phase else 'right'
-    ax.set_xticklabels(bin_labels, rotation=rotation, ha=ha, fontsize=15)
+    ax.set_xticklabels(bin_labels, rotation=rotation, ha=ha, fontsize=11)
     ax.set_yticks(range(n_dists))
-    ax.set_yticklabels(row_labels, fontsize=15)
-    ax.set_xlabel('Episode timestep bin', fontsize=17)
-    ax.set_ylabel('Reward distribution', fontsize=17)
-    ax.tick_params(axis='both', labelsize=15)
-    ax.set_title('Action Agreement by Reward Distribution and Timestep Phase',
-                 fontsize=18)
-    cell_fontsize = 18 if n_bins <= 8 else (15 if n_bins <= 16 else 12)
+    ax.set_yticklabels(row_labels, fontsize=11)
+    ax.set_xlabel('Episode timestep bin', fontsize=12)
+    ax.set_ylabel('Reward distribution', fontsize=12)
+    ax.tick_params(axis='both', labelsize=11)
+    ax.set_title('Action Agreement by Reward Distribution\nand Timestep Phase',
+                 fontsize=13)
+    cell_fontsize = 12 if n_bins <= 8 else (10 if n_bins <= 16 else 9)
     for r in range(n_dists):
         for b in range(n_bins):
             val = agree_matrix[r, b]
@@ -1082,7 +1079,7 @@ def plot_regret(
     n_steps = cumrew_transformer.shape[1]
     steps = np.arange(1, n_steps + 1)
 
-    fig, ax = plt.subplots(figsize=(7, 11))
+    fig, ax = plt.subplots(figsize=(6, 5))
 
     series = [
         ('Transformer', cumrew_transformer, 'steelblue'),
@@ -1103,6 +1100,114 @@ def plot_regret(
                  fontsize=13)
     ax.legend(fontsize=11, loc='lower right')
     ax.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"  Saved: {save_path}")
+
+
+def plot_combined_row(
+    cumrew_transformer: np.ndarray,
+    cumrew_greedy: np.ndarray,
+    cumrew_epsgreedy: np.ndarray,
+    n_mdps: int,
+    q_true: np.ndarray,
+    q_pred: np.ndarray,
+    r2: float,
+    dist_data: List[Tuple[str, np.ndarray]],
+    n_steps: int,
+    save_path: str,
+    n_bins: int = 3,
+) -> None:
+    """Single-row figure: regret (left), probe scatter (middle), agreement (right)."""
+    fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+
+    # --- Left: regret ---
+    ax = axes[0]
+    n_steps_r = cumrew_transformer.shape[1]
+    steps = np.arange(1, n_steps_r + 1)
+    series = [
+        ('Transformer', cumrew_transformer, 'steelblue'),
+        ('Greedy Q (ε=0)', cumrew_greedy, 'darkorange'),
+        ('ε-greedy Q (ε=0.2)', cumrew_epsgreedy, 'forestgreen'),
+    ]
+    for label, data, color in series:
+        mean = data.mean(axis=0)
+        std = data.std(axis=0)
+        ax.plot(steps, mean, color=color, linewidth=2, label=label)
+        ax.fill_between(steps, mean - std, mean + std, alpha=0.15, color=color)
+    ax.set_xlabel('Timestep', fontsize=12)
+    ax.set_ylabel('Cumulative Reward', fontsize=12)
+    ax.tick_params(axis='both', labelsize=11)
+    ax.set_title(f'Cumulative Reward (mean ± std, {n_mdps} MDPs)', fontsize=12)
+    ax.legend(fontsize=10, loc='lower right')
+    ax.grid(True, alpha=0.3)
+
+    # --- Middle: probe scatter ---
+    ax = axes[1]
+    q_t = q_true.reshape(-1)
+    q_p = q_pred.reshape(-1)
+    rng = np.random.default_rng(0)
+    idx = rng.choice(len(q_t), size=min(10000, len(q_t)), replace=False)
+    ax.scatter(q_t[idx], q_p[idx], alpha=0.35, s=10, color='steelblue',
+               rasterized=True, edgecolors='none')
+    lo = min(q_t.min(), q_p.min())
+    hi = max(q_t.max(), q_p.max())
+    ax.plot([lo, hi], [lo, hi], 'r--', linewidth=1.5, label='y = x')
+    ax.set_xlim(q_t.min(), q_t.max())
+    y_lo, y_hi = q_p.min(), q_p.max()
+    y_pad = 0.02 * (y_hi - y_lo)
+    ax.set_ylim(y_lo - y_pad, y_hi + y_pad)
+    ax.set_xlabel('Q tabular', fontsize=12)
+    ax.set_ylabel('Q probe (context token)', fontsize=12)
+    ax.tick_params(axis='both', labelsize=11)
+    ax.set_title(f'Context Token Probe: Q-Values vs True  (R$^2$ = {r2:.4f})',
+                 fontsize=12)
+    ax.legend(fontsize=10, loc='upper left')
+    ax.grid(True, alpha=0.3)
+
+    # --- Right: per-distribution agreement ---
+    ax = axes[2]
+    bin_edges = np.linspace(0, n_steps, n_bins + 1, dtype=int)
+    use_phase = n_bins <= len(_BIN_PHASE_LABELS)
+    if use_phase:
+        bin_labels = [
+            f'{_BIN_PHASE_LABELS[i]}\nt={bin_edges[i]+1}–{bin_edges[i+1]}'
+            for i in range(n_bins)
+        ]
+    else:
+        bin_labels = [
+            f't={bin_edges[i]+1}–{bin_edges[i+1]}'
+            for i in range(n_bins)
+        ]
+    n_dists = len(dist_data)
+    agree_matrix = np.full((n_dists, n_bins), np.nan)
+    for row_i, (_, arr) in enumerate(dist_data):
+        for b in range(n_bins):
+            blo, bhi = int(bin_edges[b]), int(bin_edges[b + 1])
+            agree_matrix[row_i, b] = float(arr[:, blo:bhi].mean())
+    row_labels = [label for label, _ in dist_data]
+    ax.imshow(agree_matrix, aspect='auto', cmap='RdYlGn', vmin=0, vmax=1)
+    ax.set_xticks(range(n_bins))
+    rotation = 0 if use_phase else 45
+    ha = 'center' if use_phase else 'right'
+    ax.set_xticklabels(bin_labels, rotation=rotation, ha=ha, fontsize=10)
+    ax.set_yticks(range(n_dists))
+    ax.set_yticklabels(row_labels, fontsize=10)
+    ax.set_xlabel('Episode timestep bin', fontsize=12)
+    ax.set_ylabel('Reward distribution', fontsize=12)
+    ax.tick_params(axis='both', labelsize=10)
+    ax.set_title('Action Agreement by Reward Distribution\nand Timestep Phase',
+                 fontsize=12)
+    cell_fontsize = 11 if n_bins <= 8 else (9 if n_bins <= 16 else 8)
+    for r in range(n_dists):
+        for b in range(n_bins):
+            val = agree_matrix[r, b]
+            if not np.isnan(val):
+                ax.text(b, r, f'{val:.2f}', ha='center', va='center',
+                        fontsize=cell_fontsize,
+                        color='black' if 0.3 < val < 0.85 else 'white')
 
     plt.tight_layout()
     plt.savefig(save_path, dpi=150, bbox_inches='tight')
@@ -1853,7 +1958,7 @@ def main():
     plot_per_distribution_agreement(
         dist_data, args.n_steps,
         os.path.join(args.figures_dir, 'per_state_agreement.png'),
-        n_bins=max(1, args.n_steps // 10),
+        n_bins=3,
     )
 
     # -----------------------------------------------------------------------
@@ -1914,6 +2019,15 @@ def main():
         cumrew_t, cumrew_g, cumrew_e,
         n_mdps=args.n_eval_mdps,
         save_path=os.path.join(args.figures_dir, 'regret.png'),
+    )
+
+    plot_combined_row(
+        cumrew_t, cumrew_g, cumrew_e,
+        n_mdps=args.n_eval_mdps,
+        q_true=q_ev, q_pred=q_pred, r2=r2,
+        dist_data=dist_data, n_steps=args.n_steps,
+        save_path=os.path.join(args.figures_dir, 'combined_row.png'),
+        n_bins=3,
     )
 
     # -----------------------------------------------------------------------
