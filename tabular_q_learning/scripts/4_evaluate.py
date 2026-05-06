@@ -441,7 +441,7 @@ def plot_action_agreement(
     ood_colours = ['darkorange', 'crimson', 'forestgreen', 'purple', 'saddlebrown']
     ood_styles = ['--', '-.', ':', (0, (3, 1, 1, 1)), (0, (5, 1))]
 
-    fig, ax = plt.subplots(figsize=(16, 10))
+    fig, ax = plt.subplots(figsize=(7, 11))
     ax.plot(steps, aa_mean_id, color='steelblue', linewidth=2.5,
             label='In-distribution (ID)')
     ax.fill_between(steps, aa_mean_id - aa_std_id, aa_mean_id + aa_std_id,
@@ -457,17 +457,18 @@ def plot_action_agreement(
 
     ax.axhline(y=1.0, color='gray', linestyle=':', linewidth=1, alpha=0.5,
                label='Perfect agreement')
-    ax.set_xlabel('Timestep', fontsize=7)
-    ax.set_ylabel('Greedy Action Agreement', fontsize=7)
-    ax.tick_params(axis='both', labelsize=7)
+    ax.set_xlabel('Timestep', fontsize=11)
+    ax.set_ylabel('Greedy Action Agreement', fontsize=10)
+    ax.tick_params(axis='x', labelsize=11)
+    ax.tick_params(axis='y', labelsize=10)
     ax.set_ylim(-0.05, 1.1)
     suffix = f' ({label_suffix})' if label_suffix else ''
     ax.set_title(
         f'Per-Step Action Agreement: ID vs OOD Variants{suffix}\n'
         f'(mean +/- std, {n_mdps} MDPs each variant)',
-        fontsize=11,
+        fontsize=12,
     )
-    ax.legend(fontsize=8, loc='lower right')
+    ax.legend(fontsize=9, loc='lower right')
     ax.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.savefig(save_path, dpi=150, bbox_inches='tight')
@@ -486,7 +487,7 @@ def plot_probe_scatter(
     rng = np.random.default_rng(0)
     idx = rng.choice(len(q_t), size=min(10000, len(q_t)), replace=False)
 
-    fig, ax = plt.subplots(figsize=(7, 7))
+    fig, ax = plt.subplots(figsize=(7, 11))
     ax.scatter(q_t[idx], q_p[idx], alpha=0.35, s=10, color='steelblue',
                rasterized=True, edgecolors='none')
     lo = min(q_t.min(), q_p.min())
@@ -496,12 +497,12 @@ def plot_probe_scatter(
     y_lo, y_hi = q_p.min(), q_p.max()
     y_pad = 0.02 * (y_hi - y_lo)
     ax.set_ylim(y_lo - y_pad, y_hi + y_pad)
-    ax.set_xlabel('Q tabular', fontsize=10)
-    ax.set_ylabel('Q probe (context token)', fontsize=10)
-    ax.tick_params(axis='both', labelsize=9)
+    ax.set_xlabel('Q tabular', fontsize=14)
+    ax.set_ylabel('Q probe (context token)', fontsize=14)
+    ax.tick_params(axis='both', labelsize=13)
     ax.set_title(f'Context Token Probe: Q-Values vs True  (R$^2$ = {r2:.4f})',
-                 fontsize=12)
-    ax.legend(fontsize=10, loc='upper left')
+                 fontsize=14)
+    ax.legend(fontsize=12, loc='upper left')
     ax.grid(True, alpha=0.3)
     plt.subplots_adjust(left=0.10, right=0.98, top=0.94, bottom=0.10)
     plt.savefig(save_path, dpi=150, bbox_inches='tight', pad_inches=0.05)
@@ -1026,73 +1027,44 @@ def run_optimal_autonomous(
 
 def plot_long_horizon(
     cumrew_transformer: np.ndarray,
-    cumrew_optimal: np.ndarray,
+    cumrew_greedy: np.ndarray,
     cumrew_epsgreedy: np.ndarray,
     train_horizon: int,
     n_mdps: int,
     save_path: str,
 ) -> None:
-    """Two panels: cumulative reward and per-step normalized reward (rolling
-    mean) over a horizon longer than the training horizon. A vertical line
-    marks the end of the training horizon to highlight any degradation.
+    """Single panel: cumulative reward over a horizon longer than the
+    training horizon, with a vertical marker at the training cutoff.
     """
     n_steps = cumrew_transformer.shape[1]
     steps = np.arange(1, n_steps + 1)
 
-    inst_t = np.diff(cumrew_transformer, axis=1, prepend=0.0)
-    inst_o = np.diff(cumrew_optimal, axis=1, prepend=0.0)
-    inst_e = np.diff(cumrew_epsgreedy, axis=1, prepend=0.0)
-
-    win = max(5, n_steps // 20)
-    kernel = np.ones(win) / win
-
-    def _roll(x):
-        return np.stack([np.convolve(row, kernel, mode='same') for row in x],
-                        axis=0)
-
-    roll_t = _roll(inst_t)
-    roll_o = _roll(inst_o)
-    roll_e = _roll(inst_e)
-
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+    fig, ax = plt.subplots(figsize=(9, 7))
 
     series = [
-        ('Optimal (value iter.)', cumrew_optimal, 'black'),
         ('Transformer', cumrew_transformer, 'steelblue'),
+        ('Greedy Q (ε=0)', cumrew_greedy, 'darkorange'),
         ('ε-greedy Q (ε=0.2)', cumrew_epsgreedy, 'forestgreen'),
     ]
     for label, data, color in series:
         mean = data.mean(axis=0)
         std = data.std(axis=0)
-        ax1.plot(steps, mean, color=color, linewidth=2, label=label)
-        ax1.fill_between(steps, mean - std, mean + std, alpha=0.15, color=color)
-    ax1.axvline(train_horizon, color='red', linestyle='--', linewidth=1.5,
-                alpha=0.7, label=f'Training horizon (t={train_horizon})')
-    ax1.set_xlabel('Timestep')
-    ax1.set_ylabel('Cumulative Reward')
-    ax1.set_title(f'Cumulative Reward over {n_steps} steps '
-                  f'(mean ± std, {n_mdps} MDPs)')
-    ax1.legend(fontsize=9)
-    ax1.grid(True, alpha=0.3)
+        ax.plot(steps, mean, color=color, linewidth=2, label=label)
+        ax.fill_between(steps, mean - std, mean + std, alpha=0.15, color=color)
 
-    roll_series = [
-        ('Optimal', roll_o, 'black'),
-        ('Transformer', roll_t, 'steelblue'),
-        ('ε-greedy Q', roll_e, 'forestgreen'),
-    ]
-    for label, data, color in roll_series:
-        mean = data.mean(axis=0)
-        ax2.plot(steps, mean, color=color, linewidth=2, label=label)
-    ax2.axvline(train_horizon, color='red', linestyle='--', linewidth=1.5,
-                alpha=0.7, label=f'Training horizon (t={train_horizon})')
-    ax2.set_xlabel('Timestep')
-    ax2.set_ylabel(f'Per-step reward (rolling mean, window={win})')
-    ax2.set_title('Per-step reward beyond training horizon')
-    ax2.legend(fontsize=9)
-    ax2.grid(True, alpha=0.3)
+    ax.axvline(train_horizon, color='red', linestyle='--', linewidth=1.5,
+               alpha=0.7, label=f'Training horizon (t={train_horizon})')
+    ax.set_xlabel('Timestep', fontsize=13)
+    ax.set_ylabel('Cumulative Reward', fontsize=13)
+    ax.tick_params(axis='both', labelsize=12)
+    ax.set_title(
+        f'Cumulative Reward over {n_steps} steps\n'
+        f'(mean ± std, {n_mdps} MDPs)',
+        fontsize=13,
+    )
+    ax.legend(fontsize=11, loc='lower right')
+    ax.grid(True, alpha=0.3)
 
-    plt.suptitle('Long-Horizon Generalization Past Training Cutoff',
-                 fontsize=13)
     plt.tight_layout()
     plt.savefig(save_path, dpi=150, bbox_inches='tight')
     plt.close()
@@ -1103,17 +1075,16 @@ def plot_regret(
     cumrew_transformer: np.ndarray,
     cumrew_greedy: np.ndarray,
     cumrew_epsgreedy: np.ndarray,
-    cumrew_optimal: np.ndarray,
     n_mdps: int,
     save_path: str,
 ) -> None:
+    """Single tall panel: cumulative reward for the three agents."""
     n_steps = cumrew_transformer.shape[1]
     steps = np.arange(1, n_steps + 1)
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+    fig, ax = plt.subplots(figsize=(7, 11))
 
     series = [
-        ('Optimal (value iter.)', cumrew_optimal, 'black'),
         ('Transformer', cumrew_transformer, 'steelblue'),
         ('Greedy Q (ε=0)', cumrew_greedy, 'darkorange'),
         ('ε-greedy Q (ε=0.2)', cumrew_epsgreedy, 'forestgreen'),
@@ -1122,35 +1093,17 @@ def plot_regret(
     for label, data, color in series:
         mean = data.mean(axis=0)
         std = data.std(axis=0)
-        ax1.plot(steps, mean, color=color, linewidth=2, label=label)
-        ax1.fill_between(steps, mean - std, mean + std, alpha=0.15, color=color)
+        ax.plot(steps, mean, color=color, linewidth=2, label=label)
+        ax.fill_between(steps, mean - std, mean + std, alpha=0.15, color=color)
 
-    ax1.set_xlabel('Timestep')
-    ax1.set_ylabel('Cumulative Reward')
-    ax1.set_title(f'Cumulative Reward (mean ± std, {n_mdps} MDPs)')
-    ax1.legend(fontsize=9)
-    ax1.grid(True, alpha=0.3)
+    ax.set_xlabel('Timestep', fontsize=13)
+    ax.set_ylabel('Cumulative Reward', fontsize=13)
+    ax.tick_params(axis='both', labelsize=12)
+    ax.set_title(f'Cumulative Reward (mean ± std, {n_mdps} MDPs)',
+                 fontsize=13)
+    ax.legend(fontsize=11, loc='lower right')
+    ax.grid(True, alpha=0.3)
 
-    regret_series = [
-        ('Transformer', cumrew_optimal - cumrew_transformer, 'steelblue'),
-        ('Greedy Q (ε=0)', cumrew_optimal - cumrew_greedy, 'darkorange'),
-        ('ε-greedy Q (ε=0.2)', cumrew_optimal - cumrew_epsgreedy, 'forestgreen'),
-    ]
-
-    for label, data, color in regret_series:
-        mean = data.mean(axis=0)
-        std = data.std(axis=0)
-        ax2.plot(steps, mean, color=color, linewidth=2, label=label)
-        ax2.fill_between(steps, mean - std, mean + std, alpha=0.15, color=color)
-
-    ax2.axhline(0, color='gray', linestyle=':', linewidth=1, alpha=0.5)
-    ax2.set_xlabel('Timestep')
-    ax2.set_ylabel('Regret (optimal − agent)')
-    ax2.set_title('Regret vs Optimal Policy')
-    ax2.legend(fontsize=9)
-    ax2.grid(True, alpha=0.3)
-
-    plt.suptitle('Autonomous Regret Comparison', fontsize=13)
     plt.tight_layout()
     plt.savefig(save_path, dpi=150, bbox_inches='tight')
     plt.close()
@@ -1958,7 +1911,7 @@ def main():
     print(f"    ε-greedy Q:     {cumrew_e[:, -1].mean():.2f} ± {cumrew_e[:, -1].std():.2f}")
 
     plot_regret(
-        cumrew_t, cumrew_g, cumrew_e, cumrew_o,
+        cumrew_t, cumrew_g, cumrew_e,
         n_mdps=args.n_eval_mdps,
         save_path=os.path.join(args.figures_dir, 'regret.png'),
     )
@@ -1971,34 +1924,35 @@ def main():
         print(f"Part 4b: Long-horizon eval "
               f"({args.long_horizon_steps} steps, train horizon={args.n_steps})")
         print(f"{'=' * 60}")
-        long_t, long_e, long_o = [], [], []
+        long_t, long_g, long_e = [], [], []
         for seed_i, seed in enumerate(eval_seeds):
             print(f"  Long-horizon MDP {seed_i+1}/{args.n_eval_mdps} "
                   f"(seed={seed}) ...", flush=True)
             P, R = generate_eval_mdp(n_states, n_actions, seed=seed)
             rng_t = np.random.default_rng(seed + 100)
+            rng_g = np.random.default_rng(seed + 100)
             rng_e = np.random.default_rng(seed + 100)
-            rng_o = np.random.default_rng(seed + 100)
             rew_t = run_transformer_autonomous(
                 model, P, R, n_states, n_actions, args.long_horizon_steps,
                 vocab, config, device, epsilon=0.0, rng=rng_t,
+            )
+            rew_g = run_q_learner_autonomous(
+                P, R, n_states, n_actions, args.long_horizon_steps,
+                alpha=args.alpha, gamma=args.gamma, epsilon=0.0,
+                rng=rng_g,
             )
             rew_e = run_q_learner_autonomous(
                 P, R, n_states, n_actions, args.long_horizon_steps,
                 alpha=args.alpha, gamma=args.gamma, epsilon=args.epsilon,
                 rng=rng_e,
             )
-            rew_o = run_optimal_autonomous(
-                P, R, n_states, n_actions, args.long_horizon_steps,
-                gamma=args.gamma, rng=rng_o,
-            )
             long_t.append(np.cumsum(rew_t))
+            long_g.append(np.cumsum(rew_g))
             long_e.append(np.cumsum(rew_e))
-            long_o.append(np.cumsum(rew_o))
 
         plot_long_horizon(
             np.stack(long_t, axis=0),
-            np.stack(long_o, axis=0),
+            np.stack(long_g, axis=0),
             np.stack(long_e, axis=0),
             train_horizon=args.n_steps,
             n_mdps=args.n_eval_mdps,
