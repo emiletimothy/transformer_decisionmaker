@@ -31,6 +31,8 @@ Output files:
     figures/action_agreement.png
     figures/probe_scatter.png
     figures/probe_frobenius.png
+    figures/probe_scatter_nobias.png
+    figures/probe_frobenius_nobias.png
     figures/attention_heatmap.png
     figures/attention_heatmap.csv
     figures/attention_full_heatmap_4s2a.png
@@ -282,9 +284,9 @@ class ContextQProbe(nn.Module):
 
     Maps c_a^(t) in R^{d_model} to [Q(s_1, a), ..., Q(s_{|S|}, a)] in R^{|S|}.
     """
-    def __init__(self, d_model: int, n_states: int):
+    def __init__(self, d_model: int, n_states: int, bias: bool = True):
         super().__init__()
-        self.linear = nn.Linear(d_model, n_states)
+        self.linear = nn.Linear(d_model, n_states, bias=bias)
 
     def forward(self, h: torch.Tensor) -> torch.Tensor:
         return self.linear(h)
@@ -1904,6 +1906,26 @@ def main():
         q_pred, q_ev, n_steps=args.n_steps, n_traj=args.n_probe_eval,
         n_actions=n_actions,
         save_path=os.path.join(args.figures_dir, 'probe_frobenius.png'),
+    )
+
+    # Bias-free probe: maps zero context exactly to zero, removing the
+    # cosmetic step-0 offset visible in the standard probe plots.
+    print(f"\nTraining bias-free context Q-probe ...")
+    probe_nb = ContextQProbe(config.d_model, n_states, bias=False).to(device)
+    losses_nb = train_probe(probe_nb, ctx_tr, q_tr, device, n_epochs=args.probe_epochs)
+    print(f"  MSE per epoch: {['%.4f' % l for l in losses_nb]}")
+
+    r2_nb, frob_mean_nb, q_pred_nb = evaluate_probe(probe_nb, ctx_ev, q_ev, device)
+    print(f"  Eval (no bias): R2={r2_nb:.4f}  Frobenius={frob_mean_nb:.4f}")
+
+    plot_probe_scatter(
+        q_ev, q_pred_nb, r2=r2_nb,
+        save_path=os.path.join(args.figures_dir, 'probe_scatter_nobias.png'),
+    )
+    plot_probe_frobenius(
+        q_pred_nb, q_ev, n_steps=args.n_steps, n_traj=args.n_probe_eval,
+        n_actions=n_actions,
+        save_path=os.path.join(args.figures_dir, 'probe_frobenius_nobias.png'),
     )
 
     # -----------------------------------------------------------------------
