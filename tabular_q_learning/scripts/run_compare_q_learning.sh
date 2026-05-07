@@ -6,8 +6,6 @@
 #SBATCH --time=02:00:00
 #SBATCH --output=%x.out
 #SBATCH --error=%x.err
-#SBATCH --mail-user=abdullah_ateyeh@berkeley.edu
-#SBATCH --mail-type=END,FAIL
 
 # Define our directories based on where the job was submitted
 SCRIPT_DIR="$SLURM_SUBMIT_DIR"

@@ -6,8 +6,6 @@
 #SBATCH --time=24:00:00
 #SBATCH --output=coconut_experiment%j.out
 #SBATCH --error=coconut_experiment%j.err
-#SBATCH --mail-user=abdullah_ateyeh@berkeley.edu
-#SBATCH --mail-type=END,FAIL
 # 
 # Run from: tabular_q_learning/
 #   sbatch scripts/run_experiment.sh
