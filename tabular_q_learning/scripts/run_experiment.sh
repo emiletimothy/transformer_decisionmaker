@@ -1,18 +1,5 @@
-#!/usr/bin/env bash
-#SBATCH --job-name=coconut_ql
-#SBATCH --partition=yss,jsteinhardt
-#SBATCH --gpus=A100:1
-#SBATCH --cpus-per-task=8
-#SBATCH --time=24:00:00
-#SBATCH --output=coconut_experiment%j.out
-#SBATCH --error=coconut_experiment%j.err
-# 
-# Run from: tabular_q_learning/
-#   sbatch scripts/run_experiment.sh
-
 set -euo pipefail
 
-export WANDB_API_KEY=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
 
 # Parse optional overrides
 N_SEQUENCES=50000
