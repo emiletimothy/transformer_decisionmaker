@@ -1,250 +1,227 @@
 # Transformer Decision Maker
 
-Your Transformer is (maybe not so secretly) an online decision maker! This repository implements and analyzes multiplicative weights algorithms through both classical and transformer-based approaches.
+Your Transformer is (maybe not so secretly) an online decision maker! This repository
+studies how transformer architectures realize classical online-learning and
+control algorithms — multiplicative weights for prediction with expert advice,
+tabular Q-learning for online control, and prompted LLMs as black-box online
+decision makers.
+
+The repo is organized as three self-contained projects:
+
+| Subdirectory             | Topic                                      | Approach |
+|--------------------------|--------------------------------------------|----------|
+| `multiplicative_weights/`| Prediction with expert advice (MW)         | Hand-wired transformer + learned (GPT-style) transformer |
+| `tabular_q_learning/`    | Online off-policy control in finite MDPs   | Hand-wired transformer + learned recurrent-context transformer |
+| `llm/`                   | Online prediction with expert advice via LLM prompting | DeepSeek V3 / Qwen3 evaluated as agents |
 
 ## Project Structure
 
 ```
 transformer_decisionmaker/
-├── src/                    # Core modules and implementations
-│   ├── multiplicative_weights.py    # Classical MW algorithm
-│   ├── additive_weights.py          # Additive variant implementation
-│   ├── transformer_mw.py            # Transformer-based MW
-│   ├── learned_mw_transformer.py    # Learned MW via gradient training
-│   └── __init__.py                  # Package initialization
-├── scripts/                # Executable scripts and demos
-│   ├── examples.py                  # Basic MW examples
-│   ├── numpy_transformer_demo.py    # Numpy transformer demo
-│   ├── transformer_demo.py          # Full transformer demo
-│   ├── train_learned_mw.py          # Train learned MW transformer
-│   ├── analyze_learned_mw.py        # Analyze learned model
-│   └── theoretical_analysis.py      # Theoretical validation
-├── figures/                # Generated plots and visualizations
-│   ├── numpy_transformer_comparison.png
-│   ├── regret_bounds_analysis.png
-│   └── attention_patterns_analysis.png
-├── tabular_q_learning/     # Q-learning extension (see section below)
-│   ├── scripts/                    # Pipeline + analysis scripts
-│   ├── data/                       # Generated trajectory datasets
-│   ├── checkpoints/                # Trained transformer weights
-│   └── figures/                    # Probe / attention / regret plots
-├── run_demos.py            # Main runner script for all demos
-├── requirements.txt        # Python dependencies
-└── README.md              # This file
+├── multiplicative_weights/         # MW project
+│   ├── scripts/                        # Training, eval, attention analysis
+│   │   ├── multiplicative_weights.py        # Classical MW reference
+│   │   ├── transformer_handwired_multiplicative_weights.py  # Hand-wired transformer
+│   │   ├── learned_mw_transformer.py        # Learned MW model (GPT-style)
+│   │   ├── gradient_train_transformer_for_mwu.py  # Curriculum training loop
+│   │   ├── generate_dataset.py / generate_eval_dataset.py
+│   │   ├── eval.py / evaluate_model.py / eval_long_sequences.py
+│   │   ├── eval_robustness.py
+│   │   ├── eval_attention*.py               # Attention-pattern visualizations
+│   │   ├── run_aws_train.sh / run_train_and_eval.bash
+│   │   └── show_tokenization.py
+│   ├── data/                           # Generated MW datasets
+│   └── figures/                        # Training logs, checkpoints, plots
+│       ├── checkpoints/                    # Trained model weights
+│       ├── attention-figures/              # Per-stage attention heatmaps
+│       └── eval*/, eval_robustness*/       # Evaluation artifacts
+│
+├── tabular_q_learning/             # Q-learning project
+│   ├── scripts/
+│   │   ├── tabular_q_learning.py            # Reference tabular learner + chain MDP
+│   │   ├── transformer_handwired_q_learning.py  # Weight-engineered transformer
+│   │   ├── learned_qlearning_transformer.py     # Recurrent-context transformer
+│   │   ├── 1_generate_data.py               # Trajectory generation
+│   │   ├── 2_model.py                       # Model definition
+│   │   ├── 3_train.py                       # Training entrypoint
+│   │   ├── 4_evaluate.py                    # Evaluation + probes
+│   │   ├── compare_q_learning_transformer.py
+│   │   ├── diagnose_one_step.py / inspect_dataset.py
+│   │   ├── run_experiment.sh / run_compare_q_learning.sh
+│   │   └── show_tokenization.py
+│   └── figures/                         # Probe / attention / regret plots
+│
+├── llm/                            # LLM-as-online-learner project
+│   ├── core/
+│   │   ├── interactive_api_run.py           # Main experiment runner (API + vLLM)
+│   │   ├── mw_lib.py                        # MW algorithm, analysis, plotting
+│   │   ├── generate_dataset.py              # Expert-prediction dataset generator
+│   │   ├── plot_regret.py
+│   │   ├── prompts/                         # Prompt templates (weather/online × note/no-note)
+│   │   └── mw_dataset*.json                 # Stratified / flat / anti-signal regimes
+│   ├── exp_results*/                    # Per-regime experiment outputs
+│   ├── plots/, docs/, archive/
+│   ├── plot_regret*.py / mw_lib.py      # Top-level convenience copies
+│   └── run_*.sh                         # Batch runners (DeepSeek, Qwen, antisignal, …)
+│
+├── requirements.txt                # Python dependencies
+├── LICENSE
+└── README.md                       # This file
 ```
 
-## Multiplicative Weights Algorithm
-
-This repository implements the **Multiplicative Weights Algorithm**, a fundamental online learning algorithm for decision making under uncertainty, and demonstrates how transformer architectures can realize the same algorithmic behavior.
-
-### Key Features
-
-- **Classical Implementation**: Standard multiplicative weights with theoretical guarantees
-- **Transformer Realization**: Neural architecture that implements MW through attention
-- **Learned MW**: GPT-2 style transformer trained to learn MW updates via gradient descent
-- **Online Learning**: Adapts to changing environments without knowing the future
-- **Regret Minimization**: Theoretical guarantees on performance vs best expert in hindsight
-- **Multiple Applications**: Portfolio selection, expert aggregation, multi-armed bandits
-- **Comprehensive Analysis**: Theoretical validation and empirical comparisons
-
-### Quick Start
-
-```python
-from src.multiplicative_weights import MultiplicativeWeights
-
-# Create algorithm with 4 experts
-mw = MultiplicativeWeights(num_experts=4, learning_rate=0.1)
-
-# In each round:
-selected_expert = mw.select_expert(method='sample')
-losses = [0.2, 0.1, 0.8, 0.3]  # Observe losses for all experts
-mw.update_weights(losses)
-
-# View current probabilities
-print(mw.get_probabilities())
-```
-
-### Installation
+## Installation
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### Running Examples
+The `llm/` subproject has additional optional dependencies (`openai`, `vllm`,
+`openpyxl`); see `llm/core/README.md` for details.
 
-#### Quick Start - Run All Demos
+---
+
+## 1. Multiplicative Weights (`multiplicative_weights/`)
+
+A study of **prediction with expert advice** through three lenses:
+
+- **Classical MW.** `scripts/multiplicative_weights.py` is the reference
+  implementation. Per round: weights are updated by `w_i ← w_i · exp(-η · ℓ_i)`
+  and renormalized. Regret bound `O(√T log n)`.
+- **Hand-wired transformer.** `scripts/transformer_handwired_multiplicative_weights.py`
+  realizes the MW update with a 2-layer transformer whose attention heads are
+  weight-engineered to do expert-advice loading, weight copying, label copying,
+  and softmax aggregation — a constructive existence proof.
+- **Learned transformer.** `scripts/learned_mw_transformer.py` defines a
+  GPT-style decoder (d_model=768, 8 heads, 2 layers) trained end-to-end via a
+  multi-stage curriculum
+  (`scripts/gradient_train_transformer_for_mwu.py`):
+  - Stage *i*: learn *i*-step MW reasoning sequences
+  - Mix previous-stage data with probability 0.1
+  - 25 epochs per stage, up to 12 stages
+  - AdamW (β₁=0.9, β₂=0.95, wd=10⁻²), lr=10⁻⁴
+
+Tokenization is discrete (experts, weights, losses, predictions, step markers).
+The model is supervised on both weight-prediction and binary-decision targets.
+
+### Quick start
+
 ```bash
-python run_demos.py                 # Run all demonstrations
-python run_demos.py --list          # List available demos
-python run_demos.py examples        # Run specific demo
+cd multiplicative_weights/scripts
+
+# Generate dataset
+python generate_dataset.py
+
+# Train the learned MW transformer (GPU recommended)
+bash run_train_and_eval.bash
+
+# Evaluate a checkpoint
+python eval.py
+python eval_long_sequences.py
+python eval_robustness.py
+
+# Visualize learned attention patterns
+python eval_attention_heatmaps.py
+python eval_attention_expert_focus.py
 ```
 
-#### Individual Scripts
-```bash
-cd scripts
-python examples.py                  # Basic MW examples
-python numpy_transformer_demo.py    # Numpy-based transformer
-python transformer_demo.py          # Full PyTorch transformer
-python train_learned_mw.py          # Train learned MW transformer
-python theoretical_analysis.py      # Regret bounds and validation
-```
+Outputs (logs, checkpoints, per-stage eval JSON, attention heatmaps) land in
+`multiplicative_weights/figures/`.
 
-### What You'll See
+---
 
-- **Basic Examples**: Classical MW on various problems (portfolio, expert advice, bandits)
-- **Transformer Demos**: How attention mechanisms implement multiplicative weight updates
-- **Learned MW Training**: Multi-stage curriculum learning for MW algorithm acquisition
-- **Performance Comparisons**: Side-by-side analysis of classical vs transformer approaches
-- **Theoretical Validation**: Regret bound analysis and attention pattern visualization
+## 2. Tabular Q-Learning (`tabular_q_learning/`)
 
-## Algorithm Details
+Extends the project from online prediction to **online off-policy control** in
+finite MDPs. We consider chain MDPs (with randomized variants for OOD eval)
+and ε-greedy trajectories.
 
-### Classical Multiplicative Weights
-
-The multiplicative weights update rule:
-```
-w_i ← w_i × exp(-η × loss_i)
-```
-
-Where `η` is the learning rate and weights are normalized to sum to 1.
-
-**Regret Bound**: O(√T log n) where T is number of rounds and n is number of experts.
-
-### Transformer Realization
-
-The transformer architecture implements MW through:
-1. **Layer 1**: Expert advice loading, weight copying, label copying via specialized attention heads
-2. **Layer 2**: Softmax aggregation and multiplicative weight updates through attention mechanisms
-3. **Token Embeddings**: Structured representation of experts, weights, losses, and updates
-
-This demonstrates that transformers can implement classical online learning algorithms while maintaining their theoretical properties.
-
-### Learned Multiplicative Weights
-
-The learned MW approach trains a GPT-2 style transformer to acquire MW behavior through gradient-based learning:
-
-**Architecture**: 2-layer transformer with d_model=768, n_heads=8, following GPT-2 design principles
-
-**Training Strategy**: Multi-stage curriculum learning similar to chain-of-thought training:
-- Stage i: Learn to perform i-step MW reasoning sequences
-- Mix previous stage data with probability 0.1
-- Train for 25 epochs per stage, up to 12 stages total
-- AdamW optimizer (β₁=0.9, β₂=0.95, weight_decay=10⁻²), lr=10⁻⁴
-
-**Tokenization**: Discrete tokens for experts, weights, losses, predictions, and step markers
-
-**Supervision**: Multi-task learning with weight prediction and binary decision targets
-
-## Key Results
-
-- **Performance Equivalence**: Transformer MW achieves ~99.8% performance ratio vs classical MW
-- **Regret Guarantees**: Theoretical bounds are preserved through the neural architecture
-- **Attention Patterns**: Visualizable correspondence between attention and MW operations
-- **Scalability**: Works across different numbers of experts and time horizons
-
-## Tabular Q-Learning
-
-The `tabular_q_learning/` subdirectory extends the project from online prediction
-(multiplicative weights) to **online off-policy control** in finite MDPs. It
-contains a tabular Q-learning baseline, a hand-wired transformer construction
-that exactly reproduces the tabular update, and a learned recurrent-context
-transformer that acquires Q-learning behavior end-to-end via gradient descent.
-
-### Setting
-
-We consider finite MDPs with `|S|` states and `|A|` actions. Trajectories are
-generated by an ε-greedy policy over a chain MDP (or randomized variants for
-OOD evaluation). The reference algorithm is **ε-greedy tabular Q-learning**:
-
+Reference algorithm — ε-greedy tabular Q-learning:
 ```
 Q(s_t, a_t) ← Q(s_t, a_t) + α · (r_t + γ · max_a Q(s_{t+1}, a) − Q(s_t, a_t))
 ```
 
-with all other `(s, a)` entries unchanged each step. The Q-table is initialized
-to zero. This update is the per-step target the transformer is asked to track.
-
 ### Components
 
-- **`tabular_q_learning.py`** — Reference tabular learner. Maintains a
-  `(|S|, |A|)` Q-table, applies the off-policy TD update one transition at a
-  time, and exposes a Q-history for lock-step comparison with the transformer.
-  Also defines the chain MDP and ε-greedy trajectory generator used to produce
-  training data.
-- **`transformer_handwired_q_learning.py`** — Hand-constructed transformer
-  whose attention heads, projections, and FFNs are weight-engineered to
-  implement the tabular update **exactly**. Serves as a constructive existence
-  proof that the architecture is expressive enough to realize Q-learning.
-- **`learned_qlearning_transformer.py` + `2_model.py`** — Recurrent-context
-  transformer (`COCONUTTransformer`) trained to produce the same Q-table
-  evolution from trajectory tokens. Each step consumes discrete tokens for
-  `(s_t, a_t, r_t, s_{t+1})` together with `n_actions` continuous **context
-  tokens** that carry the running Q-state across steps. The hidden state at
-  the `UPDATE` position is written back into context slot `a_t`, mirroring
-  the table-write of tabular Q-learning.
+- **`tabular_q_learning.py`** — Reference learner, chain MDP, trajectory generator.
+- **`transformer_handwired_q_learning.py`** — Hand-engineered transformer that
+  reproduces the tabular update bit-for-bit.
+- **`learned_qlearning_transformer.py` + `2_model.py`** — `COCONUTTransformer`,
+  a recurrent-context architecture trained to track the same Q-table evolution
+  from trajectory tokens.
 
 ### Pipeline
 
-The numbered scripts in `tabular_q_learning/scripts/` form an end-to-end
-pipeline:
-
 ```bash
 cd tabular_q_learning/scripts
-python 1_generate_data.py     # Sample MDPs + ε-greedy trajectories → data/
-python 2_model.py             # Model + config (importable; prints summary)
-python 3_train.py             # Train COCONUTTransformer on (s,a,r,s') sequences
-python 4_evaluate.py          # Probes, attention, regret, α/γ recovery → figures/
+
+python 1_generate_data.py        # Generate trajectory dataset
+python 3_train.py                # Train COCONUTTransformer
+python 4_evaluate.py             # Greedy-action match, linear probes, (α,γ) recovery
+python compare_q_learning_transformer.py   # Side-by-side comparison
+bash run_experiment.sh           # Full pipeline driver
 ```
 
-Auxiliary tools:
+Plots (probes, attention, regret) are written to `tabular_q_learning/figures/`.
 
-- `compare_q_learning_transformer.py` — Side-by-side Q-table evolution between
-  the tabular learner and the (hand-wired or learned) transformer on a shared
-  trajectory.
-- `show_tokenization.py`, `inspect_dataset.py` — Debugging utilities for the
-  token layout and dataset contents.
-- `diagnose_one_step.py` — Single-step forward-pass diagnostics.
+### Headline results
 
-### Evaluation (`4_evaluate.py`)
-
-`4_evaluate.py` produces all analysis figures in `tabular_q_learning/figures/`:
-
-1. **Action prediction (ID + OOD).** Per-step greedy-action agreement against
-   the tabular learner on in-distribution and out-of-distribution MDPs.
-   → `action_agreement.png`, `per_state_agreement.png`
-2. **Context-token Q-probe.** Trains a linear probe `c_a → [Q(s_1,a), …, Q(s_{|S|},a)]`
-   on each context token and reports R² and Frobenius error vs. the tabular
-   target. A second **bias-free** probe is trained alongside, which maps a
-   zero context exactly to zero Q-values (removing the cosmetic step-0 offset
-   produced by the bias term).
-   → `probe_scatter.png`, `probe_frobenius.png`,
-     `probe_scatter_nobias.png`, `probe_frobenius_nobias.png`
-3. **Attention heatmaps.** Verifies that `SELECT` attends to `EVAL` tokens and
-   `UPDATE` attends to context + `QCURR/QNEXT`, matching the hand-wired roles.
-   → `attention_heatmap.png`, `attention_full_heatmap_4s2a.png`
-4. **Closed-loop regret.** Runs the transformer autonomously on fresh MDPs
-   and compares cumulative reward against greedy and ε-greedy tabular
-   Q-learners.
-   → `regret.png`, `long_horizon.png`
-5. **Effective α/γ recovery.** Fits `(α_eff, γ_eff)` per trajectory from the
-   probe-decoded Q dynamics — recovers the training-time hyperparameters when
-   the model has internalized the update rule.
-   → `effective_alpha_gamma.png`
-6. **Reward probe from context delta.** Linear probe on
-   `Δc_{a_t} = update_hidden − context[a_t]` predicting `r_t`, testing whether
-   the trained model preserves the hand-wired reward-injection pathway.
-   → `reward_probe.png`
-
-### Key Findings
-
-- **Constructive expressivity.** The hand-wired transformer reproduces the
-  tabular update bit-for-bit, confirming that the recurrent-context layout
-  is sufficient to realize ε-greedy Q-learning.
+- **Constructive equivalence.** The hand-wired transformer reproduces the
+  tabular update exactly.
 - **Behavioral match.** The learned transformer attains high greedy-action
-  agreement with the tabular learner ID and degrades gracefully OOD.
-- **Decodable Q-state.** A linear probe on context tokens recovers the
-  tabular Q-values with high R², so the model encodes Q-values approximately
-  linearly in the context.
+  agreement with the tabular learner ID, degrading gracefully OOD.
+- **Decodable Q-state.** A linear probe on context tokens recovers the tabular
+  Q-values with high R²: Q-values are encoded approximately linearly in context.
 - **Recovered hyperparameters.** Per-trajectory fits of `(α_eff, γ_eff)` from
-  the probe-decoded dynamics align with the training-time `(α, γ)`,
-  evidence that the learned dynamics implement (an approximation of) the
-  Q-learning update rather than a different value-tracking heuristic.
+  the probe-decoded dynamics align with the training-time `(α, γ)`, evidence
+  that the model implements (an approximation of) the Q-learning rule rather
+  than a different value-tracking heuristic.
+
+---
+
+## 3. LLM as Online Learner (`llm/`)
+
+Treats a frozen LLM as a black-box online decision maker on the prediction-
+with-expert-advice problem. Across four prompting conditions (weather vs.
+online framing, with vs. without a running "note"), DeepSeek V3 and a local
+Qwen3-14B are evaluated against MW and best-expert baselines on three
+loss regimes (stratified, flat, anti-signal).
+
+### Quick start
+
+```bash
+cd llm/core
+
+# Generate datasets (or use provided JSON files)
+python generate_dataset.py --all
+
+# DeepSeek V3 (requires DEEPSEEK_API_KEY)
+python interactive_api_run.py cases \
+  --idx $(seq 0 29) \
+  --model ds \
+  --prompt interactive_weather_notehist \
+  --dataset mw_dataset.json \
+  --steps 100
+
+# Plot regret curves
+python plot_regret.py
+```
+
+For local Qwen3-14B inference, see `llm/core/README.md` for the `vllm serve`
+command. Convenience batch scripts (`run_overnight.sh`, `run_qwen_all.sh`,
+`run_antisignal.sh`, …) live at `llm/`.
+
+---
+
+## Headline results across projects
+
+- **MW realization.** The hand-wired transformer is exact; the learned
+  transformer reaches ~99.8% performance ratio versus classical MW.
+- **Regret bounds.** `O(√T log n)` regret is preserved through the learned
+  architecture.
+- **Attention ↔ algorithm.** Attention patterns line up with MW / Q-learning
+  primitives (expert loading, weight copying, softmax aggregation, TD update).
+- **Q-learning realization.** Constructive equivalence + learned
+  approximation, with linearly decodable Q-state and recoverable `(α, γ)`.
+- **LLM agents.** Prompted LLMs interpolate between best-expert imitation and
+  MW depending on framing and note availability, regime-dependent.
+
