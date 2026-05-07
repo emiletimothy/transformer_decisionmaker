@@ -1,0 +1,1606 @@
+[
+  {
+    "role": "user",
+    "content": "You are helping with a daily weather guess.\n\nEach day, four different people give their opinion about tomorrow's weather. Each person says either \"sunny\" or \"rainy\".\n\nYour job is to make your own guess about tomorrow's weather based on what they say. Over time, use the past outcomes to improve your future guesses.\n\nAfter you give your guess, I will tell you what the actual weather was. Use what you learn from earlier days when making later guesses.\n\nOutput valid JSON only \u2014 no explanation, no reasoning steps, no other text:\n{\n  \"prediction\": \"sunny\" or \"rainy\"\n}\n\n\nDay 1: opinions = ['sunny', 'rainy', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 2: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 3: opinions = ['rainy', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 4: opinions = ['rainy', 'sunny', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 5: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 6: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 7: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 8: opinions = ['sunny', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 9: opinions = ['sunny', 'sunny', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 10: opinions = ['sunny', 'rainy', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 11: opinions = ['sunny', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 12: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 13: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 14: opinions = ['rainy', 'sunny', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 15: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 16: opinions = ['sunny', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 17: opinions = ['rainy', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 18: opinions = ['rainy', 'sunny', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 19: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 20: opinions = ['rainy', 'rainy', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 21: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 22: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 23: opinions = ['sunny', 'rainy', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 24: opinions = ['sunny', 'sunny', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 25: opinions = ['sunny', 'sunny', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 26: opinions = ['rainy', 'sunny', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 27: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 28: opinions = ['rainy', 'sunny', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 29: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 30: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 31: opinions = ['sunny', 'rainy', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 32: opinions = ['rainy', 'sunny', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 33: opinions = ['sunny', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 34: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 35: opinions = ['sunny', 'sunny', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 36: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 37: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 38: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 39: opinions = ['sunny', 'rainy', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 40: opinions = ['sunny', 'sunny', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 41: opinions = ['sunny', 'sunny', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 42: opinions = ['sunny', 'rainy', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 43: opinions = ['rainy', 'rainy', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 44: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 45: opinions = ['sunny', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 46: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 47: opinions = ['sunny', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 48: opinions = ['sunny', 'rainy', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 49: opinions = ['rainy', 'sunny', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 50: opinions = ['rainy', 'rainy', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 51: opinions = ['rainy', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 52: opinions = ['sunny', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 53: opinions = ['sunny', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 54: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 55: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 56: opinions = ['rainy', 'rainy', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 57: opinions = ['rainy', 'sunny', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 58: opinions = ['rainy', 'sunny', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 59: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 60: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 61: opinions = ['rainy', 'sunny', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 62: opinions = ['sunny', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 63: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 64: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 65: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 66: opinions = ['sunny', 'sunny', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 67: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 68: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 69: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 70: opinions = ['rainy', 'sunny', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 71: opinions = ['rainy', 'rainy', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 72: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 73: opinions = ['rainy', 'rainy', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 74: opinions = ['sunny', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 75: opinions = ['rainy', 'sunny', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 76: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 77: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 78: opinions = ['sunny', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 79: opinions = ['rainy', 'rainy', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 80: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 81: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 82: opinions = ['sunny', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 83: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 84: opinions = ['rainy', 'sunny', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 85: opinions = ['sunny', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 86: opinions = ['rainy', 'sunny', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 87: opinions = ['rainy', 'rainy', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 88: opinions = ['rainy', 'rainy', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 89: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 90: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 91: opinions = ['sunny', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 92: opinions = ['rainy', 'sunny', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 93: opinions = ['sunny', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 94: opinions = ['rainy', 'rainy', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 95: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 96: opinions = ['rainy', 'rainy', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 97: opinions = ['sunny', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 98: opinions = ['rainy', 'rainy', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 99: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 100: opinions = ['rainy', 'rainy', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 101: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 102: opinions = ['rainy', 'sunny', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 103: opinions = ['rainy', 'sunny', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 104: opinions = ['sunny', 'rainy', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 105: opinions = ['sunny', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 106: opinions = ['rainy', 'sunny', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 107: opinions = ['sunny', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 108: opinions = ['rainy', 'rainy', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 109: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 110: opinions = ['rainy', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 111: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 112: opinions = ['sunny', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 113: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 114: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 115: opinions = ['rainy', 'sunny', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 116: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 117: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 118: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 119: opinions = ['sunny', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 120: opinions = ['sunny', 'sunny', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 121: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 122: opinions = ['rainy', 'rainy', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 123: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 124: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 125: opinions = ['sunny', 'sunny', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 126: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 127: opinions = ['sunny', 'rainy', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 128: opinions = ['rainy', 'sunny', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 129: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 130: opinions = ['sunny', 'sunny', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 131: opinions = ['rainy', 'rainy', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 132: opinions = ['rainy', 'sunny', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 133: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 134: opinions = ['rainy', 'rainy', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 135: opinions = ['sunny', 'rainy', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 136: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 137: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 138: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 139: opinions = ['sunny', 'sunny', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 140: opinions = ['sunny', 'rainy', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 141: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 142: opinions = ['rainy', 'rainy', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 143: opinions = ['rainy', 'rainy', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 144: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 145: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 146: opinions = ['rainy', 'rainy', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 147: opinions = ['rainy', 'sunny', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 148: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 149: opinions = ['rainy', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 150: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 151: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 152: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 153: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 154: opinions = ['rainy', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 155: opinions = ['sunny', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 156: opinions = ['rainy', 'sunny', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 157: opinions = ['sunny', 'rainy', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 158: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 159: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 160: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 161: opinions = ['rainy', 'rainy', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 162: opinions = ['rainy', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 163: opinions = ['rainy', 'rainy', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 164: opinions = ['rainy', 'sunny', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 165: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 166: opinions = ['sunny', 'sunny', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 167: opinions = ['rainy', 'rainy', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 168: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 169: opinions = ['sunny', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 170: opinions = ['sunny', 'sunny', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 171: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 172: opinions = ['sunny', 'sunny', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 173: opinions = ['sunny', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 174: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 175: opinions = ['rainy', 'sunny', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 176: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 177: opinions = ['rainy', 'rainy', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 178: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 179: opinions = ['sunny', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 180: opinions = ['sunny', 'sunny', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 181: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 182: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 183: opinions = ['rainy', 'rainy', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 184: opinions = ['rainy', 'sunny', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 185: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 186: opinions = ['rainy', 'rainy', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 187: opinions = ['rainy', 'sunny', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 188: opinions = ['rainy', 'rainy', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 189: opinions = ['sunny', 'rainy', 'sunny', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 190: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 191: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 192: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 193: opinions = ['rainy', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 194: opinions = ['sunny', 'sunny', 'rainy', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 195: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 196: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 197: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 198: opinions = ['rainy', 'rainy', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"rainy\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: sunny. Day 199: opinions = ['sunny', 'sunny', 'sunny', 'rainy']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. Day 200: opinions = ['sunny', 'sunny', 'rainy', 'sunny']"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"prediction\": \"sunny\"\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "Actual weather: rainy. All days complete."
+  }
+]

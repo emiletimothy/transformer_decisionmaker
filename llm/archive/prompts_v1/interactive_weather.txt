@@ -1,0 +1,12 @@
+You are helping with a daily weather guess.
+
+Each day, four different people give their opinion about tomorrow's weather. Each person says either "sunny" or "rainy".
+
+Your job is to make your own guess about tomorrow's weather based on what they say. Over time, use the past outcomes to improve your future guesses.
+
+After you give your guess, I will tell you what the actual weather was. Use what you learn from earlier days when making later guesses.
+
+Output valid JSON only — no explanation, no reasoning steps, no other text:
+{
+  "prediction": "sunny" or "rainy"
+}

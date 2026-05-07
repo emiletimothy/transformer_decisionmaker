@@ -1,0 +1,401 @@
+{"role": "system", "content": "You are helping with a daily weather guess.\n\nEach day, the same four weather experts \u2014 Expert A, Expert B, Expert C, and Expert D \u2014 make predictions about the weather. Each expert predicts either \"sunny\" or \"rainy\". They each have their own way of making forecasts, so some may be consistently more reliable than others.\n\nYour job is to make your own prediction based on the experts' predictions. Your goal is to be as accurate as possible over time. Use past outcomes to figure out which experts are most trustworthy and improve your future predictions.\n\nThis interaction has two kinds of turns.\n\n1. Forecast turn\n\nIn a forecast turn, you are given:\n\n* a short note from earlier days,\n* today's predictions from the four experts.\n\nYou should use the note and the experts' predictions to make your prediction for today.\n\nInput format:\n{\n\"turn_type\": \"forecast\",\n\"note\": \"<short text>\",\n\"Expert_A\": \"sunny\" or \"rainy\",\n\"Expert_B\": \"sunny\" or \"rainy\",\n\"Expert_C\": \"sunny\" or \"rainy\",\n\"Expert_D\": \"sunny\" or \"rainy\"\n}\n\nOutput format:\n{\n\"prediction\": \"sunny\" or \"rainy\"\n}\n\n2. Feedback turn\n\nIn a feedback turn, you are given:\n\n* the previous note,\n* today's predictions from the four experts,\n* the actual weather for today.\n\nYou should produce a new short note for future days. The note should keep only the information that is most useful for making later guesses.\n\nInput format:\n{\n\"turn_type\": \"feedback\",\n\"note\": \"<short text>\",\n\"Expert_A\": \"sunny\" or \"rainy\",\n\"Expert_B\": \"sunny\" or \"rainy\",\n\"Expert_C\": \"sunny\" or \"rainy\",\n\"Expert_D\": \"sunny\" or \"rainy\",\n\"actual_weather\": \"sunny\" or \"rainy\"\n}\n\nOutput format:\n{\n\"note\": \"<short text>\"\n}\n\nImportant requirements:\n\n* Do not use any external tools.\n* Do not write or execute code.\n* Do not provide any explanation or reasoning steps.\n* Keep the note short and compact.\n* The note must be at most 500 words long.\n* The note should contain only the most useful information for future predictions.\n* Do not repeat the full history.\n* Output valid JSON only \u2014 no explanation, no reasoning steps, no other text.\n"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"All 4 correct: A,B,C,D\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"All 4 correct: A,B,C,D\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"All 4 correct: A,B,C,D\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 2/2; B,C,D correct 1/2\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 2/2; B,C,D correct 1/2\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 2/2; B,C,D correct 1/2\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 2/3; B correct 2/3; C correct 1/3; D correct 1/3\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 2/3; B correct 2/3; C correct 1/3; D correct 1/3\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 2/3; B correct 2/3; C correct 1/3; D correct 1/3\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 2/4; B correct 2/4; C correct 2/4; D correct 1/4\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 2/4; B correct 2/4; C correct 2/4; D correct 1/4\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 2/4; B correct 2/4; C correct 2/4; D correct 1/4\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 3/5; B correct 2/5; C correct 2/5; D correct 1/5\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 3/5; B correct 2/5; C correct 2/5; D correct 1/5\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 3/5; B correct 2/5; C correct 2/5; D correct 1/5\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 4/6; B correct 2/6; C correct 2/6; D correct 2/6\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 4/6; B correct 2/6; C correct 2/6; D correct 2/6\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 4/6; B correct 2/6; C correct 2/6; D correct 2/6\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 5/7; B correct 3/7; C correct 2/7; D correct 3/7\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 5/7; B correct 3/7; C correct 2/7; D correct 3/7\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 5/7; B correct 3/7; C correct 2/7; D correct 3/7\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 6/8; B correct 3/8; C correct 3/8; D correct 3/8\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 6/8; B correct 3/8; C correct 3/8; D correct 3/8\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 6/8; B correct 3/8; C correct 3/8; D correct 3/8\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 7/9; B correct 4/9; C correct 3/9; D correct 3/9\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 7/9; B correct 4/9; C correct 3/9; D correct 3/9\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 7/9; B correct 4/9; C correct 3/9; D correct 3/9\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 8/10; B correct 4/10; C correct 4/10; D correct 4/10\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 8/10; B correct 4/10; C correct 4/10; D correct 4/10\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 8/10; B correct 4/10; C correct 4/10; D correct 4/10\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 8/11; B correct 4/11; C correct 5/11; D correct 4/11\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 8/11; B correct 4/11; C correct 5/11; D correct 4/11\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 8/11; B correct 4/11; C correct 5/11; D correct 4/11\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 9/12; B correct 4/12; C correct 6/12; D correct 5/12\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 9/12; B correct 4/12; C correct 6/12; D correct 5/12\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 9/12; B correct 4/12; C correct 6/12; D correct 5/12\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 10/13; B correct 5/13; C correct 7/13; D correct 6/13\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 10/13; B correct 5/13; C correct 7/13; D correct 6/13\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 10/13; B correct 5/13; C correct 7/13; D correct 6/13\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 11/14; B correct 6/14; C correct 7/14; D correct 7/14\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 11/14; B correct 6/14; C correct 7/14; D correct 7/14\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 11/14; B correct 6/14; C correct 7/14; D correct 7/14\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 12/15; B correct 7/15; C correct 8/15; D correct 7/15\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 12/15; B correct 7/15; C correct 8/15; D correct 7/15\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 12/15; B correct 7/15; C correct 8/15; D correct 7/15\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 12/16; B correct 7/16; C correct 8/16; D correct 7/16\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 12/16; B correct 7/16; C correct 8/16; D correct 7/16\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 12/16; B correct 7/16; C correct 8/16; D correct 7/16\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 13/17; B correct 8/17; C correct 8/17; D correct 8/17\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 13/17; B correct 8/17; C correct 8/17; D correct 8/17\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 13/17; B correct 8/17; C correct 8/17; D correct 8/17\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 14/18; B correct 8/18; C correct 9/18; D correct 8/18\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 14/18; B correct 8/18; C correct 9/18; D correct 8/18\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 14/18; B correct 8/18; C correct 9/18; D correct 8/18\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 14/19; B correct 9/19; C correct 9/19; D correct 9/19\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 14/19; B correct 9/19; C correct 9/19; D correct 9/19\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 14/19; B correct 9/19; C correct 9/19; D correct 9/19\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 14/20; B correct 9/20; C correct 9/20; D correct 9/20\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 14/20; B correct 9/20; C correct 9/20; D correct 9/20\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 14/20; B correct 9/20; C correct 9/20; D correct 9/20\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 15/21; B correct 9/21; C correct 10/21; D correct 10/21\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 15/21; B correct 9/21; C correct 10/21; D correct 10/21\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 15/21; B correct 9/21; C correct 10/21; D correct 10/21\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 16/22; B correct 9/22; C correct 11/22; D correct 10/22\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 16/22; B correct 9/22; C correct 11/22; D correct 10/22\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 16/22; B correct 9/22; C correct 11/22; D correct 10/22\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 17/23; B correct 9/23; C correct 12/23; D correct 11/23\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 17/23; B correct 9/23; C correct 12/23; D correct 11/23\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 17/23; B correct 9/23; C correct 12/23; D correct 11/23\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 18/24; B correct 9/24; C correct 13/24; D correct 11/24\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 18/24; B correct 9/24; C correct 13/24; D correct 11/24\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 18/24; B correct 9/24; C correct 13/24; D correct 11/24\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 19/25; B correct 9/25; C correct 13/25; D correct 12/25\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 19/25; B correct 9/25; C correct 13/25; D correct 12/25\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 19/25; B correct 9/25; C correct 13/25; D correct 12/25\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 20/26; B correct 9/26; C correct 13/26; D correct 12/26\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 20/26; B correct 9/26; C correct 13/26; D correct 12/26\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 20/26; B correct 9/26; C correct 13/26; D correct 12/26\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 21/27; B correct 10/27; C correct 14/27; D correct 12/27\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 21/27; B correct 10/27; C correct 14/27; D correct 12/27\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 21/27; B correct 10/27; C correct 14/27; D correct 12/27\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 21/28; B correct 10/28; C correct 15/28; D correct 12/28\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 21/28; B correct 10/28; C correct 15/28; D correct 12/28\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 21/28; B correct 10/28; C correct 15/28; D correct 12/28\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 22/29; B correct 10/29; C correct 16/29; D correct 12/29\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 22/29; B correct 10/29; C correct 16/29; D correct 12/29\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 22/29; B correct 10/29; C correct 16/29; D correct 12/29\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 23/30; B correct 10/30; C correct 16/30; D correct 13/30\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 23/30; B correct 10/30; C correct 16/30; D correct 13/30\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 23/30; B correct 10/30; C correct 16/30; D correct 13/30\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 23/31; B correct 11/31; C correct 17/31; D correct 14/31\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 23/31; B correct 11/31; C correct 17/31; D correct 14/31\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 23/31; B correct 11/31; C correct 17/31; D correct 14/31\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 24/32; B correct 11/32; C correct 17/32; D correct 14/32\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 24/32; B correct 11/32; C correct 17/32; D correct 14/32\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 24/32; B correct 11/32; C correct 17/32; D correct 14/32\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 24/33; B correct 11/33; C correct 17/33; D correct 14/33\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 24/33; B correct 11/33; C correct 17/33; D correct 14/33\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 24/33; B correct 11/33; C correct 17/33; D correct 14/33\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 25/34; B correct 11/34; C correct 17/34; D correct 15/34\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 25/34; B correct 11/34; C correct 17/34; D correct 15/34\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 25/34; B correct 11/34; C correct 17/34; D correct 15/34\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 26/35; B correct 12/35; C correct 18/35; D correct 16/35\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 26/35; B correct 12/35; C correct 18/35; D correct 16/35\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 26/35; B correct 12/35; C correct 18/35; D correct 16/35\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 26/36; B correct 12/36; C correct 18/36; D correct 16/36\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 26/36; B correct 12/36; C correct 18/36; D correct 16/36\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 26/36; B correct 12/36; C correct 18/36; D correct 16/36\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 27/37; B correct 12/37; C correct 18/37; D correct 16/37\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 27/37; B correct 12/37; C correct 18/37; D correct 16/37\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 27/37; B correct 12/37; C correct 18/37; D correct 16/37\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 28/38; B correct 13/38; C correct 19/38; D correct 17/38\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 28/38; B correct 13/38; C correct 19/38; D correct 17/38\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 28/38; B correct 13/38; C correct 19/38; D correct 17/38\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 29/39; B correct 14/39; C correct 20/39; D correct 17/39\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 29/39; B correct 14/39; C correct 20/39; D correct 17/39\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 29/39; B correct 14/39; C correct 20/39; D correct 17/39\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 30/40; B correct 14/40; C correct 20/40; D correct 18/40\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 30/40; B correct 14/40; C correct 20/40; D correct 18/40\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 30/40; B correct 14/40; C correct 20/40; D correct 18/40\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 31/41; B correct 14/41; C correct 21/41; D correct 18/41\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 31/41; B correct 14/41; C correct 21/41; D correct 18/41\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 31/41; B correct 14/41; C correct 21/41; D correct 18/41\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 32/42; B correct 15/42; C correct 21/42; D correct 19/42\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 32/42; B correct 15/42; C correct 21/42; D correct 19/42\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 32/42; B correct 15/42; C correct 21/42; D correct 19/42\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 32/43; B correct 15/43; C correct 21/43; D correct 19/43\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 32/43; B correct 15/43; C correct 21/43; D correct 19/43\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 32/43; B correct 15/43; C correct 21/43; D correct 19/43\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 33/44; B correct 16/44; C correct 22/44; D correct 20/44\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 33/44; B correct 16/44; C correct 22/44; D correct 20/44\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 33/44; B correct 16/44; C correct 22/44; D correct 20/44\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 33/45; B correct 16/45; C correct 22/45; D correct 21/45\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 33/45; B correct 16/45; C correct 22/45; D correct 21/45\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 33/45; B correct 16/45; C correct 22/45; D correct 21/45\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 33/46; B correct 16/46; C correct 23/46; D correct 22/46\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 33/46; B correct 16/46; C correct 23/46; D correct 22/46\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 33/46; B correct 16/46; C correct 23/46; D correct 22/46\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 34/47; B correct 17/47; C correct 23/47; D correct 23/47\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 34/47; B correct 17/47; C correct 23/47; D correct 23/47\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 34/47; B correct 17/47; C correct 23/47; D correct 23/47\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 34/48; B correct 17/48; C correct 24/48; D correct 23/48\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 34/48; B correct 17/48; C correct 24/48; D correct 23/48\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 34/48; B correct 17/48; C correct 24/48; D correct 23/48\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 34/49; B correct 18/49; C correct 25/49; D correct 23/49\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 34/49; B correct 18/49; C correct 25/49; D correct 23/49\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 34/49; B correct 18/49; C correct 25/49; D correct 23/49\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 35/50; B correct 18/50; C correct 26/50; D correct 24/50\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 35/50; B correct 18/50; C correct 26/50; D correct 24/50\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 35/50; B correct 18/50; C correct 26/50; D correct 24/50\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 36/51; B correct 18/51; C correct 26/51; D correct 25/51\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 36/51; B correct 18/51; C correct 26/51; D correct 25/51\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 36/51; B correct 18/51; C correct 26/51; D correct 25/51\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 37/52; B correct 18/52; C correct 26/52; D correct 25/52\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 37/52; B correct 18/52; C correct 26/52; D correct 25/52\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 37/52; B correct 18/52; C correct 26/52; D correct 25/52\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 37/53; B correct 19/53; C correct 26/53; D correct 26/53\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 37/53; B correct 19/53; C correct 26/53; D correct 26/53\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 37/53; B correct 19/53; C correct 26/53; D correct 26/53\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 37/54; B correct 19/54; C correct 27/54; D correct 27/54\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 37/54; B correct 19/54; C correct 27/54; D correct 27/54\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 37/54; B correct 19/54; C correct 27/54; D correct 27/54\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 38/55; B correct 19/55; C correct 27/55; D correct 27/55\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 38/55; B correct 19/55; C correct 27/55; D correct 27/55\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 38/55; B correct 19/55; C correct 27/55; D correct 27/55\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 39/56; B correct 19/56; C correct 27/56; D correct 27/56\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 39/56; B correct 19/56; C correct 27/56; D correct 27/56\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 39/56; B correct 19/56; C correct 27/56; D correct 27/56\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 40/57; B correct 19/57; C correct 28/57; D correct 28/57\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 40/57; B correct 19/57; C correct 28/57; D correct 28/57\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 40/57; B correct 19/57; C correct 28/57; D correct 28/57\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 40/58; B correct 19/58; C correct 29/58; D correct 29/58\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 40/58; B correct 19/58; C correct 29/58; D correct 29/58\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 40/58; B correct 19/58; C correct 29/58; D correct 29/58\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 40/59; B correct 20/59; C correct 29/59; D correct 29/59\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 40/59; B correct 20/59; C correct 29/59; D correct 29/59\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 40/59; B correct 20/59; C correct 29/59; D correct 29/59\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 40/60; B correct 21/60; C correct 29/60; D correct 29/60\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 40/60; B correct 21/60; C correct 29/60; D correct 29/60\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 40/60; B correct 21/60; C correct 29/60; D correct 29/60\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 40/61; B correct 21/61; C correct 30/61; D correct 29/61\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 40/61; B correct 21/61; C correct 30/61; D correct 29/61\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 40/61; B correct 21/61; C correct 30/61; D correct 29/61\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 41/62; B correct 21/62; C correct 31/62; D correct 30/62\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 41/62; B correct 21/62; C correct 31/62; D correct 30/62\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 41/62; B correct 21/62; C correct 31/62; D correct 30/62\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 41/63; B correct 22/63; C correct 31/63; D correct 30/63\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 41/63; B correct 22/63; C correct 31/63; D correct 30/63\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 41/63; B correct 22/63; C correct 31/63; D correct 30/63\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 42/64; B correct 22/64; C correct 32/64; D correct 31/64\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 42/64; B correct 22/64; C correct 32/64; D correct 31/64\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 42/64; B correct 22/64; C correct 32/64; D correct 31/64\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 42/65; B correct 22/65; C correct 33/65; D correct 32/65\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 42/65; B correct 22/65; C correct 33/65; D correct 32/65\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 42/65; B correct 22/65; C correct 33/65; D correct 32/65\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 43/66; B correct 22/66; C correct 34/66; D correct 32/66\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 43/66; B correct 22/66; C correct 34/66; D correct 32/66\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 43/66; B correct 22/66; C correct 34/66; D correct 32/66\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 44/67; B correct 23/67; C correct 35/67; D correct 32/67\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 44/67; B correct 23/67; C correct 35/67; D correct 32/67\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 44/67; B correct 23/67; C correct 35/67; D correct 32/67\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 45/68; B correct 23/68; C correct 35/68; D correct 33/68\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 45/68; B correct 23/68; C correct 35/68; D correct 33/68\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 45/68; B correct 23/68; C correct 35/68; D correct 33/68\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 46/69; B correct 23/69; C correct 35/69; D correct 34/69\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 46/69; B correct 23/69; C correct 35/69; D correct 34/69\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 46/69; B correct 23/69; C correct 35/69; D correct 34/69\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 46/70; B correct 24/70; C correct 36/70; D correct 35/70\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 46/70; B correct 24/70; C correct 36/70; D correct 35/70\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 46/70; B correct 24/70; C correct 36/70; D correct 35/70\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 47/71; B correct 25/71; C correct 36/71; D correct 35/71\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 47/71; B correct 25/71; C correct 36/71; D correct 35/71\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 47/71; B correct 25/71; C correct 36/71; D correct 35/71\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 47/72; B correct 26/72; C correct 36/72; D correct 35/72\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 47/72; B correct 26/72; C correct 36/72; D correct 35/72\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 47/72; B correct 26/72; C correct 36/72; D correct 35/72\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 48/73; B correct 27/73; C correct 37/73; D correct 35/73\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 48/73; B correct 27/73; C correct 37/73; D correct 35/73\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 48/73; B correct 27/73; C correct 37/73; D correct 35/73\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 49/74; B correct 28/74; C correct 38/74; D correct 35/74\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 49/74; B correct 28/74; C correct 38/74; D correct 35/74\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 49/74; B correct 28/74; C correct 38/74; D correct 35/74\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 50/75; B correct 29/75; C correct 38/75; D correct 36/75\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 50/75; B correct 29/75; C correct 38/75; D correct 36/75\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 50/75; B correct 29/75; C correct 38/75; D correct 36/75\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 51/76; B correct 30/76; C correct 38/76; D correct 36/76\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 51/76; B correct 30/76; C correct 38/76; D correct 36/76\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 51/76; B correct 30/76; C correct 38/76; D correct 36/76\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 52/77; B correct 30/77; C correct 38/77; D correct 36/77\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 52/77; B correct 30/77; C correct 38/77; D correct 36/77\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 52/77; B correct 30/77; C correct 38/77; D correct 36/77\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 53/78; B correct 30/78; C correct 38/78; D correct 36/78\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 53/78; B correct 30/78; C correct 38/78; D correct 36/78\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 53/78; B correct 30/78; C correct 38/78; D correct 36/78\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 54/79; B correct 31/79; C correct 38/79; D correct 37/79\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 54/79; B correct 31/79; C correct 38/79; D correct 37/79\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 54/79; B correct 31/79; C correct 38/79; D correct 37/79\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 54/80; B correct 31/80; C correct 39/80; D correct 37/80\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 54/80; B correct 31/80; C correct 39/80; D correct 37/80\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 54/80; B correct 31/80; C correct 39/80; D correct 37/80\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 54/81; B correct 32/81; C correct 40/81; D correct 38/81\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 54/81; B correct 32/81; C correct 40/81; D correct 38/81\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 54/81; B correct 32/81; C correct 40/81; D correct 38/81\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 54/82; B correct 32/82; C correct 40/82; D correct 38/82\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 54/82; B correct 32/82; C correct 40/82; D correct 38/82\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 54/82; B correct 32/82; C correct 40/82; D correct 38/82\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 55/83; B correct 32/83; C correct 40/83; D correct 39/83\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 55/83; B correct 32/83; C correct 40/83; D correct 39/83\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 55/83; B correct 32/83; C correct 40/83; D correct 39/83\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 55/84; B correct 32/84; C correct 41/84; D correct 39/84\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 55/84; B correct 32/84; C correct 41/84; D correct 39/84\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 55/84; B correct 32/84; C correct 41/84; D correct 39/84\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 55/85; B correct 32/85; C correct 41/85; D correct 39/85\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 55/85; B correct 32/85; C correct 41/85; D correct 39/85\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 55/85; B correct 32/85; C correct 41/85; D correct 39/85\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 56/86; B correct 32/86; C correct 42/86; D correct 39/86\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 56/86; B correct 32/86; C correct 42/86; D correct 39/86\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 56/86; B correct 32/86; C correct 42/86; D correct 39/86\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 57/87; B correct 33/87; C correct 42/87; D correct 40/87\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 57/87; B correct 33/87; C correct 42/87; D correct 40/87\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 57/87; B correct 33/87; C correct 42/87; D correct 40/87\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 58/88; B correct 33/88; C correct 42/88; D correct 40/88\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 58/88; B correct 33/88; C correct 42/88; D correct 40/88\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 58/88; B correct 33/88; C correct 42/88; D correct 40/88\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 59/89; B correct 34/89; C correct 43/89; D correct 40/89\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 59/89; B correct 34/89; C correct 43/89; D correct 40/89\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 59/89; B correct 34/89; C correct 43/89; D correct 40/89\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 59/90; B correct 34/90; C correct 44/90; D correct 40/90\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 59/90; B correct 34/90; C correct 44/90; D correct 40/90\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 59/90; B correct 34/90; C correct 44/90; D correct 40/90\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 60/91; B correct 35/91; C correct 44/91; D correct 40/91\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 60/91; B correct 35/91; C correct 44/91; D correct 40/91\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 60/91; B correct 35/91; C correct 44/91; D correct 40/91\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 61/92; B correct 35/92; C correct 45/92; D correct 40/92\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 61/92; B correct 35/92; C correct 45/92; D correct 40/92\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 61/92; B correct 35/92; C correct 45/92; D correct 40/92\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 61/93; B correct 36/93; C correct 45/93; D correct 41/93\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 61/93; B correct 36/93; C correct 45/93; D correct 41/93\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 61/93; B correct 36/93; C correct 45/93; D correct 41/93\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 62/94; B correct 36/94; C correct 45/94; D correct 42/94\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 62/94; B correct 36/94; C correct 45/94; D correct 42/94\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 62/94; B correct 36/94; C correct 45/94; D correct 42/94\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 62/95; B correct 37/95; C correct 45/95; D correct 42/95\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 62/95; B correct 37/95; C correct 45/95; D correct 42/95\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 62/95; B correct 37/95; C correct 45/95; D correct 42/95\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 63/96; B correct 37/96; C correct 45/96; D correct 43/96\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 63/96; B correct 37/96; C correct 45/96; D correct 43/96\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 63/96; B correct 37/96; C correct 45/96; D correct 43/96\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 64/97; B correct 38/97; C correct 45/97; D correct 43/97\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 64/97; B correct 38/97; C correct 45/97; D correct 43/97\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 64/97; B correct 38/97; C correct 45/97; D correct 43/97\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 64/98; B correct 39/98; C correct 45/98; D correct 44/98\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 64/98; B correct 39/98; C correct 45/98; D correct 44/98\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 64/98; B correct 39/98; C correct 45/98; D correct 44/98\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 65/99; B correct 40/99; C correct 45/99; D correct 44/99\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"A correct 65/99; B correct 40/99; C correct 45/99; D correct 44/99\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A correct 65/99; B correct 40/99; C correct 45/99; D correct 44/99\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"A correct 66/100; B correct 40/100; C correct 45/100; D correct 45/100\"}"}

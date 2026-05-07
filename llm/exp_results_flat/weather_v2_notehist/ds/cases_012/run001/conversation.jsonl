@@ -1,0 +1,401 @@
+{"role": "system", "content": "You are helping with a daily weather guess.\n\nEach day, the same four weather experts \u2014 Expert A, Expert B, Expert C, and Expert D \u2014 make predictions about the weather. Each expert predicts either \"sunny\" or \"rainy\". They each have their own way of making forecasts, so some may be consistently more reliable than others.\n\nYour job is to make your own prediction based on the experts' predictions. Your goal is to be as accurate as possible over time. Use past outcomes to figure out which experts are most trustworthy and improve your future predictions.\n\nThis interaction has two kinds of turns.\n\n1. Forecast turn\n\nIn a forecast turn, you are given:\n\n* a short note from earlier days,\n* today's predictions from the four experts.\n\nYou should use the note and the experts' predictions to make your prediction for today.\n\nInput format:\n{\n\"turn_type\": \"forecast\",\n\"note\": \"<short text>\",\n\"Expert_A\": \"sunny\" or \"rainy\",\n\"Expert_B\": \"sunny\" or \"rainy\",\n\"Expert_C\": \"sunny\" or \"rainy\",\n\"Expert_D\": \"sunny\" or \"rainy\"\n}\n\nOutput format:\n{\n\"prediction\": \"sunny\" or \"rainy\"\n}\n\n2. Feedback turn\n\nIn a feedback turn, you are given:\n\n* the previous note,\n* today's predictions from the four experts,\n* the actual weather for today.\n\nYou should produce a new short note for future days. The note should keep only the information that is most useful for making later guesses.\n\nInput format:\n{\n\"turn_type\": \"feedback\",\n\"note\": \"<short text>\",\n\"Expert_A\": \"sunny\" or \"rainy\",\n\"Expert_B\": \"sunny\" or \"rainy\",\n\"Expert_C\": \"sunny\" or \"rainy\",\n\"Expert_D\": \"sunny\" or \"rainy\",\n\"actual_weather\": \"sunny\" or \"rainy\"\n}\n\nOutput format:\n{\n\"note\": \"<short text>\"\n}\n\nImportant requirements:\n\n* Do not use any external tools.\n* Do not write or execute code.\n* Do not provide any explanation or reasoning steps.\n* Keep the note short and compact.\n* The note must be at most 500 words long.\n* The note should contain only the most useful information for future predictions.\n* Do not repeat the full history.\n* Output valid JSON only \u2014 no explanation, no reasoning steps, no other text.\n"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"All 4 predicted sunny, actual rainy. All wrong.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"All 4 predicted sunny, actual rainy. All wrong.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"All 4 predicted sunny, actual rainy. All wrong.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"Day1: all wrong. Day2: B,D correct (rainy), A,C wrong.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"Day1: all wrong. Day2: B,D correct (rainy), A,C wrong.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Day1: all wrong. Day2: B,D correct (rainy), A,C wrong.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"Day1: all wrong. Day2: B,D correct (rainy). Day3: A,B,D wrong (rainy), C correct (sunny).\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"Day1: all wrong. Day2: B,D correct (rainy). Day3: A,B,D wrong (rainy), C correct (sunny).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Day1: all wrong. Day2: B,D correct (rainy). Day3: A,B,D wrong (rainy), C correct (sunny).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"Day1: all wrong. Day2: B,D correct (rainy). Day3: C correct (sunny). Day4: C correct (rainy), A,B,D wrong.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"Day1: all wrong. Day2: B,D correct (rainy). Day3: C correct (sunny). Day4: C correct (rainy), A,B,D wrong.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Day1: all wrong. Day2: B,D correct (rainy). Day3: C correct (sunny). Day4: C correct (rainy), A,B,D wrong.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 3/4 (days 3,4,5). B correct 1/4 (day2). D correct 1/4 (day2). A correct 0/4.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C correct 3/4 (days 3,4,5). B correct 1/4 (day2). D correct 1/4 (day2). A correct 0/4.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 3/4 (days 3,4,5). B correct 1/4 (day2). D correct 1/4 (day2). A correct 0/4.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 4/5 (days 3-6). B correct 1/5. D correct 1/5. A correct 0/5.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C correct 4/5 (days 3-6). B correct 1/5. D correct 1/5. A correct 0/5.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 4/5 (days 3-6). B correct 1/5. D correct 1/5. A correct 0/5.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 4/6 (days 3-6, day7 wrong). B correct 1/6. D correct 1/6. A correct 1/6 (day7).\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C correct 4/6 (days 3-6, day7 wrong). B correct 1/6. D correct 1/6. A correct 1/6 (day7).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 4/6 (days 3-6, day7 wrong). B correct 1/6. D correct 1/6. A correct 1/6 (day7).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 4/7, A 2/7 (days7,8), B 1/7, D 2/7 (day2,8).\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 4/7, A 2/7 (days7,8), B 1/7, D 2/7 (day2,8).\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 4/7, A 2/7 (days7,8), B 1/7, D 2/7 (day2,8).\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 4/8, A 3/8 (days7,8,9), B 2/8 (day2,9), D 3/8 (day2,8,9).\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 4/8, A 3/8 (days7,8,9), B 2/8 (day2,9), D 3/8 (day2,8,9).\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 4/8, A 3/8 (days7,8,9), B 2/8 (day2,9), D 3/8 (day2,8,9).\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 4/9, A 3/9, B 3/9 (day2,9,10), D 3/9.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 4/9, A 3/9, B 3/9 (day2,9,10), D 3/9.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 4/9, A 3/9, B 3/9 (day2,9,10), D 3/9.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 4/10, A 4/10 (days7,8,9,11), B 3/10, D 3/10.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 4/10, A 4/10 (days7,8,9,11), B 3/10, D 3/10.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 4/10, A 4/10 (days7,8,9,11), B 3/10, D 3/10.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 4/11, A 4/11, B 3/11, D 4/11 (day2,8,9,12).\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 4/11, A 4/11, B 3/11, D 4/11 (day2,8,9,12).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 4/11, A 4/11, B 3/11, D 4/11 (day2,8,9,12).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 5/12 (days3-6,13), A 4/12, B 4/12 (day2,9,10,13), D 5/12 (day2,8,9,12,13).\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 5/12 (days3-6,13), A 4/12, B 4/12 (day2,9,10,13), D 5/12 (day2,8,9,12,13).\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 5/12 (days3-6,13), A 4/12, B 4/12 (day2,9,10,13), D 5/12 (day2,8,9,12,13).\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 6/13 (days3-6,13,14), A 4/13, B 4/13, D 5/13.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 6/13 (days3-6,13,14), A 4/13, B 4/13, D 5/13.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 6/13 (days3-6,13,14), A 4/13, B 4/13, D 5/13.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 7/14 (days3-6,13-15), A 4/14, B 4/14, D 5/14.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 7/14 (days3-6,13-15), A 4/14, B 4/14, D 5/14.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 7/14 (days3-6,13-15), A 4/14, B 4/14, D 5/14.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 7/15, A 4/15, B 5/15 (day2,9,10,13,16), D 6/15 (day2,8,9,12,13,16).\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 7/15, A 4/15, B 5/15 (day2,9,10,13,16), D 6/15 (day2,8,9,12,13,16).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 7/15, A 4/15, B 5/15 (day2,9,10,13,16), D 6/15 (day2,8,9,12,13,16).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 7/16, A 5/16 (days7,8,9,11,17), B 6/16 (day2,9,10,13,16,17), D 6/16.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 7/16, A 5/16 (days7,8,9,11,17), B 6/16 (day2,9,10,13,16,17), D 6/16.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 7/16, A 5/16 (days7,8,9,11,17), B 6/16 (day2,9,10,13,16,17), D 6/16.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 7/17, A 6/17 (days7,8,9,11,17,18), B 6/17, D 6/17.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 7/17, A 6/17 (days7,8,9,11,17,18), B 6/17, D 6/17.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 7/17, A 6/17 (days7,8,9,11,17,18), B 6/17, D 6/17.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 7/18, A 6/18, B 7/18 (day2,9,10,13,16,17,19), D 7/18 (day2,8,9,12,13,16,19).\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 7/18, A 6/18, B 7/18 (day2,9,10,13,16,17,19), D 7/18 (day2,8,9,12,13,16,19).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 7/18, A 6/18, B 7/18 (day2,9,10,13,16,17,19), D 7/18 (day2,8,9,12,13,16,19).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 7/19, A 6/19, B 8/19 (day2,9,10,13,16,17,19,20), D 7/19.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 7/19, A 6/19, B 8/19 (day2,9,10,13,16,17,19,20), D 7/19.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 7/19, A 6/19, B 8/19 (day2,9,10,13,16,17,19,20), D 7/19.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 7/20, A 7/20 (days7,8,9,11,17,18,21), B 9/20 (day2,9,10,13,16,17,19,20,21), D 7/20.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 7/20, A 7/20 (days7,8,9,11,17,18,21), B 9/20 (day2,9,10,13,16,17,19,20,21), D 7/20.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 7/20, A 7/20 (days7,8,9,11,17,18,21), B 9/20 (day2,9,10,13,16,17,19,20,21), D 7/20.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 8/21 (days3-6,13-15,22), A 7/21, B 9/21, D 7/21.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 8/21 (days3-6,13-15,22), A 7/21, B 9/21, D 7/21.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 8/21 (days3-6,13-15,22), A 7/21, B 9/21, D 7/21.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 9/22 (days3-6,13-15,22,23), A 7/22, B 9/22, D 7/22.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 9/22 (days3-6,13-15,22,23), A 7/22, B 9/22, D 7/22.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 9/22 (days3-6,13-15,22,23), A 7/22, B 9/22, D 7/22.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 9/23, A 7/23, B 9/23, D 7/23.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 9/23, A 7/23, B 9/23, D 7/23.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 9/23, A 7/23, B 9/23, D 7/23.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 9/24, A 8/24 (days7,8,9,11,17,18,21,25), B 10/24 (day2,9,10,13,16,17,19,20,21,25), D 7/24.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 9/24, A 8/24 (days7,8,9,11,17,18,21,25), B 10/24 (day2,9,10,13,16,17,19,20,21,25), D 7/24.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 9/24, A 8/24 (days7,8,9,11,17,18,21,25), B 10/24 (day2,9,10,13,16,17,19,20,21,25), D 7/24.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 9/25, A 9/25 (days7,8,9,11,17,18,21,25,26), B 11/25 (day2,9,10,13,16,17,19,20,21,25,26), D 7/25.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 9/25, A 9/25 (days7,8,9,11,17,18,21,25,26), B 11/25 (day2,9,10,13,16,17,19,20,21,25,26), D 7/25.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 9/25, A 9/25 (days7,8,9,11,17,18,21,25,26), B 11/25 (day2,9,10,13,16,17,19,20,21,25,26), D 7/25.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 10/26 (days3-6,13-15,22,23,27), A 9/26, B 11/26, D 7/26.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 10/26 (days3-6,13-15,22,23,27), A 9/26, B 11/26, D 7/26.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 10/26 (days3-6,13-15,22,23,27), A 9/26, B 11/26, D 7/26.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 11/27 (days3-6,13-15,22,23,27,28), A 9/27, B 11/27, D 7/27.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 11/27 (days3-6,13-15,22,23,27,28), A 9/27, B 11/27, D 7/27.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 11/27 (days3-6,13-15,22,23,27,28), A 9/27, B 11/27, D 7/27.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 12/28 (days3-6,13-15,22,23,27-29), A 9/28, B 11/28, D 7/28.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 12/28 (days3-6,13-15,22,23,27-29), A 9/28, B 11/28, D 7/28.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 12/28 (days3-6,13-15,22,23,27-29), A 9/28, B 11/28, D 7/28.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 12/29, A 10/29 (days7,8,9,11,17,18,21,25,26,30), B 11/29, D 8/29 (day2,8,9,12,13,16,19,30).\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 12/29, A 10/29 (days7,8,9,11,17,18,21,25,26,30), B 11/29, D 8/29 (day2,8,9,12,13,16,19,30).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 12/29, A 10/29 (days7,8,9,11,17,18,21,25,26,30), B 11/29, D 8/29 (day2,8,9,12,13,16,19,30).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 13/30 (days3-6,13-15,22,23,27-29,31), A 10/30, B 11/30, D 8/30.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 13/30 (days3-6,13-15,22,23,27-29,31), A 10/30, B 11/30, D 8/30.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 13/30 (days3-6,13-15,22,23,27-29,31), A 10/30, B 11/30, D 8/30.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 14/31 (days3-6,13-15,22,23,27-29,31,32), A 10/31, B 11/31, D 8/31.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 14/31 (days3-6,13-15,22,23,27-29,31,32), A 10/31, B 11/31, D 8/31.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 14/31 (days3-6,13-15,22,23,27-29,31,32), A 10/31, B 11/31, D 8/31.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 15/32 (days3-6,13-15,22,23,27-29,31-33), A 10/32, B 11/32, D 8/32.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 15/32 (days3-6,13-15,22,23,27-29,31-33), A 10/32, B 11/32, D 8/32.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 15/32 (days3-6,13-15,22,23,27-29,31-33), A 10/32, B 11/32, D 8/32.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 16/33 (days3-6,13-15,22,23,27-29,31-34), A 10/33, B 11/33, D 9/33 (day2,8,9,12,13,16,19,30,34).\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 16/33 (days3-6,13-15,22,23,27-29,31-34), A 10/33, B 11/33, D 9/33 (day2,8,9,12,13,16,19,30,34).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 16/33 (days3-6,13-15,22,23,27-29,31-34), A 10/33, B 11/33, D 9/33 (day2,8,9,12,13,16,19,30,34).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 17/34 (days3-6,13-15,22,23,27-29,31-35), A 10/34, B 11/34, D 9/34.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 17/34 (days3-6,13-15,22,23,27-29,31-35), A 10/34, B 11/34, D 9/34.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 17/34 (days3-6,13-15,22,23,27-29,31-35), A 10/34, B 11/34, D 9/34.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 18/35 (days3-6,13-15,22,23,27-29,31-36), A 10/35, B 11/35, D 9/35.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 18/35 (days3-6,13-15,22,23,27-29,31-36), A 10/35, B 11/35, D 9/35.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 18/35 (days3-6,13-15,22,23,27-29,31-36), A 10/35, B 11/35, D 9/35.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 18/36, A 10/36, B 12/36 (day2,9,10,13,16,17,19,20,21,25,26,37), D 10/36 (day2,8,9,12,13,16,19,30,34,37).\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 18/36, A 10/36, B 12/36 (day2,9,10,13,16,17,19,20,21,25,26,37), D 10/36 (day2,8,9,12,13,16,19,30,34,37).\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 18/36, A 10/36, B 12/36 (day2,9,10,13,16,17,19,20,21,25,26,37), D 10/36 (day2,8,9,12,13,16,19,30,34,37).\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 19/37 (days3-6,13-15,22,23,27-29,31-36,38), A 10/37, B 13/37 (day2,9,10,13,16,17,19,20,21,25,26,37,38), D 11/37 (day2,8,9,12,13,16,19,30,34,37,38).\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 19/37 (days3-6,13-15,22,23,27-29,31-36,38), A 10/37, B 13/37 (day2,9,10,13,16,17,19,20,21,25,26,37,38), D 11/37 (day2,8,9,12,13,16,19,30,34,37,38).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 19/37 (days3-6,13-15,22,23,27-29,31-36,38), A 10/37, B 13/37 (day2,9,10,13,16,17,19,20,21,25,26,37,38), D 11/37 (day2,8,9,12,13,16,19,30,34,37,38).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 19/38, A 10/38, B 13/38, D 12/38 (day2,8,9,12,13,16,19,30,34,37,38,39).\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 19/38, A 10/38, B 13/38, D 12/38 (day2,8,9,12,13,16,19,30,34,37,38,39).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 19/38, A 10/38, B 13/38, D 12/38 (day2,8,9,12,13,16,19,30,34,37,38,39).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 20/39 (days3-6,13-15,22,23,27-29,31-36,38,40), A 10/39, B 13/39, D 12/39.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 20/39 (days3-6,13-15,22,23,27-29,31-36,38,40), A 10/39, B 13/39, D 12/39.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 20/39 (days3-6,13-15,22,23,27-29,31-36,38,40), A 10/39, B 13/39, D 12/39.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 20/40, A 10/40, B 13/40, D 12/40.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 20/40, A 10/40, B 13/40, D 12/40.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 20/40, A 10/40, B 13/40, D 12/40.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 21/41 (days3-6,13-15,22,23,27-29,31-36,38,40,42), A 10/41, B 13/41, D 12/41.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 21/41 (days3-6,13-15,22,23,27-29,31-36,38,40,42), A 10/41, B 13/41, D 12/41.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 21/41 (days3-6,13-15,22,23,27-29,31-36,38,40,42), A 10/41, B 13/41, D 12/41.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 22/42 (days3-6,13-15,22,23,27-29,31-36,38,40,42,43), A 10/42, B 13/42, D 12/42.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 22/42 (days3-6,13-15,22,23,27-29,31-36,38,40,42,43), A 10/42, B 13/42, D 12/42.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 22/42 (days3-6,13-15,22,23,27-29,31-36,38,40,42,43), A 10/42, B 13/42, D 12/42.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 23/43 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44), A 10/43, B 13/43, D 12/43.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 23/43 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44), A 10/43, B 13/43, D 12/43.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 23/43 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44), A 10/43, B 13/43, D 12/43.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 23/44, A 11/44 (days7,8,9,11,17,18,21,25,26,30,45), B 14/44 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45), D 13/44 (day2,8,9,12,13,16,19,30,34,37,38,39,45).\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 23/44, A 11/44 (days7,8,9,11,17,18,21,25,26,30,45), B 14/44 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45), D 13/44 (day2,8,9,12,13,16,19,30,34,37,38,39,45).\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 23/44, A 11/44 (days7,8,9,11,17,18,21,25,26,30,45), B 14/44 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45), D 13/44 (day2,8,9,12,13,16,19,30,34,37,38,39,45).\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 23/45, A 11/45, B 14/45, D 14/45 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46).\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 23/45, A 11/45, B 14/45, D 14/45 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 23/45, A 11/45, B 14/45, D 14/45 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 24/46 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47), A 11/46, B 14/46, D 14/46.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 24/46 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47), A 11/46, B 14/46, D 14/46.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 24/46 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47), A 11/46, B 14/46, D 14/46.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 25/47 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48), A 11/47, B 14/47, D 14/47.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 25/47 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48), A 11/47, B 14/47, D 14/47.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 25/47 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48), A 11/47, B 14/47, D 14/47.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 25/48, A 11/48, B 15/48 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45,49), D 15/48 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49).\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 25/48, A 11/48, B 15/48 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45,49), D 15/48 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 25/48, A 11/48, B 15/48 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45,49), D 15/48 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 26/49 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50), A 11/49, B 15/49, D 15/49.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 26/49 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50), A 11/49, B 15/49, D 15/49.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 26/49 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50), A 11/49, B 15/49, D 15/49.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 27/50 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50,51), A 11/50, B 15/50, D 15/50.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 27/50 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50,51), A 11/50, B 15/50, D 15/50.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 27/50 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50,51), A 11/50, B 15/50, D 15/50.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 28/51 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52), A 11/51, B 15/51, D 15/51.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 28/51 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52), A 11/51, B 15/51, D 15/51.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 28/51 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52), A 11/51, B 15/51, D 15/51.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 28/52, A 11/52, B 15/52, D 15/52.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 28/52, A 11/52, B 15/52, D 15/52.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 28/52, A 11/52, B 15/52, D 15/52.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 29/53 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54), A 11/53, B 15/53, D 15/53.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 29/53 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54), A 11/53, B 15/53, D 15/53.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 29/53 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54), A 11/53, B 15/53, D 15/53.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 30/54 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55), A 11/54, B 16/54 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45,49,55), D 15/54.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 30/54 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55), A 11/54, B 16/54 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45,49,55), D 15/54.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 30/54 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55), A 11/54, B 16/54 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45,49,55), D 15/54.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 30/55, A 12/55 (days7,8,9,11,17,18,21,25,26,30,45,56), B 16/55, D 15/55.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 30/55, A 12/55 (days7,8,9,11,17,18,21,25,26,30,45,56), B 16/55, D 15/55.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 30/55, A 12/55 (days7,8,9,11,17,18,21,25,26,30,45,56), B 16/55, D 15/55.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 31/56 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57), A 12/56, B 16/56, D 15/56.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 31/56 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57), A 12/56, B 16/56, D 15/56.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 31/56 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57), A 12/56, B 16/56, D 15/56.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 32/57 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58), A 12/57, B 16/57, D 15/57.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 32/57 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58), A 12/57, B 16/57, D 15/57.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 32/57 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58), A 12/57, B 16/57, D 15/57.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 32/58, A 12/58, B 17/58 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45,49,55,59), D 16/58 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59).\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 32/58, A 12/58, B 17/58 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45,49,55,59), D 16/58 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 32/58, A 12/58, B 17/58 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45,49,55,59), D 16/58 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 33/59 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60), A 12/59, B 17/59, D 16/59.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 33/59 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60), A 12/59, B 17/59, D 16/59.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 33/59 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60), A 12/59, B 17/59, D 16/59.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 34/60 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61), A 12/60, B 17/60, D 16/60.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 34/60 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61), A 12/60, B 17/60, D 16/60.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 34/60 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61), A 12/60, B 17/60, D 16/60.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 34/61, A 12/61, B 18/61 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45,49,55,59,62), D 17/61 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62).\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 34/61, A 12/61, B 18/61 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45,49,55,59,62), D 17/61 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 34/61, A 12/61, B 18/61 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45,49,55,59,62), D 17/61 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 34/62, A 12/62, B 18/62, D 17/62.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 34/62, A 12/62, B 18/62, D 17/62.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 34/62, A 12/62, B 18/62, D 17/62.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 35/63 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64), A 12/63, B 18/63, D 17/63.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 35/63 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64), A 12/63, B 18/63, D 17/63.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 35/63 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64), A 12/63, B 18/63, D 17/63.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 35/64, A 12/64, B 19/64 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45,49,55,59,62,65), D 18/64 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62,65).\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 35/64, A 12/64, B 19/64 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45,49,55,59,62,65), D 18/64 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62,65).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 35/64, A 12/64, B 19/64 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45,49,55,59,62,65), D 18/64 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62,65).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 36/65 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66), A 12/65, B 19/65, D 18/65.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 36/65 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66), A 12/65, B 19/65, D 18/65.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 36/65 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66), A 12/65, B 19/65, D 18/65.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 36/66, A 12/66, B 20/66 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45,49,55,59,62,65,67), D 18/66.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 36/66, A 12/66, B 20/66 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45,49,55,59,62,65,67), D 18/66.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 36/66, A 12/66, B 20/66 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45,49,55,59,62,65,67), D 18/66.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 36/67, A 12/67, B 21/67 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45,49,55,59,62,65,67,68), D 19/67 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62,65,68).\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 36/67, A 12/67, B 21/67 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45,49,55,59,62,65,67,68), D 19/67 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62,65,68).\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 36/67, A 12/67, B 21/67 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45,49,55,59,62,65,67,68), D 19/67 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62,65,68).\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 36/68, A 12/68, B 21/68, D 19/68.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 36/68, A 12/68, B 21/68, D 19/68.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 36/68, A 12/68, B 21/68, D 19/68.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 36/69, A 13/69 (days7,8,9,11,17,18,21,25,26,30,45,56,70), B 21/69, D 19/69.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 36/69, A 13/69 (days7,8,9,11,17,18,21,25,26,30,45,56,70), B 21/69, D 19/69.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 36/69, A 13/69 (days7,8,9,11,17,18,21,25,26,30,45,56,70), B 21/69, D 19/69.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 36/70, A 13/70, B 21/70, D 19/70.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 36/70, A 13/70, B 21/70, D 19/70.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 36/70, A 13/70, B 21/70, D 19/70.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 36/71, A 13/71, B 21/71, D 20/71 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62,65,68,72).\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 36/71, A 13/71, B 21/71, D 20/71 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62,65,68,72).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 36/71, A 13/71, B 21/71, D 20/71 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62,65,68,72).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 37/72 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73), A 13/72, B 21/72, D 20/72.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 37/72 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73), A 13/72, B 21/72, D 20/72.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 37/72 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73), A 13/72, B 21/72, D 20/72.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 38/73 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73,74), A 13/73, B 21/73, D 20/73.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 38/73 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73,74), A 13/73, B 21/73, D 20/73.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 38/73 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73,74), A 13/73, B 21/73, D 20/73.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 39/74 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75), A 13/74, B 21/74, D 20/74.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 39/74 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75), A 13/74, B 21/74, D 20/74.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 39/74 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75), A 13/74, B 21/74, D 20/74.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 39/75, A 13/75, B 21/75, D 20/75.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 39/75, A 13/75, B 21/75, D 20/75.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 39/75, A 13/75, B 21/75, D 20/75.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 39/76, A 13/76, B 21/76, D 21/76 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62,65,68,72,77).\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 39/76, A 13/76, B 21/76, D 21/76 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62,65,68,72,77).\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 39/76, A 13/76, B 21/76, D 21/76 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62,65,68,72,77).\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 40/77 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78), A 13/77, B 21/77, D 21/77.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 40/77 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78), A 13/77, B 21/77, D 21/77.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 40/77 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78), A 13/77, B 21/77, D 21/77.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 40/78, A 13/78, B 21/78, D 21/78.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 40/78, A 13/78, B 21/78, D 21/78.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 40/78, A 13/78, B 21/78, D 21/78.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 40/79, A 13/79, B 21/79, D 22/79 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62,65,68,72,77,80).\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 40/79, A 13/79, B 21/79, D 22/79 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62,65,68,72,77,80).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 40/79, A 13/79, B 21/79, D 22/79 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62,65,68,72,77,80).\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 41/80 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81), A 13/80, B 21/80, D 22/80.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 41/80 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81), A 13/80, B 21/80, D 22/80.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 41/80 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81), A 13/80, B 21/80, D 22/80.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 41/81, A 14/81 (days7,8,9,11,17,18,21,25,26,30,45,56,70,82), B 22/81 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45,49,55,59,62,65,67,68,82), D 22/81.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 41/81, A 14/81 (days7,8,9,11,17,18,21,25,26,30,45,56,70,82), B 22/81 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45,49,55,59,62,65,67,68,82), D 22/81.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 41/81, A 14/81 (days7,8,9,11,17,18,21,25,26,30,45,56,70,82), B 22/81 (day2,9,10,13,16,17,19,20,21,25,26,37,38,45,49,55,59,62,65,67,68,82), D 22/81.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 41/82, A 14/82, B 22/82, D 22/82.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 41/82, A 14/82, B 22/82, D 22/82.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 41/82, A 14/82, B 22/82, D 22/82.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 42/83 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81,84), A 14/83, B 22/83, D 22/83.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 42/83 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81,84), A 14/83, B 22/83, D 22/83.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 42/83 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81,84), A 14/83, B 22/83, D 22/83.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"rainy\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 43/84 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81,84,85), A 14/84, B 22/84, D 22/84.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 43/84 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81,84,85), A 14/84, B 22/84, D 22/84.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 43/84 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81,84,85), A 14/84, B 22/84, D 22/84.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 44/85 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81,84-86), A 14/85, B 22/85, D 22/85.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 44/85 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81,84-86), A 14/85, B 22/85, D 22/85.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 44/85 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81,84-86), A 14/85, B 22/85, D 22/85.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 44/86, A 14/86, B 22/86, D 22/86.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 44/86, A 14/86, B 22/86, D 22/86.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 44/86, A 14/86, B 22/86, D 22/86.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 44/87, A 14/87, B 22/87, D 23/87 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62,65,68,72,77,80,88).\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 44/87, A 14/87, B 22/87, D 23/87 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62,65,68,72,77,80,88).\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 44/87, A 14/87, B 22/87, D 23/87 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62,65,68,72,77,80,88).\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 44/88, A 14/88, B 22/88, D 23/88.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 44/88, A 14/88, B 22/88, D 23/88.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 44/88, A 14/88, B 22/88, D 23/88.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 44/89, A 14/89, B 22/89, D 24/89 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62,65,68,72,77,80,88,90).\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 44/89, A 14/89, B 22/89, D 24/89 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62,65,68,72,77,80,88,90).\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 44/89, A 14/89, B 22/89, D 24/89 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62,65,68,72,77,80,88,90).\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 44/90, A 14/90, B 22/90, D 24/90.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 44/90, A 14/90, B 22/90, D 24/90.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 44/90, A 14/90, B 22/90, D 24/90.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 44/91, A 14/91, B 22/91, D 24/91.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 44/91, A 14/91, B 22/91, D 24/91.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 44/91, A 14/91, B 22/91, D 24/91.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 45/92 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81,84-86,93), A 14/92, B 22/92, D 24/92.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 45/92 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81,84-86,93), A 14/92, B 22/92, D 24/92.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 45/92 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81,84-86,93), A 14/92, B 22/92, D 24/92.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 45/93, A 14/93, B 22/93, D 24/93.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 45/93, A 14/93, B 22/93, D 24/93.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 45/93, A 14/93, B 22/93, D 24/93.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 46/94 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81,84-86,93,95), A 14/94, B 22/94, D 24/94.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 46/94 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81,84-86,93,95), A 14/94, B 22/94, D 24/94.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"rainy\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 46/94 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81,84-86,93,95), A 14/94, B 22/94, D 24/94.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"rainy\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 47/95 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81,84-86,93,95,96), A 14/95, B 22/95, D 24/95.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 47/95 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81,84-86,93,95,96), A 14/95, B 22/95, D 24/95.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 47/95 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81,84-86,93,95,96), A 14/95, B 22/95, D 24/95.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 47/96, A 14/96, B 22/96, D 25/96 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62,65,68,72,77,80,88,90,97).\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 47/96, A 14/96, B 22/96, D 25/96 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62,65,68,72,77,80,88,90,97).\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 47/96, A 14/96, B 22/96, D 25/96 (day2,8,9,12,13,16,19,30,34,37,38,39,45,46,49,59,62,65,68,72,77,80,88,90,97).\", \"Expert_A\": \"rainy\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 48/97 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81,84-86,93,95,96,98), A 14/97, B 22/97, D 25/97.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 48/97 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81,84-86,93,95,96,98), A 14/97, B 22/97, D 25/97.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 48/97 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81,84-86,93,95,96,98), A 14/97, B 22/97, D 25/97.\", \"Expert_A\": \"rainy\", \"Expert_B\": \"sunny\", \"Expert_C\": \"sunny\", \"Expert_D\": \"rainy\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 49/98 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81,84-86,93,95,96,98,99), A 14/98, B 22/98, D 25/98.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"forecast\", \"note\": \"C 49/98 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81,84-86,93,95,96,98,99), A 14/98, B 22/98, D 25/98.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"prediction\": \"sunny\"}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C 49/98 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81,84-86,93,95,96,98,99), A 14/98, B 22/98, D 25/98.\", \"Expert_A\": \"sunny\", \"Expert_B\": \"rainy\", \"Expert_C\": \"sunny\", \"Expert_D\": \"sunny\", \"actual_weather\": \"sunny\"}"}
+{"role": "assistant", "content": "{\"note\": \"C 50/99 (days3-6,13-15,22,23,27-29,31-36,38,40,42-44,47,48,50-52,54,55,57,58,60,61,64,66,73-75,78,81,84-86,93,95,96,98-100), A 14/99, B 22/99, D 25/99.\"}"}

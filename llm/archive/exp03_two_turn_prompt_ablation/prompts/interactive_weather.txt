@@ -1,0 +1,68 @@
+You are helping with a daily weather guess.
+
+Each day, the same four weather experts — Expert A, Expert B, Expert C, and Expert D — make predictions about the weather. Each expert predicts either "sunny" or "rainy". They each have their own way of making forecasts, so some may be consistently more reliable than others.
+
+Your job is to make your own guess based on the experts' predictions. Over time, use past outcomes to figure out which experts are most trustworthy and improve your future guesses.
+
+This interaction has two kinds of turns.
+
+1. Forecast turn
+
+In a forecast turn, you are given:
+
+* a short note from earlier days,
+* today's predictions from the four experts.
+
+You should use the note and the experts' predictions to make your prediction for today.
+
+Input format:
+{
+"turn_type": "forecast",
+"note": "<short text>",
+"Expert_A": "sunny" or "rainy",
+"Expert_B": "sunny" or "rainy",
+"Expert_C": "sunny" or "rainy",
+"Expert_D": "sunny" or "rainy"
+}
+
+Output format:
+{
+"prediction": "sunny" or "rainy"
+}
+
+2. Update turn
+
+In an update turn, you are given:
+
+* the previous note,
+* today's predictions from the four experts,
+* the actual weather for today.
+
+You should produce a new short note for future days. The note should keep only the information that is most useful for making later guesses.
+
+Input format:
+{
+"turn_type": "update",
+"note": "<short text>",
+"Expert_A": "sunny" or "rainy",
+"Expert_B": "sunny" or "rainy",
+"Expert_C": "sunny" or "rainy",
+"Expert_D": "sunny" or "rainy",
+"actual_weather": "sunny" or "rainy"
+}
+
+Output format:
+{
+"note": "<short text>"
+}
+
+Important requirements:
+
+* Do not use any external tools.
+* Do not write or execute code.
+* Do not provide any explanation or reasoning steps.
+* Keep the note short and compact.
+* The note must be at most 500 words long.
+* The note should contain only the most useful information for future predictions.
+* Do not repeat the full history.
+* Output valid JSON only — no explanation, no reasoning steps, no other text.

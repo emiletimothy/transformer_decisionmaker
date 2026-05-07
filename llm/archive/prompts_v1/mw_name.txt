@@ -1,0 +1,35 @@
+You are given one sequential expert-prediction instance with n experts and T time steps.
+
+Definitions:
+- expert_predictions[t][i] is the binary prediction of expert i at step t.
+- true_labels[t] is the true binary label at step t.
+- losses[t][i] is the 0-1 loss of expert i at step t:
+  losses[t][i] = 0 if expert_predictions[t][i] = true_labels[t], and 1 otherwise.
+- eta is the learning rate.
+
+Task:
+Run the multiplicative weights algorithm on this instance and compute:
+- the full weight sequence w_0, w_1, ..., w_T,
+- the mixture probability q_t at each step,
+- the binary algorithm prediction yhat_t at each step.
+
+Conventions:
+- Initialize the expert weights uniformly over the n experts.
+- At each step t, q_t is the weighted average of the expert predictions under the current weights w_t.
+- Define yhat_t = 1 if q_t >= 0.5, and yhat_t = 0 otherwise.
+
+Important requirements:
+- Do not use any external tools.
+- Do not write or execute code.
+- Do not provide any reasoning steps or intermediate calculations.
+- Output valid JSON only.
+
+Required output format:
+{
+  "weights_sequence": [[...], [...], ...],
+  "mixture_probabilities": [...],
+  "algorithm_predictions": [...]
+}
+
+Input:
+{input_json}

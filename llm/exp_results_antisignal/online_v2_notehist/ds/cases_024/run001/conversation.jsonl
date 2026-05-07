@@ -1,0 +1,401 @@
+{"role": "system", "content": "You are helping in an online learning setting.\n\nIn each round, the same four experts \u2014 Expert A, Expert B, Expert C, and Expert D \u2014 make predictions about a binary outcome. Each expert predicts either 0 or 1. Some experts may be consistently more accurate than others.\n\nYour job is to make your own prediction based on the experts' predictions. Your goal is to be as accurate as possible over time. Use past outcomes to figure out which experts are most trustworthy and improve your future predictions.\n\nThis interaction has two kinds of turns.\n\n1. Prediction turn\n\nIn a prediction turn, you are given:\n\n* a short note from earlier rounds,\n* this round's predictions from the four experts.\n\nYou should use the note and the experts' predictions to make your prediction for this round.\n\nInput format:\n{\n\"turn_type\": \"prediction\",\n\"note\": \"<short text>\",\n\"Expert_A\": 0 or 1,\n\"Expert_B\": 0 or 1,\n\"Expert_C\": 0 or 1,\n\"Expert_D\": 0 or 1\n}\n\nOutput format:\n{\n\"prediction\": 0 or 1\n}\n\n2. Feedback turn\n\nIn a feedback turn, you are given:\n\n* the previous note,\n* this round's predictions from the four experts,\n* the true label for this round.\n\nYou should produce a new short note for future rounds. The note should keep only the information that is most useful for making later predictions.\n\nInput format:\n{\n\"turn_type\": \"feedback\",\n\"note\": \"<short text>\",\n\"Expert_A\": 0 or 1,\n\"Expert_B\": 0 or 1,\n\"Expert_C\": 0 or 1,\n\"Expert_D\": 0 or 1,\n\"true_label\": 0 or 1\n}\n\nOutput format:\n{\n\"note\": \"<short text>\"\n}\n\nImportant requirements:\n\n* Do not use any external tools.\n* Do not write or execute code.\n* Do not provide any explanation or reasoning steps.\n* Keep the note short and compact.\n* The note must be at most 500 words long.\n* The note should contain only the most useful information for future predictions.\n* Do not repeat the full history.\n* Output valid JSON only \u2014 no explanation, no reasoning steps, no other text.\n"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 B:0 C:0 D:0 -> label 0. A wrong, others correct.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 B:0 C:0 D:0 -> label 0. A wrong, others correct.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 B:0 C:0 D:0 -> label 0. A wrong, others correct.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 B:1 C:0 D:1 -> label 0. A wrong, B wrong, C correct, D wrong. C correct both rounds.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 B:1 C:0 D:1 -> label 0. A wrong, B wrong, C correct, D wrong. C correct both rounds.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 B:1 C:0 D:1 -> label 0. A wrong, B wrong, C correct, D wrong. C correct both rounds.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 3/3. A: 0/3, B: 1/3, D: 1/3. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 3/3. A: 0/3, B: 1/3, D: 1/3. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 3/3. A: 0/3, B: 1/3, D: 1/3. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 3/4. A: 0/4, B: 1/4, D: 1/4. C still best.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 3/4. A: 0/4, B: 1/4, D: 1/4. C still best.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 3/4. A: 0/4, B: 1/4, D: 1/4. C still best.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 4/5. A: 0/5, B: 1/5, D: 1/5. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 4/5. A: 0/5, B: 1/5, D: 1/5. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 4/5. A: 0/5, B: 1/5, D: 1/5. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 4/6. A: 0/6, B: 1/6, D: 1/6. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 4/6. A: 0/6, B: 1/6, D: 1/6. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 4/6. A: 0/6, B: 1/6, D: 1/6. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 5/7. A: 0/7, B: 1/7, D: 1/7. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 5/7. A: 0/7, B: 1/7, D: 1/7. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 5/7. A: 0/7, B: 1/7, D: 1/7. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 6/8. A: 0/8, B: 1/8, D: 1/8. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 6/8. A: 0/8, B: 1/8, D: 1/8. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 6/8. A: 0/8, B: 1/8, D: 1/8. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 7/9. A: 0/9, B: 1/9, D: 1/9. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 7/9. A: 0/9, B: 1/9, D: 1/9. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 7/9. A: 0/9, B: 1/9, D: 1/9. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 8/10. A: 0/10, B: 1/10, D: 1/10. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 8/10. A: 0/10, B: 1/10, D: 1/10. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 8/10. A: 0/10, B: 1/10, D: 1/10. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 8/11. A: 0/11, B: 1/11, D: 1/11. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 8/11. A: 0/11, B: 1/11, D: 1/11. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 8/11. A: 0/11, B: 1/11, D: 1/11. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 9/12. A: 0/12, B: 1/12, D: 1/12. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 9/12. A: 0/12, B: 1/12, D: 1/12. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 9/12. A: 0/12, B: 1/12, D: 1/12. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 9/13. A: 0/13, B: 1/13, D: 1/13. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 9/13. A: 0/13, B: 1/13, D: 1/13. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 9/13. A: 0/13, B: 1/13, D: 1/13. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 10/14. A: 0/14, B: 1/14, D: 1/14. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 10/14. A: 0/14, B: 1/14, D: 1/14. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 10/14. A: 0/14, B: 1/14, D: 1/14. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 11/15. A: 0/15, B: 1/15, D: 1/15. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 11/15. A: 0/15, B: 1/15, D: 1/15. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 11/15. A: 0/15, B: 1/15, D: 1/15. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 12/16. A: 0/16, B: 1/16, D: 1/16. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 12/16. A: 0/16, B: 1/16, D: 1/16. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 12/16. A: 0/16, B: 1/16, D: 1/16. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 13/17. A: 0/17, B: 1/17, D: 1/17. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 13/17. A: 0/17, B: 1/17, D: 1/17. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 13/17. A: 0/17, B: 1/17, D: 1/17. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 14/18. A: 0/18, B: 1/18, D: 1/18. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 14/18. A: 0/18, B: 1/18, D: 1/18. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 14/18. A: 0/18, B: 1/18, D: 1/18. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 14/19. A: 0/19, B: 1/19, D: 1/19. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 14/19. A: 0/19, B: 1/19, D: 1/19. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 14/19. A: 0/19, B: 1/19, D: 1/19. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 15/20. A: 0/20, B: 1/20, D: 1/20. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 15/20. A: 0/20, B: 1/20, D: 1/20. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 15/20. A: 0/20, B: 1/20, D: 1/20. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 16/21. A: 0/21, B: 1/21, D: 1/21. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 16/21. A: 0/21, B: 1/21, D: 1/21. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 16/21. A: 0/21, B: 1/21, D: 1/21. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 16/22. A: 0/22, B: 1/22, D: 1/22. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 16/22. A: 0/22, B: 1/22, D: 1/22. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 16/22. A: 0/22, B: 1/22, D: 1/22. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 17/23. A: 0/23, B: 1/23, D: 1/23. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 17/23. A: 0/23, B: 1/23, D: 1/23. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 17/23. A: 0/23, B: 1/23, D: 1/23. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 18/24. A: 0/24, B: 1/24, D: 1/24. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 18/24. A: 0/24, B: 1/24, D: 1/24. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 18/24. A: 0/24, B: 1/24, D: 1/24. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 18/25. A: 0/25, B: 1/25, D: 1/25. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 18/25. A: 0/25, B: 1/25, D: 1/25. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 18/25. A: 0/25, B: 1/25, D: 1/25. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 19/26. A: 0/26, B: 1/26, D: 1/26. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 19/26. A: 0/26, B: 1/26, D: 1/26. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 19/26. A: 0/26, B: 1/26, D: 1/26. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 19/27. A: 0/27, B: 1/27, D: 1/27. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 19/27. A: 0/27, B: 1/27, D: 1/27. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 19/27. A: 0/27, B: 1/27, D: 1/27. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 19/28. A: 0/28, B: 1/28, D: 1/28. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 19/28. A: 0/28, B: 1/28, D: 1/28. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 19/28. A: 0/28, B: 1/28, D: 1/28. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 20/29. A: 0/29, B: 1/29, D: 1/29. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 20/29. A: 0/29, B: 1/29, D: 1/29. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 20/29. A: 0/29, B: 1/29, D: 1/29. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 21/30. A: 0/30, B: 1/30, D: 1/30. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 21/30. A: 0/30, B: 1/30, D: 1/30. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 21/30. A: 0/30, B: 1/30, D: 1/30. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 22/31. A: 0/31, B: 1/31, D: 1/31. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 22/31. A: 0/31, B: 1/31, D: 1/31. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 22/31. A: 0/31, B: 1/31, D: 1/31. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 22/32. A: 0/32, B: 1/32, D: 1/32. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 22/32. A: 0/32, B: 1/32, D: 1/32. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 22/32. A: 0/32, B: 1/32, D: 1/32. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 23/33. A: 0/33, B: 1/33, D: 1/33. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 23/33. A: 0/33, B: 1/33, D: 1/33. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 23/33. A: 0/33, B: 1/33, D: 1/33. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 23/34. A: 0/34, B: 1/34, D: 1/34. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 23/34. A: 0/34, B: 1/34, D: 1/34. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 23/34. A: 0/34, B: 1/34, D: 1/34. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 24/35. A: 0/35, B: 1/35, D: 1/35. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 24/35. A: 0/35, B: 1/35, D: 1/35. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 24/35. A: 0/35, B: 1/35, D: 1/35. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 24/36. A: 0/36, B: 1/36, D: 1/36. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 24/36. A: 0/36, B: 1/36, D: 1/36. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 24/36. A: 0/36, B: 1/36, D: 1/36. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 24/37. A: 0/37, B: 1/37, D: 1/37. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 24/37. A: 0/37, B: 1/37, D: 1/37. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 24/37. A: 0/37, B: 1/37, D: 1/37. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 25/38. A: 0/38, B: 1/38, D: 1/38. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 25/38. A: 0/38, B: 1/38, D: 1/38. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 25/38. A: 0/38, B: 1/38, D: 1/38. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 25/39. A: 0/39, B: 1/39, D: 1/39. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 25/39. A: 0/39, B: 1/39, D: 1/39. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 25/39. A: 0/39, B: 1/39, D: 1/39. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 25/40. A: 0/40, B: 1/40, D: 1/40. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 25/40. A: 0/40, B: 1/40, D: 1/40. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 25/40. A: 0/40, B: 1/40, D: 1/40. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 25/41. A: 0/41, B: 1/41, D: 1/41. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 25/41. A: 0/41, B: 1/41, D: 1/41. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 25/41. A: 0/41, B: 1/41, D: 1/41. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 25/42. A: 0/42, B: 1/42, D: 1/42. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 25/42. A: 0/42, B: 1/42, D: 1/42. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 25/42. A: 0/42, B: 1/42, D: 1/42. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 26/43. A: 0/43, B: 1/43, D: 1/43. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 26/43. A: 0/43, B: 1/43, D: 1/43. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 26/43. A: 0/43, B: 1/43, D: 1/43. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 27/44. A: 0/44, B: 1/44, D: 1/44. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 27/44. A: 0/44, B: 1/44, D: 1/44. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 27/44. A: 0/44, B: 1/44, D: 1/44. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 27/45. A: 0/45, B: 1/45, D: 1/45. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 27/45. A: 0/45, B: 1/45, D: 1/45. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 27/45. A: 0/45, B: 1/45, D: 1/45. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 28/46. A: 0/46, B: 1/46, D: 1/46. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 28/46. A: 0/46, B: 1/46, D: 1/46. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 28/46. A: 0/46, B: 1/46, D: 1/46. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 28/47. A: 0/47, B: 1/47, D: 1/47. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 28/47. A: 0/47, B: 1/47, D: 1/47. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 28/47. A: 0/47, B: 1/47, D: 1/47. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 28/48. A: 0/48, B: 1/48, D: 1/48. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 28/48. A: 0/48, B: 1/48, D: 1/48. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 28/48. A: 0/48, B: 1/48, D: 1/48. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 28/49. A: 0/49, B: 1/49, D: 1/49. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 28/49. A: 0/49, B: 1/49, D: 1/49. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 28/49. A: 0/49, B: 1/49, D: 1/49. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 28/50. A: 0/50, B: 1/50, D: 1/50. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 28/50. A: 0/50, B: 1/50, D: 1/50. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 28/50. A: 0/50, B: 1/50, D: 1/50. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 28/51. A: 0/51, B: 1/51, D: 1/51. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 28/51. A: 0/51, B: 1/51, D: 1/51. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 28/51. A: 0/51, B: 1/51, D: 1/51. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 29/52. A: 0/52, B: 1/52, D: 1/52. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 29/52. A: 0/52, B: 1/52, D: 1/52. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 29/52. A: 0/52, B: 1/52, D: 1/52. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 29/53. A: 0/53, B: 1/53, D: 1/53. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 29/53. A: 0/53, B: 1/53, D: 1/53. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 29/53. A: 0/53, B: 1/53, D: 1/53. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 29/54. A: 0/54, B: 1/54, D: 1/54. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 29/54. A: 0/54, B: 1/54, D: 1/54. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 29/54. A: 0/54, B: 1/54, D: 1/54. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 29/55. A: 0/55, B: 1/55, D: 1/55. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 29/55. A: 0/55, B: 1/55, D: 1/55. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 29/55. A: 0/55, B: 1/55, D: 1/55. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 29/56. A: 0/56, B: 1/56, D: 1/56. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 29/56. A: 0/56, B: 1/56, D: 1/56. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 29/56. A: 0/56, B: 1/56, D: 1/56. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 29/57. A: 0/57, B: 1/57, D: 1/57. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 29/57. A: 0/57, B: 1/57, D: 1/57. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 29/57. A: 0/57, B: 1/57, D: 1/57. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 30/58. A: 0/58, B: 1/58, D: 1/58. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 30/58. A: 0/58, B: 1/58, D: 1/58. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 30/58. A: 0/58, B: 1/58, D: 1/58. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 31/59. A: 0/59, B: 1/59, D: 1/59. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 31/59. A: 0/59, B: 1/59, D: 1/59. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 31/59. A: 0/59, B: 1/59, D: 1/59. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 32/60. A: 0/60, B: 1/60, D: 1/60. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 32/60. A: 0/60, B: 1/60, D: 1/60. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 32/60. A: 0/60, B: 1/60, D: 1/60. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 33/61. A: 0/61, B: 1/61, D: 1/61. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 33/61. A: 0/61, B: 1/61, D: 1/61. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 33/61. A: 0/61, B: 1/61, D: 1/61. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 33/62. A: 0/62, B: 1/62, D: 1/62. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 33/62. A: 0/62, B: 1/62, D: 1/62. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 33/62. A: 0/62, B: 1/62, D: 1/62. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 33/63. A: 0/63, B: 1/63, D: 1/63. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 33/63. A: 0/63, B: 1/63, D: 1/63. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 33/63. A: 0/63, B: 1/63, D: 1/63. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 34/64. A: 0/64, B: 1/64, D: 1/64. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 34/64. A: 0/64, B: 1/64, D: 1/64. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 34/64. A: 0/64, B: 1/64, D: 1/64. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 34/65. A: 0/65, B: 1/65, D: 1/65. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 34/65. A: 0/65, B: 1/65, D: 1/65. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 34/65. A: 0/65, B: 1/65, D: 1/65. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 34/66. A: 0/66, B: 1/66, D: 1/66. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 34/66. A: 0/66, B: 1/66, D: 1/66. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 34/66. A: 0/66, B: 1/66, D: 1/66. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 35/67. A: 0/67, B: 1/67, D: 1/67. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 35/67. A: 0/67, B: 1/67, D: 1/67. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 35/67. A: 0/67, B: 1/67, D: 1/67. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 35/68. A: 0/68, B: 1/68, D: 1/68. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 35/68. A: 0/68, B: 1/68, D: 1/68. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 35/68. A: 0/68, B: 1/68, D: 1/68. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 36/69. A: 0/69, B: 1/69, D: 1/69. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 36/69. A: 0/69, B: 1/69, D: 1/69. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 36/69. A: 0/69, B: 1/69, D: 1/69. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 37/70. A: 0/70, B: 1/70, D: 1/70. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 37/70. A: 0/70, B: 1/70, D: 1/70. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 37/70. A: 0/70, B: 1/70, D: 1/70. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 38/71. A: 0/71, B: 1/71, D: 1/71. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 38/71. A: 0/71, B: 1/71, D: 1/71. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 38/71. A: 0/71, B: 1/71, D: 1/71. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 38/72. A: 0/72, B: 1/72, D: 1/72. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 38/72. A: 0/72, B: 1/72, D: 1/72. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 38/72. A: 0/72, B: 1/72, D: 1/72. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 39/73. A: 0/73, B: 1/73, D: 1/73. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 39/73. A: 0/73, B: 1/73, D: 1/73. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 39/73. A: 0/73, B: 1/73, D: 1/73. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 39/74. A: 0/74, B: 1/74, D: 1/74. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 39/74. A: 0/74, B: 1/74, D: 1/74. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 39/74. A: 0/74, B: 1/74, D: 1/74. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 40/75. A: 0/75, B: 1/75, D: 1/75. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 40/75. A: 0/75, B: 1/75, D: 1/75. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 40/75. A: 0/75, B: 1/75, D: 1/75. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 41/76. A: 0/76, B: 1/76, D: 1/76. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 41/76. A: 0/76, B: 1/76, D: 1/76. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 41/76. A: 0/76, B: 1/76, D: 1/76. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 42/77. A: 0/77, B: 1/77, D: 1/77. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 42/77. A: 0/77, B: 1/77, D: 1/77. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 42/77. A: 0/77, B: 1/77, D: 1/77. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 42/78. A: 0/78, B: 1/78, D: 1/78. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 42/78. A: 0/78, B: 1/78, D: 1/78. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 42/78. A: 0/78, B: 1/78, D: 1/78. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 42/79. A: 0/79, B: 1/79, D: 1/79. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 42/79. A: 0/79, B: 1/79, D: 1/79. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 42/79. A: 0/79, B: 1/79, D: 1/79. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 42/80. A: 0/80, B: 1/80, D: 1/80. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 42/80. A: 0/80, B: 1/80, D: 1/80. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 42/80. A: 0/80, B: 1/80, D: 1/80. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 43/81. A: 0/81, B: 1/81, D: 1/81. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 43/81. A: 0/81, B: 1/81, D: 1/81. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 43/81. A: 0/81, B: 1/81, D: 1/81. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 43/82. A: 0/82, B: 1/82, D: 1/82. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 43/82. A: 0/82, B: 1/82, D: 1/82. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 43/82. A: 0/82, B: 1/82, D: 1/82. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 43/83. A: 0/83, B: 1/83, D: 1/83. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 43/83. A: 0/83, B: 1/83, D: 1/83. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 43/83. A: 0/83, B: 1/83, D: 1/83. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 44/84. A: 0/84, B: 1/84, D: 1/84. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 44/84. A: 0/84, B: 1/84, D: 1/84. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 44/84. A: 0/84, B: 1/84, D: 1/84. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 45/85. A: 0/85, B: 1/85, D: 1/85. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 45/85. A: 0/85, B: 1/85, D: 1/85. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 45/85. A: 0/85, B: 1/85, D: 1/85. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 45/86. A: 0/86, B: 1/86, D: 1/86. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 45/86. A: 0/86, B: 1/86, D: 1/86. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 45/86. A: 0/86, B: 1/86, D: 1/86. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 45/87. A: 0/87, B: 1/87, D: 1/87. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 45/87. A: 0/87, B: 1/87, D: 1/87. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 45/87. A: 0/87, B: 1/87, D: 1/87. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 45/88. A: 0/88, B: 1/88, D: 1/88. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 45/88. A: 0/88, B: 1/88, D: 1/88. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 45/88. A: 0/88, B: 1/88, D: 1/88. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 45/89. A: 0/89, B: 1/89, D: 1/89. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 45/89. A: 0/89, B: 1/89, D: 1/89. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 45/89. A: 0/89, B: 1/89, D: 1/89. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 45/90. A: 0/90, B: 1/90, D: 1/90. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 45/90. A: 0/90, B: 1/90, D: 1/90. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 45/90. A: 0/90, B: 1/90, D: 1/90. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 46/91. A: 0/91, B: 1/91, D: 1/91. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 46/91. A: 0/91, B: 1/91, D: 1/91. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 46/91. A: 0/91, B: 1/91, D: 1/91. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 46/92. A: 0/92, B: 1/92, D: 1/92. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 46/92. A: 0/92, B: 1/92, D: 1/92. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 46/92. A: 0/92, B: 1/92, D: 1/92. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 46/93. A: 0/93, B: 1/93, D: 1/93. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 46/93. A: 0/93, B: 1/93, D: 1/93. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 46/93. A: 0/93, B: 1/93, D: 1/93. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 47/94. A: 0/94, B: 1/94, D: 1/94. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 47/94. A: 0/94, B: 1/94, D: 1/94. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 47/94. A: 0/94, B: 1/94, D: 1/94. Trust C.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 47/95. A: 0/95, B: 1/95, D: 1/95. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 47/95. A: 0/95, B: 1/95, D: 1/95. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 47/95. A: 0/95, B: 1/95, D: 1/95. C still best but less reliable.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 48/96. A: 0/96, B: 1/96, D: 1/96. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 48/96. A: 0/96, B: 1/96, D: 1/96. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 48/96. A: 0/96, B: 1/96, D: 1/96. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 48/97. A: 0/97, B: 1/97, D: 1/97. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 48/97. A: 0/97, B: 1/97, D: 1/97. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 48/97. A: 0/97, B: 1/97, D: 1/97. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 48/98. A: 0/98, B: 1/98, D: 1/98. C still best but less reliable.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 48/98. A: 0/98, B: 1/98, D: 1/98. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 48/98. A: 0/98, B: 1/98, D: 1/98. C still best but less reliable.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 49/99. A: 0/99, B: 1/99, D: 1/99. Trust C.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct 49/99. A: 0/99, B: 1/99, D: 1/99. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct 49/99. A: 0/99, B: 1/99, D: 1/99. Trust C.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct 50/100. A: 0/100, B: 1/100, D: 1/100. Trust C.\"}"}

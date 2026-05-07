@@ -1,0 +1,401 @@
+{"role": "system", "content": "You are helping in an online learning setting.\n\nIn each round, the same four experts \u2014 Expert A, Expert B, Expert C, and Expert D \u2014 make predictions about a binary outcome. Each expert predicts either 0 or 1. Some experts may be consistently more accurate than others.\n\nYour job is to make your own prediction based on the experts' predictions. Your goal is to be as accurate as possible over time. Use past outcomes to figure out which experts are most trustworthy and improve your future predictions.\n\nThis interaction has two kinds of turns.\n\n1. Prediction turn\n\nIn a prediction turn, you are given:\n\n* a short note from earlier rounds,\n* this round's predictions from the four experts.\n\nYou should use the note and the experts' predictions to make your prediction for this round.\n\nInput format:\n{\n\"turn_type\": \"prediction\",\n\"note\": \"<short text>\",\n\"Expert_A\": 0 or 1,\n\"Expert_B\": 0 or 1,\n\"Expert_C\": 0 or 1,\n\"Expert_D\": 0 or 1\n}\n\nOutput format:\n{\n\"prediction\": 0 or 1\n}\n\n2. Feedback turn\n\nIn a feedback turn, you are given:\n\n* the previous note,\n* this round's predictions from the four experts,\n* the true label for this round.\n\nYou should produce a new short note for future rounds. The note should keep only the information that is most useful for making later predictions.\n\nInput format:\n{\n\"turn_type\": \"feedback\",\n\"note\": \"<short text>\",\n\"Expert_A\": 0 or 1,\n\"Expert_B\": 0 or 1,\n\"Expert_C\": 0 or 1,\n\"Expert_D\": 0 or 1,\n\"true_label\": 0 or 1\n}\n\nOutput format:\n{\n\"note\": \"<short text>\"\n}\n\nImportant requirements:\n\n* Do not use any external tools.\n* Do not write or execute code.\n* Do not provide any explanation or reasoning steps.\n* Keep the note short and compact.\n* The note must be at most 500 words long.\n* The note should contain only the most useful information for future predictions.\n* Do not repeat the full history.\n* Output valid JSON only \u2014 no explanation, no reasoning steps, no other text.\n"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 B:0 C:0 D:0 -> label 0. A wrong, others correct.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 B:0 C:0 D:0 -> label 0. A wrong, others correct.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 B:0 C:0 D:0 -> label 0. A wrong, others correct.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1->0 wrong; B:0->1 wrong; C:0->0 correct; D:0->1 wrong. C correct both rounds.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1->0 wrong; B:0->1 wrong; C:0->0 correct; D:0->1 wrong. C correct both rounds.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1->0 wrong; B:0->1 wrong; C:0->0 correct; D:0->1 wrong. C correct both rounds.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"C correct rounds 1&2, wrong round3. A: 1 wrong, 0 wrong, 0 wrong. B: 0 wrong, 1 wrong, 1 wrong. D: 0 wrong, 1 wrong, 0 wrong. No reliable expert yet.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"C correct rounds 1&2, wrong round3. A: 1 wrong, 0 wrong, 0 wrong. B: 0 wrong, 1 wrong, 1 wrong. D: 0 wrong, 1 wrong, 0 wrong. No reliable expert yet.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"C correct rounds 1&2, wrong round3. A: 1 wrong, 0 wrong, 0 wrong. B: 0 wrong, 1 wrong, 1 wrong. D: 0 wrong, 1 wrong, 0 wrong. No reliable expert yet.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round4: A1 B1 C0 D0 label0. A,B wrong; C,D correct. C: 2/3 correct. D: 1/3 correct. A: 0/3 correct. B: 0/3 correct.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round4: A1 B1 C0 D0 label0. A,B wrong; C,D correct. C: 2/3 correct. D: 1/3 correct. A: 0/3 correct. B: 0/3 correct.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round4: A1 B1 C0 D0 label0. A,B wrong; C,D correct. C: 2/3 correct. D: 1/3 correct. A: 0/3 correct. B: 0/3 correct.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round5: A1 B0 C0 D1 label0. A wrong, B correct, C correct, D wrong. C: 3/4 correct. D: 1/4. A: 0/4. B: 1/4.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round5: A1 B0 C0 D1 label0. A wrong, B correct, C correct, D wrong. C: 3/4 correct. D: 1/4. A: 0/4. B: 1/4.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round5: A1 B0 C0 D1 label0. A wrong, B correct, C correct, D wrong. C: 3/4 correct. D: 1/4. A: 0/4. B: 1/4.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round6: A0 B0 C0 D1 label0. All correct except D. C: 4/5 correct. A: 1/5. B: 2/5. D: 1/5.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round6: A0 B0 C0 D1 label0. All correct except D. C: 4/5 correct. A: 1/5. B: 2/5. D: 1/5.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round6: A0 B0 C0 D1 label0. All correct except D. C: 4/5 correct. A: 1/5. B: 2/5. D: 1/5.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round7: A0 B1 C0 D0 label0. A,C,D correct; B wrong. C: 5/6 correct. A: 2/6. B: 2/6. D: 2/6.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round7: A0 B1 C0 D0 label0. A,C,D correct; B wrong. C: 5/6 correct. A: 2/6. B: 2/6. D: 2/6.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round7: A0 B1 C0 D0 label0. A,C,D correct; B wrong. C: 5/6 correct. A: 2/6. B: 2/6. D: 2/6.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round8: A1 B0 C0 D0 label0. A wrong; B,C,D correct. C: 6/7 correct. A: 2/7. B: 3/7. D: 3/7.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round8: A1 B0 C0 D0 label0. A wrong; B,C,D correct. C: 6/7 correct. A: 2/7. B: 3/7. D: 3/7.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round8: A1 B0 C0 D0 label0. A wrong; B,C,D correct. C: 6/7 correct. A: 2/7. B: 3/7. D: 3/7.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round9: A0 B1 C0 D0 label1. A,C,D wrong; B correct. C: 6/8 correct. B: 4/8. A: 2/8. D: 3/8.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round9: A0 B1 C0 D0 label1. A,C,D wrong; B correct. C: 6/8 correct. B: 4/8. A: 2/8. D: 3/8.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round9: A0 B1 C0 D0 label1. A,C,D wrong; B correct. C: 6/8 correct. B: 4/8. A: 2/8. D: 3/8.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round10: A0 B0 C0 D1 label0. A,B,C correct; D wrong. C: 7/9 correct. B: 5/9. A: 3/9. D: 3/9.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round10: A0 B0 C0 D1 label0. A,B,C correct; D wrong. C: 7/9 correct. B: 5/9. A: 3/9. D: 3/9.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round10: A0 B0 C0 D1 label0. A,B,C correct; D wrong. C: 7/9 correct. B: 5/9. A: 3/9. D: 3/9.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round11: A0 B1 C0 D0 label0. A,C,D correct; B wrong. C: 8/10 correct. B: 5/10. A: 4/10. D: 4/10.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round11: A0 B1 C0 D0 label0. A,C,D correct; B wrong. C: 8/10 correct. B: 5/10. A: 4/10. D: 4/10.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round11: A0 B1 C0 D0 label0. A,C,D correct; B wrong. C: 8/10 correct. B: 5/10. A: 4/10. D: 4/10.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round12: A1 B0 C0 D1 label0. A,D wrong; B,C correct. C: 9/11 correct. B: 6/11. A: 4/11. D: 4/11.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round12: A1 B0 C0 D1 label0. A,D wrong; B,C correct. C: 9/11 correct. B: 6/11. A: 4/11. D: 4/11.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round12: A1 B0 C0 D1 label0. A,D wrong; B,C correct. C: 9/11 correct. B: 6/11. A: 4/11. D: 4/11.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round13: A0 B0 C1 D1 label0. A,B correct; C,D wrong. C: 9/12 correct. B: 7/12. A: 5/12. D: 4/12.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round13: A0 B0 C1 D1 label0. A,B correct; C,D wrong. C: 9/12 correct. B: 7/12. A: 5/12. D: 4/12.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round13: A0 B0 C1 D1 label0. A,B correct; C,D wrong. C: 9/12 correct. B: 7/12. A: 5/12. D: 4/12.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round14: A0 B0 C0 D1 label0. A,B,C correct; D wrong. C: 10/13 correct. B: 8/13. A: 6/13. D: 4/13.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round14: A0 B0 C0 D1 label0. A,B,C correct; D wrong. C: 10/13 correct. B: 8/13. A: 6/13. D: 4/13.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round14: A0 B0 C0 D1 label0. A,B,C correct; D wrong. C: 10/13 correct. B: 8/13. A: 6/13. D: 4/13.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round15: A1 B1 C0 D0 label0. A,B wrong; C,D correct. C: 11/14 correct. B: 8/14. A: 6/14. D: 5/14.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round15: A1 B1 C0 D0 label0. A,B wrong; C,D correct. C: 11/14 correct. B: 8/14. A: 6/14. D: 5/14.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round15: A1 B1 C0 D0 label0. A,B wrong; C,D correct. C: 11/14 correct. B: 8/14. A: 6/14. D: 5/14.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round16: all 1 label0. All wrong. C: 11/15 correct. B: 8/15. A: 6/15. D: 5/15.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round16: all 1 label0. All wrong. C: 11/15 correct. B: 8/15. A: 6/15. D: 5/15.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round16: all 1 label0. All wrong. C: 11/15 correct. B: 8/15. A: 6/15. D: 5/15.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round17: A0 B1 C0 D1 label1. A,C wrong; B,D correct. C: 11/16 correct. B: 9/16. A: 6/16. D: 6/16.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round17: A0 B1 C0 D1 label1. A,C wrong; B,D correct. C: 11/16 correct. B: 9/16. A: 6/16. D: 6/16.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round17: A0 B1 C0 D1 label1. A,C wrong; B,D correct. C: 11/16 correct. B: 9/16. A: 6/16. D: 6/16.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round18: A1 B1 C0 D0 label0. A,B wrong; C,D correct. C: 12/17 correct. B: 9/17. A: 6/17. D: 7/17.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round18: A1 B1 C0 D0 label0. A,B wrong; C,D correct. C: 12/17 correct. B: 9/17. A: 6/17. D: 7/17.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round18: A1 B1 C0 D0 label0. A,B wrong; C,D correct. C: 12/17 correct. B: 9/17. A: 6/17. D: 7/17.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round19: A1 B1 C1 D0 label1. A,B,C correct; D wrong. C: 13/18 correct. B: 10/18. A: 7/18. D: 7/18.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round19: A1 B1 C1 D0 label1. A,B,C correct; D wrong. C: 13/18 correct. B: 10/18. A: 7/18. D: 7/18.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round19: A1 B1 C1 D0 label1. A,B,C correct; D wrong. C: 13/18 correct. B: 10/18. A: 7/18. D: 7/18.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round20: A0 B1 C0 D1 label1. A,C wrong; B,D correct. C: 13/19 correct. B: 11/19. A: 7/19. D: 8/19.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round20: A0 B1 C0 D1 label1. A,C wrong; B,D correct. C: 13/19 correct. B: 11/19. A: 7/19. D: 8/19.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round20: A0 B1 C0 D1 label1. A,C wrong; B,D correct. C: 13/19 correct. B: 11/19. A: 7/19. D: 8/19.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round21: A1 B1 C1 D0 label0. A,B,C wrong; D correct. C: 13/20 correct. B: 11/20. A: 7/20. D: 9/20.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round21: A1 B1 C1 D0 label0. A,B,C wrong; D correct. C: 13/20 correct. B: 11/20. A: 7/20. D: 9/20.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round21: A1 B1 C1 D0 label0. A,B,C wrong; D correct. C: 13/20 correct. B: 11/20. A: 7/20. D: 9/20.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round22: A0 B0 C0 D1 label0. All correct. C: 14/21 correct. B: 12/21. A: 8/21. D: 10/21.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round22: A0 B0 C0 D1 label0. All correct. C: 14/21 correct. B: 12/21. A: 8/21. D: 10/21.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round22: A0 B0 C0 D1 label0. All correct. C: 14/21 correct. B: 12/21. A: 8/21. D: 10/21.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round23: A0 B1 C0 D1 label1. A,C wrong; B,D correct. C: 14/22 correct. B: 13/22. A: 8/22. D: 11/22.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round23: A0 B1 C0 D1 label1. A,C wrong; B,D correct. C: 14/22 correct. B: 13/22. A: 8/22. D: 11/22.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round23: A0 B1 C0 D1 label1. A,C wrong; B,D correct. C: 14/22 correct. B: 13/22. A: 8/22. D: 11/22.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round24: A1 B1 C1 D0 label1. A,B,C correct; D wrong. C: 15/23 correct. B: 14/23. A: 9/23. D: 11/23.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round24: A1 B1 C1 D0 label1. A,B,C correct; D wrong. C: 15/23 correct. B: 14/23. A: 9/23. D: 11/23.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round24: A1 B1 C1 D0 label1. A,B,C correct; D wrong. C: 15/23 correct. B: 14/23. A: 9/23. D: 11/23.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round25: A0 B1 C0 D1 label1. A,C wrong; B,D correct. C: 15/24 correct. B: 15/24. A: 9/24. D: 12/24.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round25: A0 B1 C0 D1 label1. A,C wrong; B,D correct. C: 15/24 correct. B: 15/24. A: 9/24. D: 12/24.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round25: A0 B1 C0 D1 label1. A,C wrong; B,D correct. C: 15/24 correct. B: 15/24. A: 9/24. D: 12/24.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round26: A0 B0 C0 D1 label0. All correct. C: 16/25 correct. B: 16/25. A: 10/25. D: 13/25.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round26: A0 B0 C0 D1 label0. All correct. C: 16/25 correct. B: 16/25. A: 10/25. D: 13/25.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round26: A0 B0 C0 D1 label0. All correct. C: 16/25 correct. B: 16/25. A: 10/25. D: 13/25.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round27: A1 B1 C1 D0 label0. A,B,C wrong; D correct. C: 16/26 correct. B: 16/26. A: 10/26. D: 14/26.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round27: A1 B1 C1 D0 label0. A,B,C wrong; D correct. C: 16/26 correct. B: 16/26. A: 10/26. D: 14/26.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round27: A1 B1 C1 D0 label0. A,B,C wrong; D correct. C: 16/26 correct. B: 16/26. A: 10/26. D: 14/26.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round28: A1 B1 C0 D0 label1. A,B correct; C,D wrong. C: 16/27 correct. B: 17/27. A: 11/27. D: 14/27.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round28: A1 B1 C0 D0 label1. A,B correct; C,D wrong. C: 16/27 correct. B: 17/27. A: 11/27. D: 14/27.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round28: A1 B1 C0 D0 label1. A,B correct; C,D wrong. C: 16/27 correct. B: 17/27. A: 11/27. D: 14/27.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round29: A0 B0 C0 D1 label0. All correct. C: 17/28 correct. B: 18/28. A: 12/28. D: 15/28.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round29: A0 B0 C0 D1 label0. All correct. C: 17/28 correct. B: 18/28. A: 12/28. D: 15/28.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round29: A0 B0 C0 D1 label0. All correct. C: 17/28 correct. B: 18/28. A: 12/28. D: 15/28.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round30: all 1 label0. All wrong. C: 17/29 correct. B: 18/29. A: 12/29. D: 15/29.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round30: all 1 label0. All wrong. C: 17/29 correct. B: 18/29. A: 12/29. D: 15/29.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round30: all 1 label0. All wrong. C: 17/29 correct. B: 18/29. A: 12/29. D: 15/29.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round31: A1 B0 C1 D0 label1. A,C correct; B,D wrong. C: 18/30 correct. B: 18/30. A: 13/30. D: 15/30.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round31: A1 B0 C1 D0 label1. A,C correct; B,D wrong. C: 18/30 correct. B: 18/30. A: 13/30. D: 15/30.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round31: A1 B0 C1 D0 label1. A,C correct; B,D wrong. C: 18/30 correct. B: 18/30. A: 13/30. D: 15/30.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round32: A1 B1 C1 D0 label0. A,B,C wrong; D correct. C: 18/31 correct. B: 18/31. A: 13/31. D: 16/31.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round32: A1 B1 C1 D0 label0. A,B,C wrong; D correct. C: 18/31 correct. B: 18/31. A: 13/31. D: 16/31.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round32: A1 B1 C1 D0 label0. A,B,C wrong; D correct. C: 18/31 correct. B: 18/31. A: 13/31. D: 16/31.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round33: A0 B1 C0 D0 label1. A,C,D wrong; B correct. C: 18/32 correct. B: 19/32. A: 13/32. D: 16/32.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round33: A0 B1 C0 D0 label1. A,C,D wrong; B correct. C: 18/32 correct. B: 19/32. A: 13/32. D: 16/32.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round33: A0 B1 C0 D0 label1. A,C,D wrong; B correct. C: 18/32 correct. B: 19/32. A: 13/32. D: 16/32.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round34: A1 B0 C1 D1 label1. A,C,D correct; B wrong. C: 19/33 correct. B: 19/33. A: 14/33. D: 17/33.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round34: A1 B0 C1 D1 label1. A,C,D correct; B wrong. C: 19/33 correct. B: 19/33. A: 14/33. D: 17/33.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round34: A1 B0 C1 D1 label1. A,C,D correct; B wrong. C: 19/33 correct. B: 19/33. A: 14/33. D: 17/33.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round35: A0 B1 C1 D1 label1. A wrong; B,C,D correct. C: 20/34 correct. B: 20/34. A: 14/34. D: 18/34.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round35: A0 B1 C1 D1 label1. A wrong; B,C,D correct. C: 20/34 correct. B: 20/34. A: 14/34. D: 18/34.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round35: A0 B1 C1 D1 label1. A wrong; B,C,D correct. C: 20/34 correct. B: 20/34. A: 14/34. D: 18/34.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round36: A0 B1 C1 D0 label0. A,D correct; B,C wrong. C: 20/35 correct. B: 20/35. A: 15/35. D: 19/35.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round36: A0 B1 C1 D0 label0. A,D correct; B,C wrong. C: 20/35 correct. B: 20/35. A: 15/35. D: 19/35.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round36: A0 B1 C1 D0 label0. A,D correct; B,C wrong. C: 20/35 correct. B: 20/35. A: 15/35. D: 19/35.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round37: A0 B1 C0 D1 label1. A,C wrong; B,D correct. C: 20/36 correct. B: 21/36. A: 15/36. D: 20/36.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round37: A0 B1 C0 D1 label1. A,C wrong; B,D correct. C: 20/36 correct. B: 21/36. A: 15/36. D: 20/36.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round37: A0 B1 C0 D1 label1. A,C wrong; B,D correct. C: 20/36 correct. B: 21/36. A: 15/36. D: 20/36.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round38: A1 B0 C1 D0 label0. A,C wrong; B,D correct. C: 20/37 correct. B: 22/37. A: 15/37. D: 21/37.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round38: A1 B0 C1 D0 label0. A,C wrong; B,D correct. C: 20/37 correct. B: 22/37. A: 15/37. D: 21/37.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round38: A1 B0 C1 D0 label0. A,C wrong; B,D correct. C: 20/37 correct. B: 22/37. A: 15/37. D: 21/37.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round39: A0 B1 C1 D1 label1. A wrong; B,C,D correct. C: 21/38 correct. B: 23/38. A: 15/38. D: 22/38.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round39: A0 B1 C1 D1 label1. A wrong; B,C,D correct. C: 21/38 correct. B: 23/38. A: 15/38. D: 22/38.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round39: A0 B1 C1 D1 label1. A wrong; B,C,D correct. C: 21/38 correct. B: 23/38. A: 15/38. D: 22/38.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round40: A1 B0 C1 D0 label0. A,C wrong; B,D correct. C: 21/39 correct. B: 24/39. A: 15/39. D: 23/39.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round40: A1 B0 C1 D0 label0. A,C wrong; B,D correct. C: 21/39 correct. B: 24/39. A: 15/39. D: 23/39.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round40: A1 B0 C1 D0 label0. A,C wrong; B,D correct. C: 21/39 correct. B: 24/39. A: 15/39. D: 23/39.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round41: A1 B1 C1 D0 label1. A,B,C correct; D wrong. C: 22/40 correct. B: 25/40. A: 16/40. D: 23/40.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round41: A1 B1 C1 D0 label1. A,B,C correct; D wrong. C: 22/40 correct. B: 25/40. A: 16/40. D: 23/40.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round41: A1 B1 C1 D0 label1. A,B,C correct; D wrong. C: 22/40 correct. B: 25/40. A: 16/40. D: 23/40.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round42: A1 B0 C1 D0 label1. A,C correct; B,D wrong. C: 23/41 correct. B: 25/41. A: 17/41. D: 23/41.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round42: A1 B0 C1 D0 label1. A,C correct; B,D wrong. C: 23/41 correct. B: 25/41. A: 17/41. D: 23/41.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round42: A1 B0 C1 D0 label1. A,C correct; B,D wrong. C: 23/41 correct. B: 25/41. A: 17/41. D: 23/41.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round43: A1 B0 C0 D0 label0. A wrong; B,C,D correct. C: 24/42 correct. B: 26/42. A: 17/42. D: 24/42.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round43: A1 B0 C0 D0 label0. A wrong; B,C,D correct. C: 24/42 correct. B: 26/42. A: 17/42. D: 24/42.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round43: A1 B0 C0 D0 label0. A wrong; B,C,D correct. C: 24/42 correct. B: 26/42. A: 17/42. D: 24/42.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round44: A1 B0 C0 D1 label0. A,D wrong; B,C correct. C: 25/43 correct. B: 27/43. A: 17/43. D: 24/43.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round44: A1 B0 C0 D1 label0. A,D wrong; B,C correct. C: 25/43 correct. B: 27/43. A: 17/43. D: 24/43.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round44: A1 B0 C0 D1 label0. A,D wrong; B,C correct. C: 25/43 correct. B: 27/43. A: 17/43. D: 24/43.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round45: A1 B0 C0 D0 label0. A wrong; B,C,D correct. C: 26/44 correct. B: 28/44. A: 17/44. D: 25/44.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round45: A1 B0 C0 D0 label0. A wrong; B,C,D correct. C: 26/44 correct. B: 28/44. A: 17/44. D: 25/44.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round45: A1 B0 C0 D0 label0. A wrong; B,C,D correct. C: 26/44 correct. B: 28/44. A: 17/44. D: 25/44.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round46: all 0 label0. All correct. C: 27/45 correct. B: 29/45. A: 18/45. D: 26/45.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round46: all 0 label0. All correct. C: 27/45 correct. B: 29/45. A: 18/45. D: 26/45.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round46: all 0 label0. All correct. C: 27/45 correct. B: 29/45. A: 18/45. D: 26/45.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round47: A0 B1 C0 D0 label1. A,C,D wrong; B correct. C: 27/46 correct. B: 30/46. A: 18/46. D: 26/46.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round47: A0 B1 C0 D0 label1. A,C,D wrong; B correct. C: 27/46 correct. B: 30/46. A: 18/46. D: 26/46.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round47: A0 B1 C0 D0 label1. A,C,D wrong; B correct. C: 27/46 correct. B: 30/46. A: 18/46. D: 26/46.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round48: all 0 label0. All correct. C: 28/47 correct. B: 31/47. A: 19/47. D: 27/47.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round48: all 0 label0. All correct. C: 28/47 correct. B: 31/47. A: 19/47. D: 27/47.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round48: all 0 label0. All correct. C: 28/47 correct. B: 31/47. A: 19/47. D: 27/47.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round49: A0 B0 C1 D0 label0. A,B,D correct; C wrong. C: 28/48 correct. B: 32/48. A: 20/48. D: 28/48.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round49: A0 B0 C1 D0 label0. A,B,D correct; C wrong. C: 28/48 correct. B: 32/48. A: 20/48. D: 28/48.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round49: A0 B0 C1 D0 label0. A,B,D correct; C wrong. C: 28/48 correct. B: 32/48. A: 20/48. D: 28/48.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round50: A1 B0 C0 D1 label0. A,D wrong; B,C correct. C: 29/49 correct. B: 33/49. A: 20/49. D: 28/49.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round50: A1 B0 C0 D1 label0. A,D wrong; B,C correct. C: 29/49 correct. B: 33/49. A: 20/49. D: 28/49.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round50: A1 B0 C0 D1 label0. A,D wrong; B,C correct. C: 29/49 correct. B: 33/49. A: 20/49. D: 28/49.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round51: A0 B1 C1 D1 label1. A wrong; B,C,D correct. C: 30/50 correct. B: 34/50. A: 20/50. D: 29/50.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round51: A0 B1 C1 D1 label1. A wrong; B,C,D correct. C: 30/50 correct. B: 34/50. A: 20/50. D: 29/50.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round51: A0 B1 C1 D1 label1. A wrong; B,C,D correct. C: 30/50 correct. B: 34/50. A: 20/50. D: 29/50.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round52: A0 B1 C0 D0 label1. A,C,D wrong; B correct. C: 30/51 correct. B: 35/51. A: 20/51. D: 29/51.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round52: A0 B1 C0 D0 label1. A,C,D wrong; B correct. C: 30/51 correct. B: 35/51. A: 20/51. D: 29/51.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round52: A0 B1 C0 D0 label1. A,C,D wrong; B correct. C: 30/51 correct. B: 35/51. A: 20/51. D: 29/51.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round53: A0 B1 C1 D1 label1. A wrong; B,C,D correct. C: 31/52 correct. B: 36/52. A: 20/52. D: 30/52.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round53: A0 B1 C1 D1 label1. A wrong; B,C,D correct. C: 31/52 correct. B: 36/52. A: 20/52. D: 30/52.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round53: A0 B1 C1 D1 label1. A wrong; B,C,D correct. C: 31/52 correct. B: 36/52. A: 20/52. D: 30/52.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round54: A1 B1 C0 D1 label1. A,B,D correct; C wrong. C: 31/53 correct. B: 37/53. A: 21/53. D: 31/53.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round54: A1 B1 C0 D1 label1. A,B,D correct; C wrong. C: 31/53 correct. B: 37/53. A: 21/53. D: 31/53.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round54: A1 B1 C0 D1 label1. A,B,D correct; C wrong. C: 31/53 correct. B: 37/53. A: 21/53. D: 31/53.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round55: A0 B0 C0 D1 label0. All correct. C: 32/54 correct. B: 38/54. A: 22/54. D: 32/54.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round55: A0 B0 C0 D1 label0. All correct. C: 32/54 correct. B: 38/54. A: 22/54. D: 32/54.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round55: A0 B0 C0 D1 label0. All correct. C: 32/54 correct. B: 38/54. A: 22/54. D: 32/54.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round56: A0 B1 C0 D1 label1. A,C wrong; B,D correct. C: 32/55 correct. B: 39/55. A: 22/55. D: 33/55.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round56: A0 B1 C0 D1 label1. A,C wrong; B,D correct. C: 32/55 correct. B: 39/55. A: 22/55. D: 33/55.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round56: A0 B1 C0 D1 label1. A,C wrong; B,D correct. C: 32/55 correct. B: 39/55. A: 22/55. D: 33/55.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round57: A0 B0 C1 D1 label1. A,B wrong; C,D correct. C: 33/56 correct. B: 39/56. A: 22/56. D: 34/56.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round57: A0 B0 C1 D1 label1. A,B wrong; C,D correct. C: 33/56 correct. B: 39/56. A: 22/56. D: 34/56.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round57: A0 B0 C1 D1 label1. A,B wrong; C,D correct. C: 33/56 correct. B: 39/56. A: 22/56. D: 34/56.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round58: A0 B1 C0 D0 label0. A,C,D correct; B wrong. C: 34/57 correct. B: 39/57. A: 23/57. D: 35/57.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round58: A0 B1 C0 D0 label0. A,C,D correct; B wrong. C: 34/57 correct. B: 39/57. A: 23/57. D: 35/57.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round58: A0 B1 C0 D0 label0. A,C,D correct; B wrong. C: 34/57 correct. B: 39/57. A: 23/57. D: 35/57.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round59: A1 B0 C1 D0 label1. A,C correct; B,D wrong. C: 35/58 correct. B: 39/58. A: 24/58. D: 35/58.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round59: A1 B0 C1 D0 label1. A,C correct; B,D wrong. C: 35/58 correct. B: 39/58. A: 24/58. D: 35/58.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round59: A1 B0 C1 D0 label1. A,C correct; B,D wrong. C: 35/58 correct. B: 39/58. A: 24/58. D: 35/58.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round60: all 1 label0. All wrong. C: 35/59 correct. B: 39/59. A: 24/59. D: 35/59.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round60: all 1 label0. All wrong. C: 35/59 correct. B: 39/59. A: 24/59. D: 35/59.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round60: all 1 label0. All wrong. C: 35/59 correct. B: 39/59. A: 24/59. D: 35/59.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round61: A1 B0 C1 D0 label0. A,C wrong; B,D correct. C: 35/60 correct. B: 40/60. A: 24/60. D: 36/60.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round61: A1 B0 C1 D0 label0. A,C wrong; B,D correct. C: 35/60 correct. B: 40/60. A: 24/60. D: 36/60.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round61: A1 B0 C1 D0 label0. A,C wrong; B,D correct. C: 35/60 correct. B: 40/60. A: 24/60. D: 36/60.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round62: A1 B0 C1 D1 label0. A,C,D wrong; B correct. C: 35/61 correct. B: 41/61. A: 24/61. D: 36/61.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round62: A1 B0 C1 D1 label0. A,C,D wrong; B correct. C: 35/61 correct. B: 41/61. A: 24/61. D: 36/61.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round62: A1 B0 C1 D1 label0. A,C,D wrong; B correct. C: 35/61 correct. B: 41/61. A: 24/61. D: 36/61.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round63: A1 B0 C0 D1 label0. A,D wrong; B,C correct. C: 36/62 correct. B: 42/62. A: 24/62. D: 36/62.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round63: A1 B0 C0 D1 label0. A,D wrong; B,C correct. C: 36/62 correct. B: 42/62. A: 24/62. D: 36/62.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round63: A1 B0 C0 D1 label0. A,D wrong; B,C correct. C: 36/62 correct. B: 42/62. A: 24/62. D: 36/62.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round64: A0 B1 C0 D1 label1. A,C wrong; B,D correct. C: 36/63 correct. B: 43/63. A: 24/63. D: 37/63.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round64: A0 B1 C0 D1 label1. A,C wrong; B,D correct. C: 36/63 correct. B: 43/63. A: 24/63. D: 37/63.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round64: A0 B1 C0 D1 label1. A,C wrong; B,D correct. C: 36/63 correct. B: 43/63. A: 24/63. D: 37/63.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round65: all 1 label1. All correct. C: 37/64 correct. B: 44/64. A: 25/64. D: 38/64.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round65: all 1 label1. All correct. C: 37/64 correct. B: 44/64. A: 25/64. D: 38/64.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round65: all 1 label1. All correct. C: 37/64 correct. B: 44/64. A: 25/64. D: 38/64.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round66: A0 B1 C1 D0 label1. A,D wrong; B,C correct. C: 38/65 correct. B: 45/65. A: 25/65. D: 38/65.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round66: A0 B1 C1 D0 label1. A,D wrong; B,C correct. C: 38/65 correct. B: 45/65. A: 25/65. D: 38/65.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round66: A0 B1 C1 D0 label1. A,D wrong; B,C correct. C: 38/65 correct. B: 45/65. A: 25/65. D: 38/65.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round67: A1 B0 C0 D0 label0. A wrong; B,C,D correct. C: 39/66 correct. B: 46/66. A: 25/66. D: 39/66.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round67: A1 B0 C0 D0 label0. A wrong; B,C,D correct. C: 39/66 correct. B: 46/66. A: 25/66. D: 39/66.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round67: A1 B0 C0 D0 label0. A wrong; B,C,D correct. C: 39/66 correct. B: 46/66. A: 25/66. D: 39/66.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round68: A1 B1 C1 D0 label1. A,B,C correct; D wrong. C: 40/67 correct. B: 47/67. A: 26/67. D: 39/67.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round68: A1 B1 C1 D0 label1. A,B,C correct; D wrong. C: 40/67 correct. B: 47/67. A: 26/67. D: 39/67.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round68: A1 B1 C1 D0 label1. A,B,C correct; D wrong. C: 40/67 correct. B: 47/67. A: 26/67. D: 39/67.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round69: A1 B0 C1 D1 label0. A,C,D wrong; B correct. C: 40/68 correct. B: 48/68. A: 26/68. D: 39/68.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round69: A1 B0 C1 D1 label0. A,C,D wrong; B correct. C: 40/68 correct. B: 48/68. A: 26/68. D: 39/68.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round69: A1 B0 C1 D1 label0. A,C,D wrong; B correct. C: 40/68 correct. B: 48/68. A: 26/68. D: 39/68.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round70: A0 B0 C0 D1 label0. All correct. C: 41/69 correct. B: 49/69. A: 27/69. D: 40/69.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round70: A0 B0 C0 D1 label0. All correct. C: 41/69 correct. B: 49/69. A: 27/69. D: 40/69.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round70: A0 B0 C0 D1 label0. All correct. C: 41/69 correct. B: 49/69. A: 27/69. D: 40/69.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round71: A1 B1 C0 D1 label0. A,B,D wrong; C correct. C: 42/70 correct. B: 49/70. A: 27/70. D: 40/70.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round71: A1 B1 C0 D1 label0. A,B,D wrong; C correct. C: 42/70 correct. B: 49/70. A: 27/70. D: 40/70.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round71: A1 B1 C0 D1 label0. A,B,D wrong; C correct. C: 42/70 correct. B: 49/70. A: 27/70. D: 40/70.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round72: A0 B1 C1 D1 label1. A wrong; B,C,D correct. C: 43/71 correct. B: 50/71. A: 27/71. D: 41/71.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round72: A0 B1 C1 D1 label1. A wrong; B,C,D correct. C: 43/71 correct. B: 50/71. A: 27/71. D: 41/71.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round72: A0 B1 C1 D1 label1. A wrong; B,C,D correct. C: 43/71 correct. B: 50/71. A: 27/71. D: 41/71.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round73: A0 B1 C1 D0 label1. A,D wrong; B,C correct. C: 44/72 correct. B: 51/72. A: 27/72. D: 41/72.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round73: A0 B1 C1 D0 label1. A,D wrong; B,C correct. C: 44/72 correct. B: 51/72. A: 27/72. D: 41/72.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round73: A0 B1 C1 D0 label1. A,D wrong; B,C correct. C: 44/72 correct. B: 51/72. A: 27/72. D: 41/72.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round74: all 1 label1. All correct. C: 45/73 correct. B: 52/73. A: 28/73. D: 42/73.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round74: all 1 label1. All correct. C: 45/73 correct. B: 52/73. A: 28/73. D: 42/73.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round74: all 1 label1. All correct. C: 45/73 correct. B: 52/73. A: 28/73. D: 42/73.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round75: A1 B0 C0 D0 label0. A wrong; B,C,D correct. C: 46/74 correct. B: 53/74. A: 28/74. D: 43/74.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round75: A1 B0 C0 D0 label0. A wrong; B,C,D correct. C: 46/74 correct. B: 53/74. A: 28/74. D: 43/74.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round75: A1 B0 C0 D0 label0. A wrong; B,C,D correct. C: 46/74 correct. B: 53/74. A: 28/74. D: 43/74.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round76: all 0 label0. All correct. C: 47/75 correct. B: 54/75. A: 29/75. D: 44/75.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round76: all 0 label0. All correct. C: 47/75 correct. B: 54/75. A: 29/75. D: 44/75.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round76: all 0 label0. All correct. C: 47/75 correct. B: 54/75. A: 29/75. D: 44/75.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round77: all 1 label1. All correct. C: 48/76 correct. B: 55/76. A: 30/76. D: 45/76.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round77: all 1 label1. All correct. C: 48/76 correct. B: 55/76. A: 30/76. D: 45/76.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round77: all 1 label1. All correct. C: 48/76 correct. B: 55/76. A: 30/76. D: 45/76.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round78: A1 B0 C1 D1 label0. A,C,D wrong; B correct. C: 48/77 correct. B: 56/77. A: 30/77. D: 45/77.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round78: A1 B0 C1 D1 label0. A,C,D wrong; B correct. C: 48/77 correct. B: 56/77. A: 30/77. D: 45/77.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round78: A1 B0 C1 D1 label0. A,C,D wrong; B correct. C: 48/77 correct. B: 56/77. A: 30/77. D: 45/77.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round79: all 1 label1. All correct. C: 49/78 correct. B: 57/78. A: 31/78. D: 46/78.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round79: all 1 label1. All correct. C: 49/78 correct. B: 57/78. A: 31/78. D: 46/78.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round79: all 1 label1. All correct. C: 49/78 correct. B: 57/78. A: 31/78. D: 46/78.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round80: A0 B1 C0 D0 label1. A,C,D wrong; B correct. C: 49/79 correct. B: 58/79. A: 31/79. D: 46/79.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round80: A0 B1 C0 D0 label1. A,C,D wrong; B correct. C: 49/79 correct. B: 58/79. A: 31/79. D: 46/79.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round80: A0 B1 C0 D0 label1. A,C,D wrong; B correct. C: 49/79 correct. B: 58/79. A: 31/79. D: 46/79.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round81: A0 B0 C0 D1 label1. A,B,C wrong; D correct. C: 49/80 correct. B: 58/80. A: 31/80. D: 47/80.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round81: A0 B0 C0 D1 label1. A,B,C wrong; D correct. C: 49/80 correct. B: 58/80. A: 31/80. D: 47/80.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round81: A0 B0 C0 D1 label1. A,B,C wrong; D correct. C: 49/80 correct. B: 58/80. A: 31/80. D: 47/80.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round82: A0 B0 C0 D1 label0. All correct. C: 50/81 correct. B: 59/81. A: 32/81. D: 48/81.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round82: A0 B0 C0 D1 label0. All correct. C: 50/81 correct. B: 59/81. A: 32/81. D: 48/81.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round82: A0 B0 C0 D1 label0. All correct. C: 50/81 correct. B: 59/81. A: 32/81. D: 48/81.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round83: A0 B1 C0 D0 label1. A,C,D wrong; B correct. C: 50/82 correct. B: 60/82. A: 32/82. D: 48/82.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round83: A0 B1 C0 D0 label1. A,C,D wrong; B correct. C: 50/82 correct. B: 60/82. A: 32/82. D: 48/82.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round83: A0 B1 C0 D0 label1. A,C,D wrong; B correct. C: 50/82 correct. B: 60/82. A: 32/82. D: 48/82.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round84: A0 B0 C1 D0 label0. A,B,D correct; C wrong. C: 50/83 correct. B: 61/83. A: 33/83. D: 49/83.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round84: A0 B0 C1 D0 label0. A,B,D correct; C wrong. C: 50/83 correct. B: 61/83. A: 33/83. D: 49/83.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round84: A0 B0 C1 D0 label0. A,B,D correct; C wrong. C: 50/83 correct. B: 61/83. A: 33/83. D: 49/83.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round85: A1 B1 C0 D0 label0. A,B wrong; C,D correct. C: 51/84 correct. B: 61/84. A: 33/84. D: 50/84.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round85: A1 B1 C0 D0 label0. A,B wrong; C,D correct. C: 51/84 correct. B: 61/84. A: 33/84. D: 50/84.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round85: A1 B1 C0 D0 label0. A,B wrong; C,D correct. C: 51/84 correct. B: 61/84. A: 33/84. D: 50/84.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round86: A1 B1 C0 D1 label1. A,B,D correct; C wrong. C: 51/85 correct. B: 62/85. A: 34/85. D: 51/85.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round86: A1 B1 C0 D1 label1. A,B,D correct; C wrong. C: 51/85 correct. B: 62/85. A: 34/85. D: 51/85.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round86: A1 B1 C0 D1 label1. A,B,D correct; C wrong. C: 51/85 correct. B: 62/85. A: 34/85. D: 51/85.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round87: A0 B1 C0 D0 label1. A,C,D wrong; B correct. C: 51/86 correct. B: 63/86. A: 34/86. D: 51/86.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round87: A0 B1 C0 D0 label1. A,C,D wrong; B correct. C: 51/86 correct. B: 63/86. A: 34/86. D: 51/86.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round87: A0 B1 C0 D0 label1. A,C,D wrong; B correct. C: 51/86 correct. B: 63/86. A: 34/86. D: 51/86.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round88: A1 B0 C0 D0 label1. A correct; B,C,D wrong. C: 51/87 correct. B: 63/87. A: 35/87. D: 51/87.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round88: A1 B0 C0 D0 label1. A correct; B,C,D wrong. C: 51/87 correct. B: 63/87. A: 35/87. D: 51/87.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round88: A1 B0 C0 D0 label1. A correct; B,C,D wrong. C: 51/87 correct. B: 63/87. A: 35/87. D: 51/87.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round89: A1 B0 C0 D1 label1. A,D correct; B,C wrong. C: 51/88 correct. B: 63/88. A: 36/88. D: 52/88.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round89: A1 B0 C0 D1 label1. A,D correct; B,C wrong. C: 51/88 correct. B: 63/88. A: 36/88. D: 52/88.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round89: A1 B0 C0 D1 label1. A,D correct; B,C wrong. C: 51/88 correct. B: 63/88. A: 36/88. D: 52/88.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round90: all 0 label0. All correct. C: 52/89 correct. B: 64/89. A: 37/89. D: 53/89.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round90: all 0 label0. All correct. C: 52/89 correct. B: 64/89. A: 37/89. D: 53/89.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round90: all 0 label0. All correct. C: 52/89 correct. B: 64/89. A: 37/89. D: 53/89.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round91: A1 B1 C0 D1 label0. A,B,D wrong; C correct. C: 53/90 correct. B: 64/90. A: 37/90. D: 53/90.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round91: A1 B1 C0 D1 label0. A,B,D wrong; C correct. C: 53/90 correct. B: 64/90. A: 37/90. D: 53/90.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round91: A1 B1 C0 D1 label0. A,B,D wrong; C correct. C: 53/90 correct. B: 64/90. A: 37/90. D: 53/90.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round92: A0 B0 C0 D1 label1. A,B,C wrong; D correct. C: 53/91 correct. B: 64/91. A: 37/91. D: 54/91.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round92: A0 B0 C0 D1 label1. A,B,C wrong; D correct. C: 53/91 correct. B: 64/91. A: 37/91. D: 54/91.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round92: A0 B0 C0 D1 label1. A,B,C wrong; D correct. C: 53/91 correct. B: 64/91. A: 37/91. D: 54/91.\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round93: A1 B1 C0 D1 label0. A,B,D wrong; C correct. C: 54/92 correct. B: 64/92. A: 37/92. D: 54/92.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round93: A1 B1 C0 D1 label0. A,B,D wrong; C correct. C: 54/92 correct. B: 64/92. A: 37/92. D: 54/92.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round93: A1 B1 C0 D1 label0. A,B,D wrong; C correct. C: 54/92 correct. B: 64/92. A: 37/92. D: 54/92.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round94: A1 B0 C0 D1 label0. A,D wrong; B,C correct. C: 55/93 correct. B: 65/93. A: 37/93. D: 54/93.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round94: A1 B0 C0 D1 label0. A,D wrong; B,C correct. C: 55/93 correct. B: 65/93. A: 37/93. D: 54/93.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round94: A1 B0 C0 D1 label0. A,D wrong; B,C correct. C: 55/93 correct. B: 65/93. A: 37/93. D: 54/93.\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round95: A0 B1 C1 D0 label0. A,D correct; B,C wrong. C: 55/94 correct. B: 65/94. A: 38/94. D: 55/94.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round95: A0 B1 C1 D0 label0. A,D correct; B,C wrong. C: 55/94 correct. B: 65/94. A: 38/94. D: 55/94.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round95: A0 B1 C1 D0 label0. A,D correct; B,C wrong. C: 55/94 correct. B: 65/94. A: 38/94. D: 55/94.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round96: A1 B0 C0 D1 label0. A,D wrong; B,C correct. C: 56/95 correct. B: 66/95. A: 38/95. D: 55/95.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round96: A1 B0 C0 D1 label0. A,D wrong; B,C correct. C: 56/95 correct. B: 66/95. A: 38/95. D: 55/95.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round96: A1 B0 C0 D1 label0. A,D wrong; B,C correct. C: 56/95 correct. B: 66/95. A: 38/95. D: 55/95.\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round97: A0 B0 C1 D0 label0. A,B,D correct; C wrong. C: 56/96 correct. B: 67/96. A: 39/96. D: 56/96.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round97: A0 B0 C1 D0 label0. A,B,D correct; C wrong. C: 56/96 correct. B: 67/96. A: 39/96. D: 56/96.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round97: A0 B0 C1 D0 label0. A,B,D correct; C wrong. C: 56/96 correct. B: 67/96. A: 39/96. D: 56/96.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round98: A1 B0 C1 D0 label1. A,C correct; B,D wrong. C: 57/97 correct. B: 67/97. A: 40/97. D: 56/97.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round98: A1 B0 C1 D0 label1. A,C correct; B,D wrong. C: 57/97 correct. B: 67/97. A: 40/97. D: 56/97.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round98: A1 B0 C1 D0 label1. A,C correct; B,D wrong. C: 57/97 correct. B: 67/97. A: 40/97. D: 56/97.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"Round99: A1 B0 C0 D1 label0. A,D wrong; B,C correct. C: 58/98 correct. B: 68/98. A: 40/98. D: 56/98.\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"Round99: A1 B0 C0 D1 label0. A,D wrong; B,C correct. C: 58/98 correct. B: 68/98. A: 40/98. D: 56/98.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"Round99: A1 B0 C0 D1 label0. A,D wrong; B,C correct. C: 58/98 correct. B: 68/98. A: 40/98. D: 56/98.\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"Round100: A1 B0 C1 D0 label1. A,C correct; B,D wrong. C: 59/99 correct. B: 68/99. A: 41/99. D: 56/99.\"}"}

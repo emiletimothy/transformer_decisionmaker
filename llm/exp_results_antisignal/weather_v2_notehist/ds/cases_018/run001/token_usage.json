@@ -1,0 +1,1418 @@
+{
+  "total": {
+    "prompt_tokens": 2272354,
+    "completion_tokens": 4680,
+    "total_tokens": 2277034,
+    "reasoning_tokens": 0,
+    "cached_tokens": 2241536,
+    "n_calls": 200
+  },
+  "cost": {
+    "input": 0.6135,
+    "output": 0.0051,
+    "reasoning": 0.0,
+    "total": 0.6187
+  },
+  "per_step": [
+    {
+      "forecast": {
+        "prompt_tokens": 558,
+        "completion_tokens": 8,
+        "total_tokens": 566,
+        "cached_tokens": 512
+      },
+      "feedback": {
+        "prompt_tokens": 622,
+        "completion_tokens": 12,
+        "total_tokens": 634,
+        "cached_tokens": 512
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 690,
+        "completion_tokens": 8,
+        "total_tokens": 698,
+        "cached_tokens": 640
+      },
+      "feedback": {
+        "prompt_tokens": 762,
+        "completion_tokens": 22,
+        "total_tokens": 784,
+        "cached_tokens": 640
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 850,
+        "completion_tokens": 8,
+        "total_tokens": 858,
+        "cached_tokens": 768
+      },
+      "feedback": {
+        "prompt_tokens": 932,
+        "completion_tokens": 37,
+        "total_tokens": 969,
+        "cached_tokens": 768
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 1050,
+        "completion_tokens": 8,
+        "total_tokens": 1058,
+        "cached_tokens": 896
+      },
+      "feedback": {
+        "prompt_tokens": 1147,
+        "completion_tokens": 37,
+        "total_tokens": 1184,
+        "cached_tokens": 1024
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 1265,
+        "completion_tokens": 8,
+        "total_tokens": 1273,
+        "cached_tokens": 1152
+      },
+      "feedback": {
+        "prompt_tokens": 1362,
+        "completion_tokens": 32,
+        "total_tokens": 1394,
+        "cached_tokens": 1152
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 1470,
+        "completion_tokens": 8,
+        "total_tokens": 1478,
+        "cached_tokens": 1280
+      },
+      "feedback": {
+        "prompt_tokens": 1562,
+        "completion_tokens": 34,
+        "total_tokens": 1596,
+        "cached_tokens": 1408
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 1674,
+        "completion_tokens": 8,
+        "total_tokens": 1682,
+        "cached_tokens": 1536
+      },
+      "feedback": {
+        "prompt_tokens": 1768,
+        "completion_tokens": 40,
+        "total_tokens": 1808,
+        "cached_tokens": 1664
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 1892,
+        "completion_tokens": 8,
+        "total_tokens": 1900,
+        "cached_tokens": 1792
+      },
+      "feedback": {
+        "prompt_tokens": 1992,
+        "completion_tokens": 40,
+        "total_tokens": 2032,
+        "cached_tokens": 1792
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 2116,
+        "completion_tokens": 8,
+        "total_tokens": 2124,
+        "cached_tokens": 1920
+      },
+      "feedback": {
+        "prompt_tokens": 2216,
+        "completion_tokens": 40,
+        "total_tokens": 2256,
+        "cached_tokens": 2048
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 2340,
+        "completion_tokens": 8,
+        "total_tokens": 2348,
+        "cached_tokens": 2176
+      },
+      "feedback": {
+        "prompt_tokens": 2440,
+        "completion_tokens": 40,
+        "total_tokens": 2480,
+        "cached_tokens": 2304
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 2564,
+        "completion_tokens": 8,
+        "total_tokens": 2572,
+        "cached_tokens": 2432
+      },
+      "feedback": {
+        "prompt_tokens": 2664,
+        "completion_tokens": 40,
+        "total_tokens": 2704,
+        "cached_tokens": 2560
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 2788,
+        "completion_tokens": 8,
+        "total_tokens": 2796,
+        "cached_tokens": 2688
+      },
+      "feedback": {
+        "prompt_tokens": 2888,
+        "completion_tokens": 40,
+        "total_tokens": 2928,
+        "cached_tokens": 2688
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 3012,
+        "completion_tokens": 8,
+        "total_tokens": 3020,
+        "cached_tokens": 2816
+      },
+      "feedback": {
+        "prompt_tokens": 3112,
+        "completion_tokens": 40,
+        "total_tokens": 3152,
+        "cached_tokens": 2944
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 3236,
+        "completion_tokens": 8,
+        "total_tokens": 3244,
+        "cached_tokens": 3072
+      },
+      "feedback": {
+        "prompt_tokens": 3336,
+        "completion_tokens": 40,
+        "total_tokens": 3376,
+        "cached_tokens": 3200
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 3460,
+        "completion_tokens": 8,
+        "total_tokens": 3468,
+        "cached_tokens": 3328
+      },
+      "feedback": {
+        "prompt_tokens": 3560,
+        "completion_tokens": 32,
+        "total_tokens": 3592,
+        "cached_tokens": 3456
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 3668,
+        "completion_tokens": 8,
+        "total_tokens": 3676,
+        "cached_tokens": 3584
+      },
+      "feedback": {
+        "prompt_tokens": 3760,
+        "completion_tokens": 34,
+        "total_tokens": 3794,
+        "cached_tokens": 3584
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 3872,
+        "completion_tokens": 8,
+        "total_tokens": 3880,
+        "cached_tokens": 3712
+      },
+      "feedback": {
+        "prompt_tokens": 3966,
+        "completion_tokens": 32,
+        "total_tokens": 3998,
+        "cached_tokens": 3840
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 4074,
+        "completion_tokens": 8,
+        "total_tokens": 4082,
+        "cached_tokens": 3968
+      },
+      "feedback": {
+        "prompt_tokens": 4166,
+        "completion_tokens": 36,
+        "total_tokens": 4202,
+        "cached_tokens": 3968
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 4282,
+        "completion_tokens": 8,
+        "total_tokens": 4290,
+        "cached_tokens": 4096
+      },
+      "feedback": {
+        "prompt_tokens": 4378,
+        "completion_tokens": 40,
+        "total_tokens": 4418,
+        "cached_tokens": 4224
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 4502,
+        "completion_tokens": 8,
+        "total_tokens": 4510,
+        "cached_tokens": 4352
+      },
+      "feedback": {
+        "prompt_tokens": 4602,
+        "completion_tokens": 34,
+        "total_tokens": 4636,
+        "cached_tokens": 4480
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 4714,
+        "completion_tokens": 8,
+        "total_tokens": 4722,
+        "cached_tokens": 4608
+      },
+      "feedback": {
+        "prompt_tokens": 4808,
+        "completion_tokens": 40,
+        "total_tokens": 4848,
+        "cached_tokens": 4608
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 4932,
+        "completion_tokens": 8,
+        "total_tokens": 4940,
+        "cached_tokens": 4736
+      },
+      "feedback": {
+        "prompt_tokens": 5032,
+        "completion_tokens": 40,
+        "total_tokens": 5072,
+        "cached_tokens": 4864
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 5156,
+        "completion_tokens": 8,
+        "total_tokens": 5164,
+        "cached_tokens": 4992
+      },
+      "feedback": {
+        "prompt_tokens": 5256,
+        "completion_tokens": 40,
+        "total_tokens": 5296,
+        "cached_tokens": 5120
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 5380,
+        "completion_tokens": 8,
+        "total_tokens": 5388,
+        "cached_tokens": 5248
+      },
+      "feedback": {
+        "prompt_tokens": 5480,
+        "completion_tokens": 34,
+        "total_tokens": 5514,
+        "cached_tokens": 5376
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 5592,
+        "completion_tokens": 8,
+        "total_tokens": 5600,
+        "cached_tokens": 5504
+      },
+      "feedback": {
+        "prompt_tokens": 5686,
+        "completion_tokens": 40,
+        "total_tokens": 5726,
+        "cached_tokens": 5504
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 5810,
+        "completion_tokens": 8,
+        "total_tokens": 5818,
+        "cached_tokens": 5632
+      },
+      "feedback": {
+        "prompt_tokens": 5910,
+        "completion_tokens": 40,
+        "total_tokens": 5950,
+        "cached_tokens": 5760
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 6034,
+        "completion_tokens": 8,
+        "total_tokens": 6042,
+        "cached_tokens": 5888
+      },
+      "feedback": {
+        "prompt_tokens": 6134,
+        "completion_tokens": 40,
+        "total_tokens": 6174,
+        "cached_tokens": 6016
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 6258,
+        "completion_tokens": 8,
+        "total_tokens": 6266,
+        "cached_tokens": 6144
+      },
+      "feedback": {
+        "prompt_tokens": 6358,
+        "completion_tokens": 40,
+        "total_tokens": 6398,
+        "cached_tokens": 6144
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 6482,
+        "completion_tokens": 8,
+        "total_tokens": 6490,
+        "cached_tokens": 6272
+      },
+      "feedback": {
+        "prompt_tokens": 6582,
+        "completion_tokens": 40,
+        "total_tokens": 6622,
+        "cached_tokens": 6400
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 6706,
+        "completion_tokens": 8,
+        "total_tokens": 6714,
+        "cached_tokens": 6528
+      },
+      "feedback": {
+        "prompt_tokens": 6806,
+        "completion_tokens": 40,
+        "total_tokens": 6846,
+        "cached_tokens": 6656
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 6930,
+        "completion_tokens": 8,
+        "total_tokens": 6938,
+        "cached_tokens": 6784
+      },
+      "feedback": {
+        "prompt_tokens": 7030,
+        "completion_tokens": 40,
+        "total_tokens": 7070,
+        "cached_tokens": 6912
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 7154,
+        "completion_tokens": 8,
+        "total_tokens": 7162,
+        "cached_tokens": 7040
+      },
+      "feedback": {
+        "prompt_tokens": 7254,
+        "completion_tokens": 40,
+        "total_tokens": 7294,
+        "cached_tokens": 7040
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 7378,
+        "completion_tokens": 8,
+        "total_tokens": 7386,
+        "cached_tokens": 7168
+      },
+      "feedback": {
+        "prompt_tokens": 7478,
+        "completion_tokens": 40,
+        "total_tokens": 7518,
+        "cached_tokens": 7296
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 7602,
+        "completion_tokens": 8,
+        "total_tokens": 7610,
+        "cached_tokens": 7424
+      },
+      "feedback": {
+        "prompt_tokens": 7702,
+        "completion_tokens": 40,
+        "total_tokens": 7742,
+        "cached_tokens": 7552
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 7826,
+        "completion_tokens": 8,
+        "total_tokens": 7834,
+        "cached_tokens": 7680
+      },
+      "feedback": {
+        "prompt_tokens": 7926,
+        "completion_tokens": 40,
+        "total_tokens": 7966,
+        "cached_tokens": 7808
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 8050,
+        "completion_tokens": 8,
+        "total_tokens": 8058,
+        "cached_tokens": 7936
+      },
+      "feedback": {
+        "prompt_tokens": 8150,
+        "completion_tokens": 40,
+        "total_tokens": 8190,
+        "cached_tokens": 7936
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 8274,
+        "completion_tokens": 8,
+        "total_tokens": 8282,
+        "cached_tokens": 8064
+      },
+      "feedback": {
+        "prompt_tokens": 8374,
+        "completion_tokens": 40,
+        "total_tokens": 8414,
+        "cached_tokens": 8192
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 8498,
+        "completion_tokens": 8,
+        "total_tokens": 8506,
+        "cached_tokens": 8320
+      },
+      "feedback": {
+        "prompt_tokens": 8598,
+        "completion_tokens": 40,
+        "total_tokens": 8638,
+        "cached_tokens": 8448
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 8722,
+        "completion_tokens": 8,
+        "total_tokens": 8730,
+        "cached_tokens": 8576
+      },
+      "feedback": {
+        "prompt_tokens": 8822,
+        "completion_tokens": 40,
+        "total_tokens": 8862,
+        "cached_tokens": 8704
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 8946,
+        "completion_tokens": 8,
+        "total_tokens": 8954,
+        "cached_tokens": 8832
+      },
+      "feedback": {
+        "prompt_tokens": 9046,
+        "completion_tokens": 40,
+        "total_tokens": 9086,
+        "cached_tokens": 8832
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 9170,
+        "completion_tokens": 8,
+        "total_tokens": 9178,
+        "cached_tokens": 8960
+      },
+      "feedback": {
+        "prompt_tokens": 9270,
+        "completion_tokens": 40,
+        "total_tokens": 9310,
+        "cached_tokens": 9088
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 9394,
+        "completion_tokens": 8,
+        "total_tokens": 9402,
+        "cached_tokens": 9216
+      },
+      "feedback": {
+        "prompt_tokens": 9494,
+        "completion_tokens": 40,
+        "total_tokens": 9534,
+        "cached_tokens": 9344
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 9618,
+        "completion_tokens": 8,
+        "total_tokens": 9626,
+        "cached_tokens": 9472
+      },
+      "feedback": {
+        "prompt_tokens": 9718,
+        "completion_tokens": 40,
+        "total_tokens": 9758,
+        "cached_tokens": 9600
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 9842,
+        "completion_tokens": 8,
+        "total_tokens": 9850,
+        "cached_tokens": 9728
+      },
+      "feedback": {
+        "prompt_tokens": 9942,
+        "completion_tokens": 40,
+        "total_tokens": 9982,
+        "cached_tokens": 9728
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 10066,
+        "completion_tokens": 8,
+        "total_tokens": 10074,
+        "cached_tokens": 9856
+      },
+      "feedback": {
+        "prompt_tokens": 10166,
+        "completion_tokens": 40,
+        "total_tokens": 10206,
+        "cached_tokens": 9984
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 10290,
+        "completion_tokens": 8,
+        "total_tokens": 10298,
+        "cached_tokens": 10112
+      },
+      "feedback": {
+        "prompt_tokens": 10390,
+        "completion_tokens": 40,
+        "total_tokens": 10430,
+        "cached_tokens": 10240
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 10514,
+        "completion_tokens": 8,
+        "total_tokens": 10522,
+        "cached_tokens": 10368
+      },
+      "feedback": {
+        "prompt_tokens": 10614,
+        "completion_tokens": 40,
+        "total_tokens": 10654,
+        "cached_tokens": 10496
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 10738,
+        "completion_tokens": 8,
+        "total_tokens": 10746,
+        "cached_tokens": 10624
+      },
+      "feedback": {
+        "prompt_tokens": 10838,
+        "completion_tokens": 40,
+        "total_tokens": 10878,
+        "cached_tokens": 10624
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 10962,
+        "completion_tokens": 8,
+        "total_tokens": 10970,
+        "cached_tokens": 10752
+      },
+      "feedback": {
+        "prompt_tokens": 11062,
+        "completion_tokens": 40,
+        "total_tokens": 11102,
+        "cached_tokens": 10880
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 11186,
+        "completion_tokens": 8,
+        "total_tokens": 11194,
+        "cached_tokens": 11008
+      },
+      "feedback": {
+        "prompt_tokens": 11286,
+        "completion_tokens": 40,
+        "total_tokens": 11326,
+        "cached_tokens": 11136
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 11410,
+        "completion_tokens": 8,
+        "total_tokens": 11418,
+        "cached_tokens": 11264
+      },
+      "feedback": {
+        "prompt_tokens": 11510,
+        "completion_tokens": 40,
+        "total_tokens": 11550,
+        "cached_tokens": 11392
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 11634,
+        "completion_tokens": 8,
+        "total_tokens": 11642,
+        "cached_tokens": 11520
+      },
+      "feedback": {
+        "prompt_tokens": 11734,
+        "completion_tokens": 40,
+        "total_tokens": 11774,
+        "cached_tokens": 11520
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 11858,
+        "completion_tokens": 8,
+        "total_tokens": 11866,
+        "cached_tokens": 11648
+      },
+      "feedback": {
+        "prompt_tokens": 11958,
+        "completion_tokens": 40,
+        "total_tokens": 11998,
+        "cached_tokens": 11776
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 12082,
+        "completion_tokens": 8,
+        "total_tokens": 12090,
+        "cached_tokens": 11904
+      },
+      "feedback": {
+        "prompt_tokens": 12182,
+        "completion_tokens": 40,
+        "total_tokens": 12222,
+        "cached_tokens": 12032
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 12306,
+        "completion_tokens": 8,
+        "total_tokens": 12314,
+        "cached_tokens": 12160
+      },
+      "feedback": {
+        "prompt_tokens": 12406,
+        "completion_tokens": 40,
+        "total_tokens": 12446,
+        "cached_tokens": 12288
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 12530,
+        "completion_tokens": 8,
+        "total_tokens": 12538,
+        "cached_tokens": 12416
+      },
+      "feedback": {
+        "prompt_tokens": 12630,
+        "completion_tokens": 40,
+        "total_tokens": 12670,
+        "cached_tokens": 12416
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 12754,
+        "completion_tokens": 8,
+        "total_tokens": 12762,
+        "cached_tokens": 12544
+      },
+      "feedback": {
+        "prompt_tokens": 12854,
+        "completion_tokens": 40,
+        "total_tokens": 12894,
+        "cached_tokens": 12672
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 12978,
+        "completion_tokens": 8,
+        "total_tokens": 12986,
+        "cached_tokens": 12800
+      },
+      "feedback": {
+        "prompt_tokens": 13078,
+        "completion_tokens": 40,
+        "total_tokens": 13118,
+        "cached_tokens": 12928
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 13202,
+        "completion_tokens": 8,
+        "total_tokens": 13210,
+        "cached_tokens": 13056
+      },
+      "feedback": {
+        "prompt_tokens": 13302,
+        "completion_tokens": 40,
+        "total_tokens": 13342,
+        "cached_tokens": 13184
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 13426,
+        "completion_tokens": 8,
+        "total_tokens": 13434,
+        "cached_tokens": 13312
+      },
+      "feedback": {
+        "prompt_tokens": 13526,
+        "completion_tokens": 40,
+        "total_tokens": 13566,
+        "cached_tokens": 13312
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 13650,
+        "completion_tokens": 8,
+        "total_tokens": 13658,
+        "cached_tokens": 13440
+      },
+      "feedback": {
+        "prompt_tokens": 13750,
+        "completion_tokens": 40,
+        "total_tokens": 13790,
+        "cached_tokens": 13568
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 13874,
+        "completion_tokens": 8,
+        "total_tokens": 13882,
+        "cached_tokens": 13696
+      },
+      "feedback": {
+        "prompt_tokens": 13974,
+        "completion_tokens": 40,
+        "total_tokens": 14014,
+        "cached_tokens": 13824
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 14098,
+        "completion_tokens": 8,
+        "total_tokens": 14106,
+        "cached_tokens": 13952
+      },
+      "feedback": {
+        "prompt_tokens": 14198,
+        "completion_tokens": 40,
+        "total_tokens": 14238,
+        "cached_tokens": 14080
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 14322,
+        "completion_tokens": 8,
+        "total_tokens": 14330,
+        "cached_tokens": 14208
+      },
+      "feedback": {
+        "prompt_tokens": 14422,
+        "completion_tokens": 40,
+        "total_tokens": 14462,
+        "cached_tokens": 14208
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 14546,
+        "completion_tokens": 8,
+        "total_tokens": 14554,
+        "cached_tokens": 14336
+      },
+      "feedback": {
+        "prompt_tokens": 14646,
+        "completion_tokens": 40,
+        "total_tokens": 14686,
+        "cached_tokens": 14464
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 14770,
+        "completion_tokens": 8,
+        "total_tokens": 14778,
+        "cached_tokens": 14592
+      },
+      "feedback": {
+        "prompt_tokens": 14870,
+        "completion_tokens": 40,
+        "total_tokens": 14910,
+        "cached_tokens": 14720
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 14994,
+        "completion_tokens": 8,
+        "total_tokens": 15002,
+        "cached_tokens": 14848
+      },
+      "feedback": {
+        "prompt_tokens": 15094,
+        "completion_tokens": 40,
+        "total_tokens": 15134,
+        "cached_tokens": 14976
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 15218,
+        "completion_tokens": 8,
+        "total_tokens": 15226,
+        "cached_tokens": 15104
+      },
+      "feedback": {
+        "prompt_tokens": 15318,
+        "completion_tokens": 40,
+        "total_tokens": 15358,
+        "cached_tokens": 15104
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 15442,
+        "completion_tokens": 8,
+        "total_tokens": 15450,
+        "cached_tokens": 15232
+      },
+      "feedback": {
+        "prompt_tokens": 15542,
+        "completion_tokens": 40,
+        "total_tokens": 15582,
+        "cached_tokens": 15360
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 15666,
+        "completion_tokens": 8,
+        "total_tokens": 15674,
+        "cached_tokens": 15488
+      },
+      "feedback": {
+        "prompt_tokens": 15766,
+        "completion_tokens": 40,
+        "total_tokens": 15806,
+        "cached_tokens": 15616
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 15890,
+        "completion_tokens": 8,
+        "total_tokens": 15898,
+        "cached_tokens": 15744
+      },
+      "feedback": {
+        "prompt_tokens": 15990,
+        "completion_tokens": 40,
+        "total_tokens": 16030,
+        "cached_tokens": 15872
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 16114,
+        "completion_tokens": 8,
+        "total_tokens": 16122,
+        "cached_tokens": 16000
+      },
+      "feedback": {
+        "prompt_tokens": 16214,
+        "completion_tokens": 40,
+        "total_tokens": 16254,
+        "cached_tokens": 16000
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 16338,
+        "completion_tokens": 8,
+        "total_tokens": 16346,
+        "cached_tokens": 16128
+      },
+      "feedback": {
+        "prompt_tokens": 16438,
+        "completion_tokens": 32,
+        "total_tokens": 16470,
+        "cached_tokens": 16256
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 16546,
+        "completion_tokens": 8,
+        "total_tokens": 16554,
+        "cached_tokens": 16384
+      },
+      "feedback": {
+        "prompt_tokens": 16638,
+        "completion_tokens": 40,
+        "total_tokens": 16678,
+        "cached_tokens": 16512
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 16762,
+        "completion_tokens": 8,
+        "total_tokens": 16770,
+        "cached_tokens": 16640
+      },
+      "feedback": {
+        "prompt_tokens": 16862,
+        "completion_tokens": 32,
+        "total_tokens": 16894,
+        "cached_tokens": 16768
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 16970,
+        "completion_tokens": 8,
+        "total_tokens": 16978,
+        "cached_tokens": 16768
+      },
+      "feedback": {
+        "prompt_tokens": 17062,
+        "completion_tokens": 40,
+        "total_tokens": 17102,
+        "cached_tokens": 16896
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 17186,
+        "completion_tokens": 8,
+        "total_tokens": 17194,
+        "cached_tokens": 17024
+      },
+      "feedback": {
+        "prompt_tokens": 17286,
+        "completion_tokens": 40,
+        "total_tokens": 17326,
+        "cached_tokens": 17152
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 17410,
+        "completion_tokens": 8,
+        "total_tokens": 17418,
+        "cached_tokens": 17280
+      },
+      "feedback": {
+        "prompt_tokens": 17510,
+        "completion_tokens": 40,
+        "total_tokens": 17550,
+        "cached_tokens": 17408
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 17634,
+        "completion_tokens": 8,
+        "total_tokens": 17642,
+        "cached_tokens": 17536
+      },
+      "feedback": {
+        "prompt_tokens": 17734,
+        "completion_tokens": 40,
+        "total_tokens": 17774,
+        "cached_tokens": 17536
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 17858,
+        "completion_tokens": 8,
+        "total_tokens": 17866,
+        "cached_tokens": 17664
+      },
+      "feedback": {
+        "prompt_tokens": 17958,
+        "completion_tokens": 40,
+        "total_tokens": 17998,
+        "cached_tokens": 17792
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 18082,
+        "completion_tokens": 8,
+        "total_tokens": 18090,
+        "cached_tokens": 17920
+      },
+      "feedback": {
+        "prompt_tokens": 18182,
+        "completion_tokens": 40,
+        "total_tokens": 18222,
+        "cached_tokens": 18048
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 18306,
+        "completion_tokens": 8,
+        "total_tokens": 18314,
+        "cached_tokens": 18176
+      },
+      "feedback": {
+        "prompt_tokens": 18406,
+        "completion_tokens": 40,
+        "total_tokens": 18446,
+        "cached_tokens": 18304
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 18530,
+        "completion_tokens": 8,
+        "total_tokens": 18538,
+        "cached_tokens": 18432
+      },
+      "feedback": {
+        "prompt_tokens": 18630,
+        "completion_tokens": 40,
+        "total_tokens": 18670,
+        "cached_tokens": 18432
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 18754,
+        "completion_tokens": 8,
+        "total_tokens": 18762,
+        "cached_tokens": 18560
+      },
+      "feedback": {
+        "prompt_tokens": 18854,
+        "completion_tokens": 40,
+        "total_tokens": 18894,
+        "cached_tokens": 18688
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 18978,
+        "completion_tokens": 8,
+        "total_tokens": 18986,
+        "cached_tokens": 18816
+      },
+      "feedback": {
+        "prompt_tokens": 19078,
+        "completion_tokens": 40,
+        "total_tokens": 19118,
+        "cached_tokens": 18944
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 19202,
+        "completion_tokens": 8,
+        "total_tokens": 19210,
+        "cached_tokens": 19072
+      },
+      "feedback": {
+        "prompt_tokens": 19302,
+        "completion_tokens": 40,
+        "total_tokens": 19342,
+        "cached_tokens": 19200
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 19426,
+        "completion_tokens": 8,
+        "total_tokens": 19434,
+        "cached_tokens": 19328
+      },
+      "feedback": {
+        "prompt_tokens": 19526,
+        "completion_tokens": 40,
+        "total_tokens": 19566,
+        "cached_tokens": 19328
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 19650,
+        "completion_tokens": 8,
+        "total_tokens": 19658,
+        "cached_tokens": 19456
+      },
+      "feedback": {
+        "prompt_tokens": 19750,
+        "completion_tokens": 40,
+        "total_tokens": 19790,
+        "cached_tokens": 19584
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 19874,
+        "completion_tokens": 8,
+        "total_tokens": 19882,
+        "cached_tokens": 19712
+      },
+      "feedback": {
+        "prompt_tokens": 19974,
+        "completion_tokens": 40,
+        "total_tokens": 20014,
+        "cached_tokens": 19840
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 20098,
+        "completion_tokens": 8,
+        "total_tokens": 20106,
+        "cached_tokens": 19968
+      },
+      "feedback": {
+        "prompt_tokens": 20198,
+        "completion_tokens": 40,
+        "total_tokens": 20238,
+        "cached_tokens": 20096
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 20322,
+        "completion_tokens": 8,
+        "total_tokens": 20330,
+        "cached_tokens": 20224
+      },
+      "feedback": {
+        "prompt_tokens": 20422,
+        "completion_tokens": 40,
+        "total_tokens": 20462,
+        "cached_tokens": 20224
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 20546,
+        "completion_tokens": 8,
+        "total_tokens": 20554,
+        "cached_tokens": 20352
+      },
+      "feedback": {
+        "prompt_tokens": 20646,
+        "completion_tokens": 40,
+        "total_tokens": 20686,
+        "cached_tokens": 20480
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 20770,
+        "completion_tokens": 8,
+        "total_tokens": 20778,
+        "cached_tokens": 20608
+      },
+      "feedback": {
+        "prompt_tokens": 20870,
+        "completion_tokens": 40,
+        "total_tokens": 20910,
+        "cached_tokens": 20736
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 20994,
+        "completion_tokens": 8,
+        "total_tokens": 21002,
+        "cached_tokens": 20864
+      },
+      "feedback": {
+        "prompt_tokens": 21094,
+        "completion_tokens": 40,
+        "total_tokens": 21134,
+        "cached_tokens": 20992
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 21218,
+        "completion_tokens": 8,
+        "total_tokens": 21226,
+        "cached_tokens": 21120
+      },
+      "feedback": {
+        "prompt_tokens": 21318,
+        "completion_tokens": 40,
+        "total_tokens": 21358,
+        "cached_tokens": 21120
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 21442,
+        "completion_tokens": 8,
+        "total_tokens": 21450,
+        "cached_tokens": 21248
+      },
+      "feedback": {
+        "prompt_tokens": 21542,
+        "completion_tokens": 40,
+        "total_tokens": 21582,
+        "cached_tokens": 21376
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 21666,
+        "completion_tokens": 8,
+        "total_tokens": 21674,
+        "cached_tokens": 21504
+      },
+      "feedback": {
+        "prompt_tokens": 21766,
+        "completion_tokens": 40,
+        "total_tokens": 21806,
+        "cached_tokens": 21632
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 21890,
+        "completion_tokens": 8,
+        "total_tokens": 21898,
+        "cached_tokens": 21760
+      },
+      "feedback": {
+        "prompt_tokens": 21990,
+        "completion_tokens": 40,
+        "total_tokens": 22030,
+        "cached_tokens": 21888
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 22114,
+        "completion_tokens": 8,
+        "total_tokens": 22122,
+        "cached_tokens": 22016
+      },
+      "feedback": {
+        "prompt_tokens": 22214,
+        "completion_tokens": 40,
+        "total_tokens": 22254,
+        "cached_tokens": 22016
+      }
+    },
+    {
+      "forecast": {
+        "prompt_tokens": 22338,
+        "completion_tokens": 8,
+        "total_tokens": 22346,
+        "cached_tokens": 22144
+      },
+      "feedback": {
+        "prompt_tokens": 22438,
+        "completion_tokens": 40,
+        "total_tokens": 22478,
+        "cached_tokens": 22272
+      }
+    }
+  ]
+}

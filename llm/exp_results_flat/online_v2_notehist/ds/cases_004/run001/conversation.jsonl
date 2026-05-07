@@ -1,0 +1,401 @@
+{"role": "system", "content": "You are helping in an online learning setting.\n\nIn each round, the same four experts \u2014 Expert A, Expert B, Expert C, and Expert D \u2014 make predictions about a binary outcome. Each expert predicts either 0 or 1. Some experts may be consistently more accurate than others.\n\nYour job is to make your own prediction based on the experts' predictions. Your goal is to be as accurate as possible over time. Use past outcomes to figure out which experts are most trustworthy and improve your future predictions.\n\nThis interaction has two kinds of turns.\n\n1. Prediction turn\n\nIn a prediction turn, you are given:\n\n* a short note from earlier rounds,\n* this round's predictions from the four experts.\n\nYou should use the note and the experts' predictions to make your prediction for this round.\n\nInput format:\n{\n\"turn_type\": \"prediction\",\n\"note\": \"<short text>\",\n\"Expert_A\": 0 or 1,\n\"Expert_B\": 0 or 1,\n\"Expert_C\": 0 or 1,\n\"Expert_D\": 0 or 1\n}\n\nOutput format:\n{\n\"prediction\": 0 or 1\n}\n\n2. Feedback turn\n\nIn a feedback turn, you are given:\n\n* the previous note,\n* this round's predictions from the four experts,\n* the true label for this round.\n\nYou should produce a new short note for future rounds. The note should keep only the information that is most useful for making later predictions.\n\nInput format:\n{\n\"turn_type\": \"feedback\",\n\"note\": \"<short text>\",\n\"Expert_A\": 0 or 1,\n\"Expert_B\": 0 or 1,\n\"Expert_C\": 0 or 1,\n\"Expert_D\": 0 or 1,\n\"true_label\": 0 or 1\n}\n\nOutput format:\n{\n\"note\": \"<short text>\"\n}\n\nImportant requirements:\n\n* Do not use any external tools.\n* Do not write or execute code.\n* Do not provide any explanation or reasoning steps.\n* Keep the note short and compact.\n* The note must be at most 500 words long.\n* The note should contain only the most useful information for future predictions.\n* Do not repeat the full history.\n* Output valid JSON only \u2014 no explanation, no reasoning steps, no other text.\n"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 B:1 C:1 D:0 correct\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 B:1 C:1 D:0 correct\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 B:1 C:1 D:0 correct\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1/1 B:1/1 C:1/1 D:0/1\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1/1 B:1/1 C:1/1 D:0/1\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1/1 B:1/1 C:1/1 D:0/1\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:2/2 B:2/2 C:2/2 D:0/2\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:2/2 B:2/2 C:2/2 D:0/2\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:2/2 B:2/2 C:2/2 D:0/2\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:2/2 B:2/3 C:2/2 D:0/3\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:2/2 B:2/3 C:2/2 D:0/3\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:2/2 B:2/3 C:2/2 D:0/3\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:2/3 B:2/4 C:2/3 D:0/4\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:2/3 B:2/4 C:2/3 D:0/4\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:2/3 B:2/4 C:2/3 D:0/4\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:2/4 B:2/5 C:2/4 D:0/5\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:2/4 B:2/5 C:2/4 D:0/5\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:2/4 B:2/5 C:2/4 D:0/5\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:2/5 B:2/6 C:2/5 D:0/6\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:2/5 B:2/6 C:2/5 D:0/6\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:2/5 B:2/6 C:2/5 D:0/6\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:2/6 B:2/7 C:2/6 D:0/7\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:2/6 B:2/7 C:2/6 D:0/7\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:2/6 B:2/7 C:2/6 D:0/7\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:3/7 B:3/8 C:2/7 D:0/8\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:3/7 B:3/8 C:2/7 D:0/8\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:3/7 B:3/8 C:2/7 D:0/8\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:4/8 B:4/9 C:2/8 D:0/9\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:4/8 B:4/9 C:2/8 D:0/9\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:4/8 B:4/9 C:2/8 D:0/9\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:5/9 B:4/10 C:2/9 D:0/10\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:5/9 B:4/10 C:2/9 D:0/10\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:5/9 B:4/10 C:2/9 D:0/10\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:5/10 B:4/11 C:2/10 D:0/11\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:5/10 B:4/11 C:2/10 D:0/11\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:5/10 B:4/11 C:2/10 D:0/11\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:5/11 B:4/12 C:2/11 D:0/12\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:5/11 B:4/12 C:2/11 D:0/12\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:5/11 B:4/12 C:2/11 D:0/12\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:5/12 B:4/13 C:2/12 D:0/13\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:5/12 B:4/13 C:2/12 D:0/13\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:5/12 B:4/13 C:2/12 D:0/13\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:5/13 B:4/14 C:2/13 D:0/14\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:5/13 B:4/14 C:2/13 D:0/14\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:5/13 B:4/14 C:2/13 D:0/14\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:5/14 B:4/15 C:2/14 D:0/15\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:5/14 B:4/15 C:2/14 D:0/15\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:5/14 B:4/15 C:2/14 D:0/15\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:6/15 B:5/16 C:2/15 D:0/16\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:6/15 B:5/16 C:2/15 D:0/16\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:6/15 B:5/16 C:2/15 D:0/16\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:6/16 B:5/17 C:2/16 D:0/17\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:6/16 B:5/17 C:2/16 D:0/17\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:6/16 B:5/17 C:2/16 D:0/17\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:6/17 B:6/18 C:3/17 D:0/18\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:6/17 B:6/18 C:3/17 D:0/18\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:6/17 B:6/18 C:3/17 D:0/18\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:6/18 B:6/19 C:3/18 D:0/19\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:6/18 B:6/19 C:3/18 D:0/19\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:6/18 B:6/19 C:3/18 D:0/19\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:7/19 B:7/20 C:4/19 D:0/20\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:7/19 B:7/20 C:4/19 D:0/20\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:7/19 B:7/20 C:4/19 D:0/20\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:7/20 B:7/21 C:4/20 D:0/21\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:7/20 B:7/21 C:4/20 D:0/21\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:7/20 B:7/21 C:4/20 D:0/21\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:7/21 B:7/22 C:4/21 D:0/22\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:7/21 B:7/22 C:4/21 D:0/22\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:7/21 B:7/22 C:4/21 D:0/22\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:7/22 B:7/23 C:4/22 D:0/23\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:7/22 B:7/23 C:4/22 D:0/23\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:7/22 B:7/23 C:4/22 D:0/23\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:8/23 B:7/24 C:5/23 D:0/24\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:8/23 B:7/24 C:5/23 D:0/24\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:8/23 B:7/24 C:5/23 D:0/24\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:9/24 B:7/25 C:5/24 D:0/25\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:9/24 B:7/25 C:5/24 D:0/25\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:9/24 B:7/25 C:5/24 D:0/25\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:10/25 B:7/26 C:5/25 D:0/26\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:10/25 B:7/26 C:5/25 D:0/26\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:10/25 B:7/26 C:5/25 D:0/26\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:11/26 B:7/27 C:5/26 D:0/27\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:11/26 B:7/27 C:5/26 D:0/27\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:11/26 B:7/27 C:5/26 D:0/27\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:12/27 B:7/28 C:5/27 D:0/28\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:12/27 B:7/28 C:5/27 D:0/28\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:12/27 B:7/28 C:5/27 D:0/28\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:13/28 B:7/29 C:6/28 D:0/29\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:13/28 B:7/29 C:6/28 D:0/29\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:13/28 B:7/29 C:6/28 D:0/29\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:13/29 B:7/30 C:6/29 D:0/30\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:13/29 B:7/30 C:6/29 D:0/30\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:13/29 B:7/30 C:6/29 D:0/30\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:14/30 B:8/31 C:7/30 D:0/31\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:14/30 B:8/31 C:7/30 D:0/31\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:14/30 B:8/31 C:7/30 D:0/31\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:14/31 B:9/32 C:8/31 D:0/32\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:14/31 B:9/32 C:8/31 D:0/32\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:14/31 B:9/32 C:8/31 D:0/32\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:14/32 B:9/33 C:8/32 D:0/33\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:14/32 B:9/33 C:8/32 D:0/33\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:14/32 B:9/33 C:8/32 D:0/33\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:15/33 B:10/34 C:9/33 D:0/34\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:15/33 B:10/34 C:9/33 D:0/34\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:15/33 B:10/34 C:9/33 D:0/34\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:16/34 B:11/35 C:9/34 D:0/35\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:16/34 B:11/35 C:9/34 D:0/35\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:16/34 B:11/35 C:9/34 D:0/35\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:17/35 B:11/36 C:10/35 D:0/36\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:17/35 B:11/36 C:10/35 D:0/36\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:17/35 B:11/36 C:10/35 D:0/36\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:18/36 B:12/37 C:11/36 D:0/37\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:18/36 B:12/37 C:11/36 D:0/37\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:18/36 B:12/37 C:11/36 D:0/37\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:18/37 B:12/38 C:11/37 D:0/38\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:18/37 B:12/38 C:11/37 D:0/38\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:18/37 B:12/38 C:11/37 D:0/38\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:18/38 B:12/39 C:11/38 D:0/39\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:18/38 B:12/39 C:11/38 D:0/39\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:18/38 B:12/39 C:11/38 D:0/39\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:18/39 B:12/40 C:11/39 D:0/40\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:18/39 B:12/40 C:11/39 D:0/40\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:18/39 B:12/40 C:11/39 D:0/40\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:18/40 B:12/41 C:11/40 D:0/41\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:18/40 B:12/41 C:11/40 D:0/41\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:18/40 B:12/41 C:11/40 D:0/41\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:18/41 B:12/42 C:11/41 D:0/42\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:18/41 B:12/42 C:11/41 D:0/42\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:18/41 B:12/42 C:11/41 D:0/42\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:19/42 B:12/43 C:11/42 D:0/43\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:19/42 B:12/43 C:11/42 D:0/43\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:19/42 B:12/43 C:11/42 D:0/43\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:19/43 B:12/44 C:11/43 D:0/44\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:19/43 B:12/44 C:11/43 D:0/44\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:19/43 B:12/44 C:11/43 D:0/44\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:19/44 B:12/45 C:11/44 D:0/45\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:19/44 B:12/45 C:11/44 D:0/45\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:19/44 B:12/45 C:11/44 D:0/45\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:19/45 B:12/46 C:11/45 D:0/46\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:19/45 B:12/46 C:11/45 D:0/46\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:19/45 B:12/46 C:11/45 D:0/46\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:19/46 B:13/47 C:12/46 D:0/47\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:19/46 B:13/47 C:12/46 D:0/47\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:19/46 B:13/47 C:12/46 D:0/47\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:19/47 B:13/48 C:12/47 D:0/48\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:19/47 B:13/48 C:12/47 D:0/48\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:19/47 B:13/48 C:12/47 D:0/48\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:19/48 B:13/49 C:12/48 D:0/49\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:19/48 B:13/49 C:12/48 D:0/49\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:19/48 B:13/49 C:12/48 D:0/49\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:19/49 B:13/50 C:12/49 D:0/50\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:19/49 B:13/50 C:12/49 D:0/50\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:19/49 B:13/50 C:12/49 D:0/50\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:20/50 B:13/51 C:13/50 D:0/51\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:20/50 B:13/51 C:13/50 D:0/51\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:20/50 B:13/51 C:13/50 D:0/51\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:20/51 B:13/52 C:13/51 D:0/52\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:20/51 B:13/52 C:13/51 D:0/52\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:20/51 B:13/52 C:13/51 D:0/52\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:20/52 B:13/53 C:13/52 D:0/53\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:20/52 B:13/53 C:13/52 D:0/53\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:20/52 B:13/53 C:13/52 D:0/53\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:20/53 B:13/54 C:13/53 D:0/54\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:20/53 B:13/54 C:13/53 D:0/54\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:20/53 B:13/54 C:13/53 D:0/54\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:21/54 B:13/55 C:14/54 D:0/55\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:21/54 B:13/55 C:14/54 D:0/55\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:21/54 B:13/55 C:14/54 D:0/55\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:22/55 B:14/56 C:14/55 D:0/56\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:22/55 B:14/56 C:14/55 D:0/56\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:22/55 B:14/56 C:14/55 D:0/56\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:22/56 B:14/57 C:14/56 D:0/57\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:22/56 B:14/57 C:14/56 D:0/57\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:22/56 B:14/57 C:14/56 D:0/57\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:22/57 B:14/58 C:14/57 D:0/58\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:22/57 B:14/58 C:14/57 D:0/58\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:22/57 B:14/58 C:14/57 D:0/58\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:23/58 B:14/59 C:14/58 D:0/59\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:23/58 B:14/59 C:14/58 D:0/59\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:23/58 B:14/59 C:14/58 D:0/59\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:23/59 B:14/60 C:14/59 D:0/60\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:23/59 B:14/60 C:14/59 D:0/60\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:23/59 B:14/60 C:14/59 D:0/60\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:24/60 B:15/61 C:14/60 D:0/61\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:24/60 B:15/61 C:14/60 D:0/61\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:24/60 B:15/61 C:14/60 D:0/61\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:24/61 B:15/62 C:14/61 D:0/62\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:24/61 B:15/62 C:14/61 D:0/62\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:24/61 B:15/62 C:14/61 D:0/62\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:24/62 B:15/63 C:14/62 D:0/63\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:24/62 B:15/63 C:14/62 D:0/63\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:24/62 B:15/63 C:14/62 D:0/63\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:25/63 B:16/64 C:15/63 D:0/64\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:25/63 B:16/64 C:15/63 D:0/64\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:25/63 B:16/64 C:15/63 D:0/64\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:26/64 B:17/65 C:16/64 D:0/65\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:26/64 B:17/65 C:16/64 D:0/65\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:26/64 B:17/65 C:16/64 D:0/65\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:27/65 B:17/66 C:16/65 D:0/66\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:27/65 B:17/66 C:16/65 D:0/66\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:27/65 B:17/66 C:16/65 D:0/66\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:27/66 B:17/67 C:16/66 D:0/67\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:27/66 B:17/67 C:16/66 D:0/67\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:27/66 B:17/67 C:16/66 D:0/67\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:27/67 B:17/68 C:16/67 D:0/68\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:27/67 B:17/68 C:16/67 D:0/68\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:27/67 B:17/68 C:16/67 D:0/68\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:28/68 B:18/69 C:16/68 D:0/69\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:28/68 B:18/69 C:16/68 D:0/69\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:28/68 B:18/69 C:16/68 D:0/69\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:29/69 B:18/70 C:16/69 D:0/70\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:29/69 B:18/70 C:16/69 D:0/70\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:29/69 B:18/70 C:16/69 D:0/70\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:29/70 B:18/71 C:16/70 D:0/71\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:29/70 B:18/71 C:16/70 D:0/71\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:29/70 B:18/71 C:16/70 D:0/71\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:29/71 B:18/72 C:16/71 D:0/72\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:29/71 B:18/72 C:16/71 D:0/72\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:29/71 B:18/72 C:16/71 D:0/72\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:30/72 B:19/73 C:16/72 D:0/73\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:30/72 B:19/73 C:16/72 D:0/73\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:30/72 B:19/73 C:16/72 D:0/73\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:30/73 B:19/74 C:16/73 D:0/74\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:30/73 B:19/74 C:16/73 D:0/74\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:30/73 B:19/74 C:16/73 D:0/74\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:30/74 B:19/75 C:16/74 D:0/75\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:30/74 B:19/75 C:16/74 D:0/75\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:30/74 B:19/75 C:16/74 D:0/75\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:30/75 B:19/76 C:16/75 D:0/76\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:30/75 B:19/76 C:16/75 D:0/76\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:30/75 B:19/76 C:16/75 D:0/76\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:30/76 B:19/77 C:16/76 D:0/77\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:30/76 B:19/77 C:16/76 D:0/77\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:30/76 B:19/77 C:16/76 D:0/77\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:30/77 B:19/78 C:16/77 D:0/78\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:30/77 B:19/78 C:16/77 D:0/78\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:30/77 B:19/78 C:16/77 D:0/78\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:31/78 B:19/79 C:17/78 D:0/79\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:31/78 B:19/79 C:17/78 D:0/79\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:31/78 B:19/79 C:17/78 D:0/79\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:31/79 B:19/80 C:17/79 D:0/80\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:31/79 B:19/80 C:17/79 D:0/80\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:31/79 B:19/80 C:17/79 D:0/80\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:31/80 B:19/81 C:17/80 D:0/81\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:31/80 B:19/81 C:17/80 D:0/81\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:31/80 B:19/81 C:17/80 D:0/81\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:31/81 B:19/82 C:17/81 D:0/82\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:31/81 B:19/82 C:17/81 D:0/82\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:31/81 B:19/82 C:17/81 D:0/82\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:31/82 B:19/83 C:17/82 D:0/83\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:31/82 B:19/83 C:17/82 D:0/83\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:31/82 B:19/83 C:17/82 D:0/83\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:31/83 B:19/84 C:17/83 D:0/84\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:31/83 B:19/84 C:17/83 D:0/84\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:31/83 B:19/84 C:17/83 D:0/84\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:32/84 B:20/85 C:17/84 D:0/85\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:32/84 B:20/85 C:17/84 D:0/85\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:32/84 B:20/85 C:17/84 D:0/85\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:33/85 B:21/86 C:18/85 D:0/86\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:33/85 B:21/86 C:18/85 D:0/86\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:33/85 B:21/86 C:18/85 D:0/86\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:34/86 B:21/87 C:19/86 D:0/87\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:34/86 B:21/87 C:19/86 D:0/87\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:34/86 B:21/87 C:19/86 D:0/87\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:35/87 B:21/88 C:20/87 D:0/88\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:35/87 B:21/88 C:20/87 D:0/88\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:35/87 B:21/88 C:20/87 D:0/88\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:35/88 B:21/89 C:20/88 D:0/89\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:35/88 B:21/89 C:20/88 D:0/89\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:35/88 B:21/89 C:20/88 D:0/89\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:35/89 B:21/90 C:20/89 D:0/90\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:35/89 B:21/90 C:20/89 D:0/90\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:35/89 B:21/90 C:20/89 D:0/90\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:35/90 B:21/91 C:20/90 D:0/91\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:35/90 B:21/91 C:20/90 D:0/91\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:35/90 B:21/91 C:20/90 D:0/91\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:35/91 B:21/92 C:20/91 D:0/92\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:35/91 B:21/92 C:20/91 D:0/92\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:35/91 B:21/92 C:20/91 D:0/92\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:35/92 B:22/93 C:21/92 D:0/93\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:35/92 B:22/93 C:21/92 D:0/93\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:35/92 B:22/93 C:21/92 D:0/93\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:35/93 B:22/94 C:21/93 D:0/94\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:35/93 B:22/94 C:21/93 D:0/94\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:35/93 B:22/94 C:21/93 D:0/94\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:36/94 B:23/95 C:21/94 D:0/95\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:36/94 B:23/95 C:21/94 D:0/95\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:36/94 B:23/95 C:21/94 D:0/95\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:37/95 B:24/96 C:22/95 D:0/96\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:37/95 B:24/96 C:22/95 D:0/96\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:37/95 B:24/96 C:22/95 D:0/96\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:37/96 B:24/97 C:22/96 D:0/97\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:37/96 B:24/97 C:22/96 D:0/97\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:37/96 B:24/97 C:22/96 D:0/97\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:37/97 B:24/98 C:22/97 D:0/98\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:37/97 B:24/98 C:22/97 D:0/98\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:37/97 B:24/98 C:22/97 D:0/98\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:37/98 B:24/99 C:22/98 D:0/99\"}"}

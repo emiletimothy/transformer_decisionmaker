@@ -1,0 +1,401 @@
+{"role": "system", "content": "You are helping in an online learning setting.\n\nIn each round, the same four experts \u2014 Expert A, Expert B, Expert C, and Expert D \u2014 make predictions about a binary outcome. Each expert predicts either 0 or 1. Some experts may be consistently more accurate than others.\n\nYour job is to make your own prediction based on the experts' predictions. Your goal is to be as accurate as possible over time. Use past outcomes to figure out which experts are most trustworthy and improve your future predictions.\n\nThis interaction has two kinds of turns.\n\n1. Prediction turn\n\nIn a prediction turn, you are given:\n\n* a short note from earlier rounds,\n* this round's predictions from the four experts.\n\nYou should use the note and the experts' predictions to make your prediction for this round.\n\nInput format:\n{\n\"turn_type\": \"prediction\",\n\"note\": \"<short text>\",\n\"Expert_A\": 0 or 1,\n\"Expert_B\": 0 or 1,\n\"Expert_C\": 0 or 1,\n\"Expert_D\": 0 or 1\n}\n\nOutput format:\n{\n\"prediction\": 0 or 1\n}\n\n2. Feedback turn\n\nIn a feedback turn, you are given:\n\n* the previous note,\n* this round's predictions from the four experts,\n* the true label for this round.\n\nYou should produce a new short note for future rounds. The note should keep only the information that is most useful for making later predictions.\n\nInput format:\n{\n\"turn_type\": \"feedback\",\n\"note\": \"<short text>\",\n\"Expert_A\": 0 or 1,\n\"Expert_B\": 0 or 1,\n\"Expert_C\": 0 or 1,\n\"Expert_D\": 0 or 1,\n\"true_label\": 0 or 1\n}\n\nOutput format:\n{\n\"note\": \"<short text>\"\n}\n\nImportant requirements:\n\n* Do not use any external tools.\n* Do not write or execute code.\n* Do not provide any explanation or reasoning steps.\n* Keep the note short and compact.\n* The note must be at most 500 words long.\n* The note should contain only the most useful information for future predictions.\n* Do not repeat the full history.\n* Output valid JSON only \u2014 no explanation, no reasoning steps, no other text.\n"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 D:1 wrong; B:0 C:0 correct\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 D:1 wrong; B:0 C:0 correct\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 D:1 wrong; B:0 C:0 correct\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 D:1 wrong x2; B:0 correct x2; C:1 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 D:1 wrong x2; B:0 correct x2; C:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 D:1 wrong x2; B:0 correct x2; C:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 correct; B:0 correct x3; C:0 correct; D:1 wrong x3\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 correct; B:0 correct x3; C:0 correct; D:1 wrong x3\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 correct; B:0 correct x3; C:0 correct; D:1 wrong x3\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong; B:0 wrong; C:0 wrong; D:0 correct\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong; B:0 wrong; C:0 wrong; D:0 correct\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong; B:0 wrong; C:0 wrong; D:0 correct\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong x2; B:1 correct; C:1 correct; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong x2; B:1 correct; C:1 correct; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong x2; B:1 correct; C:1 correct; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 wrong; B:0 correct x2; C:0 correct x2; D:1 wrong x2\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 wrong; B:0 correct x2; C:0 correct x2; D:1 wrong x2\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 wrong; B:0 correct x2; C:0 correct x2; D:1 wrong x2\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong; B:1 correct x3; C:1 correct x3; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong; B:1 correct x3; C:1 correct x3; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong; B:1 correct x3; C:1 correct x3; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 correct; B:0 wrong; C:1 correct x4; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 correct; B:0 wrong; C:1 correct x4; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 correct; B:0 wrong; C:1 correct x4; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 wrong; B:0 correct; C:1 wrong; D:1 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 wrong; B:0 correct; C:1 wrong; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 wrong; B:0 correct; C:1 wrong; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong; B:1 correct x2; C:0 wrong; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong; B:1 correct x2; C:0 wrong; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong; B:1 correct x2; C:0 wrong; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 wrong; B:0 correct x3; C:0 correct; D:1 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 wrong; B:0 correct x3; C:0 correct; D:1 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 wrong; B:0 correct x3; C:0 correct; D:1 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 correct; B:0 wrong; C:1 correct; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 correct; B:0 wrong; C:1 correct; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 correct; B:0 wrong; C:1 correct; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 correct x2; B:1 correct; C:0 wrong; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 correct x2; B:1 correct; C:0 wrong; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 correct x2; B:1 correct; C:0 wrong; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 correct x3; B:1 correct x2; C:1 correct; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 correct x3; B:1 correct x2; C:1 correct; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 correct x3; B:1 correct x2; C:1 correct; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong; B:1 correct x3; C:1 correct x2; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong; B:1 correct x3; C:1 correct x2; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong; B:1 correct x3; C:1 correct x2; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 correct; B:1 correct x4; C:0 wrong; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 correct; B:1 correct x4; C:0 wrong; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 correct; B:1 correct x4; C:0 wrong; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 wrong; B:1 wrong; C:1 wrong; D:1 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 wrong; B:1 wrong; C:1 wrong; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 wrong; B:1 wrong; C:1 wrong; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 correct; B:0 correct; C:0 correct; D:1 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 correct; B:0 correct; C:0 correct; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 correct; B:0 correct; C:0 correct; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 correct x2; B:0 correct x2; C:1 wrong; D:1 wrong x2\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 correct x2; B:0 correct x2; C:1 wrong; D:1 wrong x2\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 correct x2; B:0 correct x2; C:1 wrong; D:1 wrong x2\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 correct x3; B:0 correct x3; C:0 correct; D:1 wrong x3\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 correct x3; B:0 correct x3; C:0 correct; D:1 wrong x3\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 correct x3; B:0 correct x3; C:0 correct; D:1 wrong x3\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong; B:0 wrong; C:0 wrong; D:0 correct\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong; B:0 wrong; C:0 wrong; D:0 correct\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong; B:0 wrong; C:0 wrong; D:0 correct\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong x2; B:1 correct; C:0 wrong x2; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong x2; B:1 correct; C:0 wrong x2; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong x2; B:1 correct; C:0 wrong x2; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 correct; B:1 correct x2; C:0 wrong x2; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 correct; B:1 correct x2; C:0 wrong x2; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 correct; B:1 correct x2; C:0 wrong x2; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong; B:0 wrong; C:1 correct; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong; B:0 wrong; C:1 correct; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong; B:0 wrong; C:1 correct; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong x2; B:0 wrong x2; C:1 correct x2; D:0 wrong x2\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong x2; B:0 wrong x2; C:1 correct x2; D:0 wrong x2\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong x2; B:0 wrong x2; C:1 correct x2; D:0 wrong x2\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong x3; B:0 wrong x3; C:0 wrong; D:0 wrong x3\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong x3; B:0 wrong x3; C:0 wrong; D:0 wrong x3\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong x3; B:0 wrong x3; C:0 wrong; D:0 wrong x3\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 correct; B:0 wrong x3; C:1 correct; D:0 wrong x3\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 correct; B:0 wrong x3; C:1 correct; D:0 wrong x3\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 correct; B:0 wrong x3; C:1 correct; D:0 wrong x3\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 correct x2; B:1 correct; C:0 wrong; D:0 wrong x3\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 correct x2; B:1 correct; C:0 wrong; D:0 wrong x3\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 correct x2; B:1 correct; C:0 wrong; D:0 wrong x3\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 correct x3; B:1 correct x2; C:1 correct; D:0 wrong x3\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 correct x3; B:1 correct x2; C:1 correct; D:0 wrong x3\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 correct x3; B:1 correct x2; C:1 correct; D:0 wrong x3\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 correct x4; B:0 wrong; C:1 correct x2; D:0 wrong x3\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 correct x4; B:0 wrong; C:1 correct x2; D:0 wrong x3\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 correct x4; B:0 wrong; C:1 correct x2; D:0 wrong x3\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 correct x5; B:1 correct; C:0 wrong; D:0 wrong x3\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 correct x5; B:1 correct; C:0 wrong; D:0 wrong x3\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 correct x5; B:1 correct; C:0 wrong; D:0 wrong x3\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 wrong; B:0 correct; C:1 wrong; D:1 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 wrong; B:0 correct; C:1 wrong; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 wrong; B:0 correct; C:1 wrong; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong; B:1 correct x2; C:1 correct; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong; B:1 correct x2; C:1 correct; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong; B:1 correct x2; C:1 correct; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 correct; B:1 wrong; C:0 correct; D:1 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 correct; B:1 wrong; C:0 correct; D:1 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 correct; B:1 wrong; C:0 correct; D:1 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 wrong; B:1 wrong x2; C:1 wrong; D:1 wrong x2\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 wrong; B:1 wrong x2; C:1 wrong; D:1 wrong x2\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 wrong; B:1 wrong x2; C:1 wrong; D:1 wrong x2\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong; B:0 wrong; C:1 correct; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong; B:0 wrong; C:1 correct; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong; B:0 wrong; C:1 correct; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 wrong; B:1 wrong; C:1 wrong; D:1 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 wrong; B:1 wrong; C:1 wrong; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 wrong; B:1 wrong; C:1 wrong; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong; B:0 wrong; C:1 correct; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong; B:0 wrong; C:1 correct; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong; B:0 wrong; C:1 correct; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong x2; B:1 correct; C:0 wrong; D:0 wrong x2\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong x2; B:1 correct; C:0 wrong; D:0 wrong x2\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong x2; B:1 correct; C:0 wrong; D:0 wrong x2\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong x2; B:1 correct x2; C:1 correct; D:0 wrong x2\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong x2; B:1 correct x2; C:1 correct; D:0 wrong x2\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong x2; B:1 correct x2; C:1 correct; D:0 wrong x2\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 wrong; B:0 correct x3; C:0 correct; D:0 correct\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 wrong; B:0 correct x3; C:0 correct; D:0 correct\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 wrong; B:0 correct x3; C:0 correct; D:0 correct\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 correct; B:0 correct x4; C:1 wrong; D:1 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 correct; B:0 correct x4; C:1 wrong; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 correct; B:0 correct x4; C:1 wrong; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 correct x2; B:0 correct x5; C:0 correct; D:1 wrong x2\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 correct x2; B:0 correct x5; C:0 correct; D:1 wrong x2\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 correct x2; B:0 correct x5; C:0 correct; D:1 wrong x2\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 correct; B:1 correct; C:0 wrong; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 correct; B:1 correct; C:0 wrong; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 correct; B:1 correct; C:0 wrong; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 correct x2; B:1 correct x2; C:0 wrong; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 correct x2; B:1 correct x2; C:0 wrong; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 correct x2; B:1 correct x2; C:0 wrong; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 correct x3; B:0 wrong; C:1 correct; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 correct x3; B:0 wrong; C:1 correct; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 correct x3; B:0 wrong; C:1 correct; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 correct x4; B:0 wrong; C:0 wrong; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 correct x4; B:0 wrong; C:0 wrong; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 correct x4; B:0 wrong; C:0 wrong; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 correct; B:0 correct; C:0 correct; D:1 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 correct; B:0 correct; C:0 correct; D:1 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 correct; B:0 correct; C:0 correct; D:1 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 correct; B:0 wrong; C:0 wrong; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 correct; B:0 wrong; C:0 wrong; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 correct; B:0 wrong; C:0 wrong; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 correct x2; B:1 correct; C:1 correct; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 correct x2; B:1 correct; C:1 correct; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 correct x2; B:1 correct; C:1 correct; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 wrong; B:0 correct; C:1 wrong; D:0 correct\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 wrong; B:0 correct; C:1 wrong; D:0 correct\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 wrong; B:0 correct; C:1 wrong; D:0 correct\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 correct; B:1 correct; C:1 correct; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 correct; B:1 correct; C:1 correct; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 correct; B:1 correct; C:1 correct; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 wrong; B:0 correct; C:0 correct; D:1 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 wrong; B:0 correct; C:0 correct; D:1 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 wrong; B:0 correct; C:0 correct; D:1 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 wrong x2; B:0 correct x2; C:0 correct x2; D:1 wrong x2\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 wrong x2; B:0 correct x2; C:0 correct x2; D:1 wrong x2\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 wrong x2; B:0 correct x2; C:0 correct x2; D:1 wrong x2\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 wrong x3; B:0 correct x3; C:1 wrong; D:1 wrong x3\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 wrong x3; B:0 correct x3; C:1 wrong; D:1 wrong x3\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 wrong x3; B:0 correct x3; C:1 wrong; D:1 wrong x3\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong; B:1 correct x4; C:0 wrong; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong; B:1 correct x4; C:0 wrong; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong; B:1 correct x4; C:0 wrong; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong x2; B:1 correct x5; C:0 wrong x2; D:0 wrong x2\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong x2; B:1 correct x5; C:0 wrong x2; D:0 wrong x2\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong x2; B:1 correct x5; C:0 wrong x2; D:0 wrong x2\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 correct; B:0 wrong; C:1 wrong; D:1 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 correct; B:0 wrong; C:1 wrong; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 correct; B:0 wrong; C:1 wrong; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong; B:1 correct; C:1 correct; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong; B:1 correct; C:1 correct; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong; B:1 correct; C:1 correct; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 correct; B:1 correct x2; C:1 correct x2; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 correct; B:1 correct x2; C:1 correct x2; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 correct; B:1 correct x2; C:1 correct x2; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong; B:1 correct x3; C:1 correct x3; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong; B:1 correct x3; C:1 correct x3; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong; B:1 correct x3; C:1 correct x3; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 correct; B:1 correct x4; C:0 wrong; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 correct; B:1 correct x4; C:0 wrong; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 correct; B:1 correct x4; C:0 wrong; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong; B:1 correct x5; C:1 correct; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong; B:1 correct x5; C:1 correct; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong; B:1 correct x5; C:1 correct; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 correct; B:0 wrong; C:1 correct x2; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 correct; B:0 wrong; C:1 correct x2; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 correct; B:0 wrong; C:1 correct x2; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 wrong; B:1 wrong; C:0 correct; D:1 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 wrong; B:1 wrong; C:0 correct; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 wrong; B:1 wrong; C:0 correct; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 correct; B:1 wrong x2; C:1 wrong; D:1 wrong x2\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 correct; B:1 wrong x2; C:1 wrong; D:1 wrong x2\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 correct; B:1 wrong x2; C:1 wrong; D:1 wrong x2\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong; B:0 wrong; C:0 wrong; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong; B:0 wrong; C:0 wrong; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong; B:0 wrong; C:0 wrong; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 wrong; B:1 wrong; C:0 correct; D:1 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 wrong; B:1 wrong; C:0 correct; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 wrong; B:1 wrong; C:0 correct; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong; B:0 wrong; C:1 correct x2; D:1 correct\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong; B:0 wrong; C:1 correct x2; D:1 correct\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong; B:0 wrong; C:1 correct x2; D:1 correct\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 correct; B:0 correct; C:1 wrong; D:1 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 correct; B:0 correct; C:1 wrong; D:1 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 correct; B:0 correct; C:1 wrong; D:1 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 correct; B:0 wrong; C:1 correct; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 correct; B:0 wrong; C:1 correct; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 correct; B:0 wrong; C:1 correct; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong; B:1 correct; C:0 wrong; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong; B:1 correct; C:0 wrong; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong; B:1 correct; C:0 wrong; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 wrong; B:0 correct x2; C:1 wrong; D:1 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 wrong; B:0 correct x2; C:1 wrong; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 wrong; B:0 correct x2; C:1 wrong; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong; B:1 correct x3; C:1 correct; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong; B:1 correct x3; C:1 correct; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong; B:1 correct x3; C:1 correct; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 wrong; B:0 correct x4; C:0 correct; D:1 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 wrong; B:0 correct x4; C:0 correct; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 wrong; B:0 correct x4; C:0 correct; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 correct; B:1 wrong; C:0 correct x2; D:1 wrong x2\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 correct; B:1 wrong; C:0 correct x2; D:1 wrong x2\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 correct; B:1 wrong; C:0 correct x2; D:1 wrong x2\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 wrong; B:0 correct; C:1 wrong; D:1 wrong x3\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 wrong; B:0 correct; C:1 wrong; D:1 wrong x3\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 wrong; B:0 correct; C:1 wrong; D:1 wrong x3\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong; B:1 correct x2; C:1 correct; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong; B:1 correct x2; C:1 correct; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong; B:1 correct x2; C:1 correct; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 correct; B:1 wrong; C:0 correct; D:1 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 correct; B:1 wrong; C:0 correct; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 correct; B:1 wrong; C:0 correct; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong; B:1 correct; C:0 wrong; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong; B:1 correct; C:0 wrong; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong; B:1 correct; C:0 wrong; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 correct; B:1 wrong; C:0 correct; D:1 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 correct; B:1 wrong; C:0 correct; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 correct; B:1 wrong; C:0 correct; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 correct x2; B:0 correct; C:1 wrong; D:1 wrong x2\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 correct x2; B:0 correct; C:1 wrong; D:1 wrong x2\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 correct x2; B:0 correct; C:1 wrong; D:1 wrong x2\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong; B:1 correct; C:1 correct; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong; B:1 correct; C:1 correct; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong; B:1 correct; C:1 correct; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 wrong; B:0 correct x2; C:0 correct; D:1 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 wrong; B:0 correct x2; C:0 correct; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 wrong; B:0 correct x2; C:0 correct; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 correct; B:1 wrong; C:0 correct x2; D:1 wrong x2\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 correct; B:1 wrong; C:0 correct x2; D:1 wrong x2\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 correct; B:1 wrong; C:0 correct x2; D:1 wrong x2\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 correct x2; B:0 correct; C:1 wrong; D:1 wrong x3\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 correct x2; B:0 correct; C:1 wrong; D:1 wrong x3\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 correct x2; B:0 correct; C:1 wrong; D:1 wrong x3\", \"Expert_A\": 0, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong; B:0 wrong; C:1 correct; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 wrong; B:0 wrong; C:1 correct; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 wrong; B:0 wrong; C:1 correct; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 correct; B:1 wrong; C:1 wrong; D:1 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 correct; B:1 wrong; C:1 wrong; D:1 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 correct; B:1 wrong; C:1 wrong; D:1 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 correct; B:0 wrong; C:1 correct; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 correct; B:0 wrong; C:1 correct; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 correct; B:0 wrong; C:1 correct; D:0 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 wrong; B:0 correct; C:1 wrong; D:1 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 wrong; B:0 correct; C:1 wrong; D:1 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 wrong; B:0 correct; C:1 wrong; D:1 wrong\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 wrong x2; B:0 correct x2; C:0 correct; D:1 wrong x2\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 wrong x2; B:0 correct x2; C:0 correct; D:1 wrong x2\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 wrong x2; B:0 correct x2; C:0 correct; D:1 wrong x2\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 wrong x3; B:0 correct x3; C:1 wrong; D:1 wrong x3\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 wrong x3; B:0 correct x3; C:1 wrong; D:1 wrong x3\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 wrong x3; B:0 correct x3; C:1 wrong; D:1 wrong x3\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 correct; B:1 wrong; C:0 correct; D:1 wrong x4\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 correct; B:1 wrong; C:0 correct; D:1 wrong x4\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 correct; B:1 wrong; C:0 correct; D:1 wrong x4\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 wrong; B:1 wrong x2; C:0 correct x2; D:0 correct\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 wrong; B:1 wrong x2; C:0 correct x2; D:0 correct\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 wrong; B:1 wrong x2; C:0 correct x2; D:0 correct\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 wrong x2; B:0 correct; C:0 correct x3; D:1 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 wrong x2; B:0 correct; C:0 correct x3; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 wrong x2; B:0 correct; C:0 correct x3; D:1 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 correct; B:1 wrong; C:1 wrong; D:1 wrong x2\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:0 correct; B:1 wrong; C:1 wrong; D:1 wrong x2\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:0 correct; B:1 wrong; C:1 wrong; D:1 wrong x2\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 wrong; B:0 correct; C:0 correct; D:0 correct\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 wrong; B:0 correct; C:0 correct; D:0 correct\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 wrong; B:0 correct; C:0 correct; D:0 correct\", \"Expert_A\": 1, \"Expert_B\": 0, \"Expert_C\": 1, \"Expert_D\": 1, \"true_label\": 0}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 wrong x2; B:0 correct x2; C:1 wrong; D:1 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 wrong x2; B:0 correct x2; C:1 wrong; D:1 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 0}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 wrong x2; B:0 correct x2; C:1 wrong; D:1 wrong\", \"Expert_A\": 1, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:1 correct; B:1 correct; C:0 wrong; D:0 wrong\"}"}
+{"role": "user", "content": "{\"turn_type\": \"prediction\", \"note\": \"A:1 correct; B:1 correct; C:0 wrong; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0}"}
+{"role": "assistant", "content": "{\"prediction\": 1}"}
+{"role": "user", "content": "{\"turn_type\": \"feedback\", \"note\": \"A:1 correct; B:1 correct; C:0 wrong; D:0 wrong\", \"Expert_A\": 0, \"Expert_B\": 1, \"Expert_C\": 0, \"Expert_D\": 0, \"true_label\": 1}"}
+{"role": "assistant", "content": "{\"note\": \"A:0 wrong; B:1 correct x2; C:0 wrong; D:0 wrong\"}"}

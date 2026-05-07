@@ -1,0 +1,810 @@
+[
+  {
+    "role": "user",
+    "content": "You are running the Multiplicative Weights Update algorithm with 4 experts and learning rate eta = 0.33774205930604767.\n\nI will give you binary expert predictions (0 or 1) one step at a time. At each step, apply the multiplicative weights algorithm and output:\n- your current weight vector (before this step's update),\n- the mixture probability q,\n- your binary prediction yhat.\n\nAfter you output your prediction I will reveal the true label; update your weights accordingly, then I will give you the next step's predictions.\n\nOutput valid JSON only \u2014 no explanation, no reasoning steps, no other text:\n{\n  \"weights\": [...],\n  \"mixture_probability\": <float>,\n  \"prediction\": <0 or 1>\n}\nwhere \"weights\" are your current weights before this step's update.\n\n\nStep 0: expert_predictions = [1, 0, 0, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.25, 0.25, 0.25, 0.25],\n  \"mixture_probability\": 0.25,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 1: expert_predictions = [1, 1, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.25, 0.25, 0.25, 0.25],\n  \"mixture_probability\": 0.25,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 2: expert_predictions = [0, 0, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.25, 0.25, 0.25, 0.25],\n  \"mixture_probability\": 0.25,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 3: expert_predictions = [0, 1, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.25, 0.25, 0.16887102965302384, 0.25],\n  \"mixture_probability\": 0.22971775741325596,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 4: expert_predictions = [1, 1, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.25, 0.16887102965302384, 0.16887102965302384, 0.08443551482651192],\n  \"mixture_probability\": 0.5877420593060477,\n  \"prediction\": 1\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 5: expert_predictions = [1, 1, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.16887102965302384, 0.11409163843996557, 0.11409163843996557, 0.08443551482651192],\n  \"mixture_probability\": 0.397054821359467,\n  \"prediction\": 1\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 6: expert_predictions = [0, 0, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.11409163843996557, 0.0771260994024495, 0.0771260994024495, 0.08443551482651192],\n  \"mixture_probability\": 0.2927793520713765,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 7: expert_predictions = [1, 0, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.11409163843996557, 0.0771260994024495, 0.0771260994024495, 0.05696438597368692],\n  \"mixture_probability\": 0.19121773784241507,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 8: expert_predictions = [1, 1, 1, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.0771260994024495, 0.0771260994024495, 0.05199316920704892, 0.03839637643204892],\n  \"mixture_probability\": 0.24364174444399684,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 9: expert_predictions = [1, 0, 1, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.05199316920704892, 0.05199316920704892, 0.03467667676494692, 0.02556867676494692],\n  \"mixture_probability\": 0.16423169894499168,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 10: expert_predictions = [1, 0, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.03467667676494692, 0.03467667676494692, 0.02304867676494692, 0.02556867676494692],\n  \"mixture_probability\": 0.11740003029478774,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 11: expert_predictions = [0, 0, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.02304867676494692, 0.02304867676494692, 0.01533767676494692, 0.02556867676494692],\n  \"mixture_probability\": 0.08600370705978768,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 12: expert_predictions = [0, 0, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.02304867676494692, 0.02304867676494692, 0.01533767676494692, 0.01700267676494692],\n  \"mixture_probability\": 0.06243770705978768,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 13: expert_predictions = [0, 1, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.02304867676494692, 0.01533767676494692, 0.01020767676494692, 0.01136567676494692],\n  \"mixture_probability\": 0.02670335352989384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 14: expert_predictions = [0, 0, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.02304867676494692, 0.01020767676494692, 0.00676467676494692, 0.00756367676494692],\n  \"mixture_probability\": 0.01853567676494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 15: expert_predictions = [1, 0, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.01533767676494692, 0.00676467676494692, 0.00448267676494692, 0.00508667676494692],\n  \"mixture_probability\": 0.01982035352989384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 16: expert_predictions = [0, 0, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.01533767676494692, 0.00676467676494692, 0.00300067676494692, 0.00508667676494692],\n  \"mixture_probability\": 0.01004767676494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 17: expert_predictions = [0, 1, 1, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.01533767676494692, 0.00448267676494692, 0.00202467676494692, 0.00343267676494692],\n  \"mixture_probability\": 0.00993967676494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 18: expert_predictions = [0, 0, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.01533767676494692, 0.00448267676494692, 0.00136267676494692, 0.00228367676494692],\n  \"mixture_probability\": 0.00673167676494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 19: expert_predictions = [0, 0, 1, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.01533767676494692, 0.00448267676494692, 0.00091867676494692, 0.00153767676494692],\n  \"mixture_probability\": 0.00547667676494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 20: expert_predictions = [0, 0, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.01533767676494692, 0.00448267676494692, 0.00061867676494692, 0.00103767676494692],\n  \"mixture_probability\": 0.00361267676494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 21: expert_predictions = [1, 1, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.01013767676494692, 0.00298267676494692, 0.00041867676494692, 0.00069867676494692],\n  \"mixture_probability\": 0.01353867676494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 22: expert_predictions = [1, 0, 1, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00671367676494692, 0.00298267676494692, 0.00027967676494692, 0.00046567676494692],\n  \"mixture_probability\": 0.00745967676494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 23: expert_predictions = [1, 1, 1, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00445167676494692, 0.00198267676494692, 0.00018667676494692, 0.00031067676494692],\n  \"mixture_probability\": 0.00693167676494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 24: expert_predictions = [1, 1, 0, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00296467676494692, 0.00131867676494692, 0.00018667676494692, 0.00031067676494692],\n  \"mixture_probability\": 0.00446967676494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 25: expert_predictions = [0, 1, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00296467676494692, 0.00087867676494692, 0.00018667676494692, 0.00020667676494692],\n  \"mixture_probability\": 0.00215067676494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 26: expert_predictions = [0, 0, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00296467676494692, 0.00087867676494692, 0.00018667676494692, 0.00013967676494692],\n  \"mixture_probability\": 0.00116967676494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 27: expert_predictions = [0, 1, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00296467676494692, 0.00059267676494692, 0.00018667676494692, 0.00009467676494692],\n  \"mixture_probability\": 0.00068767676494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 28: expert_predictions = [1, 1, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00198767676494692, 0.00040067676494692, 0.00012667676494692, 0.00009467676494692],\n  \"mixture_probability\": 0.00251567676494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 29: expert_predictions = [0, 0, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00198767676494692, 0.00040067676494692, 0.00012667676494692, 0.00006367676494692],\n  \"mixture_probability\": 0.00039567676494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 30: expert_predictions = [1, 0, 0, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00198767676494692, 0.00040067676494692, 0.00012667676494692, 0.00004287676494692],\n  \"mixture_probability\": 0.00255790676494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 31: expert_predictions = [0, 1, 0, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00134067676494692, 0.00040067676494692, 0.00012667676494692, 0.00004287676494692],\n  \"mixture_probability\": 0.00040067676494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 32: expert_predictions = [1, 0, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00089167676494692, 0.00040067676494692, 0.00008567676494692, 0.00004287676494692],\n  \"mixture_probability\": 0.00097735352989384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 33: expert_predictions = [1, 1, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00059367676494692, 0.00026767676494692, 0.00005767676494692, 0.00004287676494692],\n  \"mixture_probability\": 0.00091902929489384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 34: expert_predictions = [1, 1, 0, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00039467676494692, 0.00017867676494692, 0.00005767676494692, 0.00004287676494692],\n  \"mixture_probability\": 0.00057335352989384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 35: expert_predictions = [0, 0, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00026367676494692, 0.00011967676494692, 0.00003867676494692, 0.00004287676494692],\n  \"mixture_probability\": 0.00004287676494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 36: expert_predictions = [1, 1, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00026367676494692, 0.00011967676494692, 0.00003867676494692, 0.00002887676494692],\n  \"mixture_probability\": 0.00042203029489384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 37: expert_predictions = [1, 1, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00017567676494692, 0.00007967676494692, 0.00002574676494692, 0.00002887676494692],\n  \"mixture_probability\": 0.00028110029489384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 38: expert_predictions = [1, 0, 1, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00011767676494692, 0.00007967676494692, 0.00001704676494692, 0.00001924676494692],\n  \"mixture_probability\": 0.00015396929489384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 39: expert_predictions = [1, 1, 1, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00007817676494692, 0.00005267676494692, 0.00001139676494692, 0.00001281076494692],\n  \"mixture_probability\": 0.00015506076494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 40: expert_predictions = [1, 1, 0, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00005167676494692, 0.00003484676494692, 0.00001139676494692, 0.00001281076494692],\n  \"mixture_probability\": 0.00008652352989384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 41: expert_predictions = [1, 0, 1, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00003434676494692, 0.00003484676494692, 0.00000758276494692, 0.00000854876494692],\n  \"mixture_probability\": 0.00005047829489384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 42: expert_predictions = [0, 0, 0, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00002367676494692, 0.00002397676494692, 0.00000504876494692, 0.00000569076494692],\n  \"mixture_probability\": 0.00005839305989384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 43: expert_predictions = [0, 0, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00002367676494692, 0.00002397676494692, 0.00000504876494692, 0.00000379076494692],\n  \"mixture_probability\": 0.00005649305989384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 44: expert_predictions = [1, 0, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00002367676494692, 0.00002397676494692, 0.00000504876494692, 0.00000254876494692],\n  \"mixture_probability\": 0.00002872552989384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 45: expert_predictions = [1, 1, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00001567676494692, 0.00001587676494692, 0.00000334676494692, 0.00000254876494692],\n  \"mixture_probability\": 0.00003489952989384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 46: expert_predictions = [1, 0, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00001037676494692, 0.00001587676494692, 0.00000334676494692, 0.00000170376494692],\n  \"mixture_probability\": 0.00001542729489384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 47: expert_predictions = [1, 0, 0, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000687276494692, 0.00001587676494692, 0.00000334676494692, 0.00000170376494692],\n  \"mixture_probability\": 0.00000687276494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 48: expert_predictions = [0, 1, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000455876494692, 0.00001058676494692, 0.00000334676494692, 0.00000170376494692],\n  \"mixture_probability\": 0.00001229029489384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 49: expert_predictions = [0, 0, 0, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000455876494692, 0.00001058676494692, 0.00000334676494692, 0.00000170376494692],\n  \"mixture_probability\": 0.00002019605989384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 50: expert_predictions = [0, 1, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000455876494692, 0.00000703676494692, 0.00000222476494692, 0.00000170376494692],\n  \"mixture_probability\": 0.00000926152989384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 51: expert_predictions = [1, 0, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000303476494692, 0.00000703676494692, 0.00000148276494692, 0.00000170376494692],\n  \"mixture_probability\": 0.00000451752989384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 52: expert_predictions = [1, 0, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000202076494692, 0.00000703676494692, 0.00000098676494692, 0.00000170376494692],\n  \"mixture_probability\": 0.00000300752989384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 53: expert_predictions = [1, 1, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000134576494692, 0.00000468676494692, 0.00000065676494692, 0.00000170376494692],\n  \"mixture_probability\": 0.00000268929489384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 54: expert_predictions = [1, 1, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000089676494692, 0.00000312176494692, 0.00000043776494692, 0.00000170376494692],\n  \"mixture_probability\": 0.00000245529489384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 55: expert_predictions = [0, 0, 1, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000059776494692, 0.00000208076494692, 0.00000029176494692, 0.00000113676494692],\n  \"mixture_probability\": 0.00000142852989384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 56: expert_predictions = [0, 1, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000059776494692, 0.00000138476494692, 0.00000029176494692, 0.00000076476494692],\n  \"mixture_probability\": 0.00000114929489384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 57: expert_predictions = [0, 1, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000059776494692, 0.00000092276494692, 0.00000029176494692, 0.00000051576494692],\n  \"mixture_probability\": 0.00000095752989384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 58: expert_predictions = [0, 0, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000059776494692, 0.00000092276494692, 0.00000029176494692, 0.00000034376494692],\n  \"mixture_probability\": 0.00000034376494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 59: expert_predictions = [1, 1, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000059776494692, 0.00000092276494692, 0.00000029176494692, 0.00000023176494692],\n  \"mixture_probability\": 0.00000181229489384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 60: expert_predictions = [0, 1, 1, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000040176494692, 0.00000092276494692, 0.00000029176494692, 0.00000023176494692],\n  \"mixture_probability\": 0.00000144629489384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 61: expert_predictions = [1, 0, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000040176494692, 0.00000062276494692, 0.00000019176494692, 0.00000023176494692],\n  \"mixture_probability\": 0.00000059352989384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 62: expert_predictions = [0, 0, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000026976494692, 0.00000041876494692, 0.00000012876494692, 0.00000023176494692],\n  \"mixture_probability\": 0.00000023176494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 63: expert_predictions = [1, 1, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000026976494692, 0.00000041876494692, 0.00000012876494692, 0.00000015676494692],\n  \"mixture_probability\": 0.00000081729489384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 64: expert_predictions = [0, 0, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000018176494692, 0.00000028176494692, 0.00000008676494692, 0.00000015676494692],\n  \"mixture_probability\": 0.00000015676494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 65: expert_predictions = [1, 1, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000018176494692, 0.00000028176494692, 0.00000005876494692, 0.00000010676494692],\n  \"mixture_probability\": 0.00000056829489384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 66: expert_predictions = [0, 0, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000012276494692, 0.00000019076494692, 0.00000003976494692, 0.00000010676494692],\n  \"mixture_probability\": 0.00000010676494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 67: expert_predictions = [1, 1, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000012276494692, 0.00000019076494692, 0.00000003976494692, 0.00000007276494692],\n  \"mixture_probability\": 0.00000035329489384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 68: expert_predictions = [1, 1, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000008276494692, 0.00000012876494692, 0.00000002676494692, 0.00000007276494692],\n  \"mixture_probability\": 0.00000023829489384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 69: expert_predictions = [0, 1, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000005576494692, 0.00000012876494692, 0.00000002676494692, 0.00000004976494692],\n  \"mixture_probability\": 0.00000017852989384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 70: expert_predictions = [0, 0, 0, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000005576494692, 0.00000012876494692, 0.00000002676494692, 0.00000004976494692],\n  \"mixture_probability\": 0.00000026105889384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 71: expert_predictions = [0, 0, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000005576494692, 0.00000012876494692, 0.00000002676494692, 0.00000003356494692],\n  \"mixture_probability\": 0.00000003356494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 72: expert_predictions = [0, 0, 0, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000005576494692, 0.00000012876494692, 0.00000002676494692, 0.00000003356494692],\n  \"mixture_probability\": 0.00000024485889384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 73: expert_predictions = [1, 0, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000005576494692, 0.00000012876494692, 0.00000002676494692, 0.00000003356494692],\n  \"mixture_probability\": 0.00000008252989384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 74: expert_predictions = [0, 1, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000003706494692, 0.00000012876494692, 0.00000001776494692, 0.00000003356494692],\n  \"mixture_probability\": 0.00000016232989384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 75: expert_predictions = [0, 0, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000003706494692, 0.00000008576494692, 0.00000001776494692, 0.00000002256494692],\n  \"mixture_probability\": 0.00000002256494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 76: expert_predictions = [0, 0, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000003706494692, 0.00000005776494692, 0.00000001776494692, 0.00000001506494692],\n  \"mixture_probability\": 0.00000001506494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 77: expert_predictions = [1, 0, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000003706494692, 0.00000005776494692, 0.00000001776494692, 0.00000001006494692],\n  \"mixture_probability\": 0.00000005482989384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 78: expert_predictions = [0, 0, 1, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000002456494692, 0.00000005776494692, 0.00000001776494692, 0.00000001006494692],\n  \"mixture_probability\": 0.00000002782989384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 79: expert_predictions = [1, 1, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000002456494692, 0.00000005776494692, 0.00000001776494692, 0.00000000676494692],\n  \"mixture_probability\": 0.00000010009489384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 80: expert_predictions = [1, 1, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000001626494692, 0.00000003826494692, 0.00000001176494692, 0.00000000676494692],\n  \"mixture_probability\": 0.00000006629489384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 81: expert_predictions = [1, 0, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.00000001076494692, 0.00000003826494692, 0.000000007796494692, 0.00000000676494692],\n  \"mixture_probability\": 0.00000001856144189384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 82: expert_predictions = [1, 1, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.000000007196494692, 0.000000025496494692, 0.000000005196494692, 0.00000000676494692],\n  \"mixture_probability\": 0.00000003788948489384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 83: expert_predictions = [0, 1, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.000000004812494692, 0.000000025496494692, 0.00000000346494692, 0.00000000454894692],\n  \"mixture_probability\": 0.00000003004588889384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 84: expert_predictions = [1, 0, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.000000004812494692, 0.000000017004494692, 0.00000000346494692, 0.00000000306494692],\n  \"mixture_probability\": 0.00000000827744189384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 85: expert_predictions = [0, 1, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.000000003227494692, 0.000000017004494692, 0.00000000231294692, 0.00000000204894692],\n  \"mixture_probability\": 0.00000002136688889384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 86: expert_predictions = [0, 0, 0, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.000000003227494692, 0.000000017004494692, 0.00000000231294692, 0.00000000204894692],\n  \"mixture_probability\": 0.00000002459388289384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 87: expert_predictions = [0, 0, 0, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.000000003227494692, 0.000000017004494692, 0.00000000231294692, 0.00000000204894692],\n  \"mixture_probability\": 0.00000002459388289384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 88: expert_predictions = [0, 0, 0, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.000000003227494692, 0.000000017004494692, 0.00000000231294692, 0.00000000136494692],\n  \"mixture_probability\": 0.00000000136494692,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 89: expert_predictions = [1, 1, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.000000003227494692, 0.000000017004494692, 0.00000000231294692, 0.00000000092294692],\n  \"mixture_probability\": 0.00000002254493630484,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 90: expert_predictions = [1, 0, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.000000002144494692, 0.000000017004494692, 0.00000000153694692, 0.00000000092294692],\n  \"mixture_probability\": 0.00000000368144189384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 91: expert_predictions = [0, 1, 1, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.000000001424494692, 0.000000017004494692, 0.00000000153694692, 0.00000000092294692],\n  \"mixture_probability\": 0.00000001946488889384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 92: expert_predictions = [1, 0, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.000000001424494692, 0.000000011444494692, 0.00000000153694692, 0.00000000062294692],\n  \"mixture_probability\": 0.00000000296144189384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 93: expert_predictions = [0, 0, 0, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.000000000957494692, 0.000000011444494692, 0.00000000153694692, 0.00000000062294692],\n  \"mixture_probability\": 0.00000001456188289384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 94: expert_predictions = [1, 1, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.000000000957494692, 0.000000011444494692, 0.00000000153694692, 0.00000000042294692],\n  \"mixture_probability\": 0.00000001393893630484,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 95: expert_predictions = [0, 0, 0, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.000000000639494692, 0.000000007644494692, 0.00000000153694692, 0.00000000042294692],\n  \"mixture_probability\": 0.00000001024388289384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 96: expert_predictions = [1, 0, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.000000000639494692, 0.000000007644494692, 0.00000000153694692, 0.00000000028994692],\n  \"mixture_probability\": 0.00000000217644189384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 97: expert_predictions = [0, 0, 0, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.000000000426494692, 0.000000005104494692, 0.00000000153694692, 0.00000000028994692],\n  \"mixture_probability\": 0.00000000735788289384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Step 98: expert_predictions = [1, 1, 1, 0]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.000000000426494692, 0.000000005104494692, 0.00000000153694692, 0.00000000019894692],\n  \"mixture_probability\": 0.00000000706793630484,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 0. Step 99: expert_predictions = [0, 0, 1, 1]"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.000000000284494692, 0.000000003417494692, 0.00000000153694692, 0.00000000019894692],\n  \"mixture_probability\": 0.00000000173589384,\n  \"prediction\": 0\n}\n```"
+  },
+  {
+    "role": "user",
+    "content": "True label: 1. Please output your final updated weights as JSON: {\"weights\": [...]}"
+  },
+  {
+    "role": "assistant",
+    "content": "```json\n{\n  \"weights\": [0.000000000284494692, 0.000000003417494692, 0.00000000102494692, 0.00000000013294692]\n}\n```"
+  }
+]
