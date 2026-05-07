@@ -318,6 +318,9 @@ def run_scenario(model, tokenizer, cot_mode, model_config, device,
         'ratios': ratios,
         'learned_traj_mean': np.mean(learned_trajs, axis=0),
         'optimal_traj_mean': np.mean(optimal_trajs, axis=0),
+        'learned_traj_std': np.std(learned_trajs, axis=0),
+        'optimal_traj_std': np.std(optimal_trajs, axis=0),
+        'n_trials': len(learned_trajs),
     }
 
 
@@ -381,24 +384,39 @@ def plot_all_scenarios(all_results, save_dir):
     logger.info(f"Saved {path}")
 
     # --- Regret trajectory comparison for select scenarios ---
-    fig, axes = plt.subplots(2, 3, figsize=(20, 12))
-    axes = axes.flatten()
-    for i, r in enumerate(all_results[:6]):
-        ax = axes[i] if i < len(axes) else None
-        if ax is None:
+    n_scenarios = len(all_results)
+    n_cols = 3
+    n_rows = (n_scenarios + n_cols - 1) // n_cols
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(7 * n_cols, 5 * n_rows))
+    axes = axes.flatten() if n_rows * n_cols > 1 else [axes]
+    for i, r in enumerate(all_results):
+        if i >= len(axes):
             break
+        ax = axes[i]
         steps = np.arange(1, len(r['learned_traj_mean']) + 1)
-        ax.plot(steps, r['learned_traj_mean'], 'r-', linewidth=2, label='Learned')
-        ax.plot(steps, r['optimal_traj_mean'], 'b-', linewidth=2, label='Optimal MW')
+        n_t = r.get('n_trials', 50)
+        stderr_scale = 1.0 / np.sqrt(n_t)  # standard error
+
+        l_mean = r['learned_traj_mean']
+        l_se = r['learned_traj_std'] * stderr_scale
+        o_mean = r['optimal_traj_mean']
+        o_se = r['optimal_traj_std'] * stderr_scale
+
+        ax.plot(steps, l_mean, 'r-', linewidth=2, label='Learned')
+        ax.fill_between(steps, l_mean - l_se, l_mean + l_se, color='red', alpha=0.15)
+        ax.plot(steps, o_mean, 'b-', linewidth=2, label='Optimal MW')
+        ax.fill_between(steps, o_mean - o_se, o_mean + o_se, color='blue', alpha=0.15)
         ax.set_xlabel('Time Step')
         ax.set_ylabel('Cumulative Regret')
         ax.set_title(r['scenario'], fontsize=10)
         ax.legend(fontsize=8)
         ax.grid(True, alpha=0.3)
     # Hide unused axes
-    for j in range(len(all_results), len(axes)):
+    for j in range(n_scenarios, len(axes)):
         axes[j].set_visible(False)
 
+    plt.suptitle(f'Regret Trajectories (mean \u00b1 SE, n={all_results[0].get("n_trials", "?")} trials)',
+                 fontsize=14, y=1.01)
     plt.tight_layout()
     path2 = os.path.join(save_dir, 'robustness_trajectories.png')
     plt.savefig(path2, dpi=200, bbox_inches='tight')

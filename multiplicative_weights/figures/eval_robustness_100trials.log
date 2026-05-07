@@ -1,0 +1,276 @@
+nohup: ignoring input
+INFO:__main__:Loading checkpoint: ../figures/checkpoints/model_stage_13.pt
+INFO:__main__:Model: continuous, seq_length=100, n_trials=100
+INFO:__main__:
+============================================================
+INFO:__main__:Scenario: 1 real expert
+INFO:__main__:============================================================
+INFO:__main__:  [1 real expert] trial 10/100
+INFO:__main__:  [1 real expert] trial 20/100
+INFO:__main__:  [1 real expert] trial 30/100
+INFO:__main__:  [1 real expert] trial 40/100
+INFO:__main__:  [1 real expert] trial 50/100
+INFO:__main__:  [1 real expert] trial 60/100
+INFO:__main__:  [1 real expert] trial 70/100
+INFO:__main__:  [1 real expert] trial 80/100
+INFO:__main__:  [1 real expert] trial 90/100
+INFO:__main__:  [1 real expert] trial 100/100
+INFO:__main__:  Learned regret: 3.98 ± 3.00
+INFO:__main__:  Optimal regret: 3.89 ± 2.35
+INFO:__main__:  Ratio:          1.76 ± 2.40
+INFO:__main__:  Accuracy:       0.6817 ± 0.1108
+INFO:__main__:
+============================================================
+INFO:__main__:Scenario: 2 real experts
+INFO:__main__:============================================================
+INFO:__main__:  [2 real experts] trial 10/100
+INFO:__main__:  [2 real experts] trial 20/100
+INFO:__main__:  [2 real experts] trial 30/100
+INFO:__main__:  [2 real experts] trial 40/100
+INFO:__main__:  [2 real experts] trial 50/100
+INFO:__main__:  [2 real experts] trial 60/100
+INFO:__main__:  [2 real experts] trial 70/100
+INFO:__main__:  [2 real experts] trial 80/100
+INFO:__main__:  [2 real experts] trial 90/100
+INFO:__main__:  [2 real experts] trial 100/100
+INFO:__main__:  Learned regret: 3.25 ± 2.44
+INFO:__main__:  Optimal regret: 2.57 ± 2.09
+INFO:__main__:  Ratio:          2.72 ± 3.33
+INFO:__main__:  Accuracy:       0.7545 ± 0.0770
+INFO:__main__:
+============================================================
+INFO:__main__:Scenario: 3 real experts
+INFO:__main__:============================================================
+INFO:__main__:  [3 real experts] trial 10/100
+INFO:__main__:  [3 real experts] trial 20/100
+INFO:__main__:  [3 real experts] trial 30/100
+INFO:__main__:  [3 real experts] trial 40/100
+INFO:__main__:  [3 real experts] trial 50/100
+INFO:__main__:  [3 real experts] trial 60/100
+INFO:__main__:  [3 real experts] trial 70/100
+INFO:__main__:  [3 real experts] trial 80/100
+INFO:__main__:  [3 real experts] trial 90/100
+INFO:__main__:  [3 real experts] trial 100/100
+INFO:__main__:  Learned regret: 1.78 ± 2.30
+INFO:__main__:  Optimal regret: 1.27 ± 1.80
+INFO:__main__:  Ratio:          2.72 ± 3.59
+INFO:__main__:  Accuracy:       0.7877 ± 0.0768
+INFO:__main__:
+============================================================
+INFO:__main__:Scenario: 4 real experts
+INFO:__main__:============================================================
+INFO:__main__:  [4 real experts] trial 10/100
+INFO:__main__:  [4 real experts] trial 20/100
+INFO:__main__:  [4 real experts] trial 30/100
+INFO:__main__:  [4 real experts] trial 40/100
+INFO:__main__:  [4 real experts] trial 50/100
+INFO:__main__:  [4 real experts] trial 60/100
+INFO:__main__:  [4 real experts] trial 70/100
+INFO:__main__:  [4 real experts] trial 80/100
+INFO:__main__:  [4 real experts] trial 90/100
+INFO:__main__:  [4 real experts] trial 100/100
+INFO:__main__:  Learned regret: 1.14 ± 2.20
+INFO:__main__:  Optimal regret: 0.59 ± 1.27
+INFO:__main__:  Ratio:          2.77 ± 3.60
+INFO:__main__:  Accuracy:       0.8166 ± 0.0667
+INFO:__main__:
+============================================================
+INFO:__main__:Scenario: quality: dominant
+INFO:__main__:============================================================
+INFO:__main__:  [quality: dominant] trial 10/100
+INFO:__main__:  [quality: dominant] trial 20/100
+INFO:__main__:  [quality: dominant] trial 30/100
+INFO:__main__:  [quality: dominant] trial 40/100
+INFO:__main__:  [quality: dominant] trial 50/100
+INFO:__main__:  [quality: dominant] trial 60/100
+INFO:__main__:  [quality: dominant] trial 70/100
+INFO:__main__:  [quality: dominant] trial 80/100
+INFO:__main__:  [quality: dominant] trial 90/100
+INFO:__main__:  [quality: dominant] trial 100/100
+INFO:__main__:  Learned regret: 1.81 ± 1.19
+INFO:__main__:  Optimal regret: 4.12 ± 1.37
+INFO:__main__:  Ratio:          0.50 ± 0.50
+INFO:__main__:  Accuracy:       0.8810 ± 0.0351
+INFO:__main__:
+============================================================
+INFO:__main__:Scenario: quality: close
+INFO:__main__:============================================================
+INFO:__main__:  [quality: close] trial 10/100
+INFO:__main__:  [quality: close] trial 20/100
+INFO:__main__:  [quality: close] trial 30/100
+INFO:__main__:  [quality: close] trial 40/100
+INFO:__main__:  [quality: close] trial 50/100
+INFO:__main__:  [quality: close] trial 60/100
+INFO:__main__:  [quality: close] trial 70/100
+INFO:__main__:  [quality: close] trial 80/100
+INFO:__main__:  [quality: close] trial 90/100
+INFO:__main__:  [quality: close] trial 100/100
+INFO:__main__:  Learned regret: 4.24 ± 3.50
+INFO:__main__:  Optimal regret: 1.82 ± 2.22
+INFO:__main__:  Ratio:          4.46 ± 4.03
+INFO:__main__:  Accuracy:       0.6200 ± 0.0582
+INFO:__main__:
+============================================================
+INFO:__main__:Scenario: quality: spread
+INFO:__main__:============================================================
+INFO:__main__:  [quality: spread] trial 10/100
+INFO:__main__:  [quality: spread] trial 20/100
+INFO:__main__:  [quality: spread] trial 30/100
+INFO:__main__:  [quality: spread] trial 40/100
+INFO:__main__:  [quality: spread] trial 50/100
+INFO:__main__:  [quality: spread] trial 60/100
+INFO:__main__:  [quality: spread] trial 70/100
+INFO:__main__:  [quality: spread] trial 80/100
+INFO:__main__:  [quality: spread] trial 90/100
+INFO:__main__:  [quality: spread] trial 100/100
+INFO:__main__:  Learned regret: 2.28 ± 2.62
+INFO:__main__:  Optimal regret: 2.65 ± 2.57
+INFO:__main__:  Ratio:          1.80 ± 2.65
+INFO:__main__:  Accuracy:       0.7841 ± 0.0951
+INFO:__main__:
+============================================================
+INFO:__main__:Scenario: switch every 10
+INFO:__main__:============================================================
+INFO:__main__:  [switch every 10] trial 10/100
+INFO:__main__:  [switch every 10] trial 20/100
+INFO:__main__:  [switch every 10] trial 30/100
+INFO:__main__:  [switch every 10] trial 40/100
+INFO:__main__:  [switch every 10] trial 50/100
+INFO:__main__:  [switch every 10] trial 60/100
+INFO:__main__:  [switch every 10] trial 70/100
+INFO:__main__:  [switch every 10] trial 80/100
+INFO:__main__:  [switch every 10] trial 90/100
+INFO:__main__:  [switch every 10] trial 100/100
+INFO:__main__:  Learned regret: 3.81 ± 3.29
+INFO:__main__:  Optimal regret: 5.27 ± 2.39
+INFO:__main__:  Ratio:          1.17 ± 1.75
+INFO:__main__:  Accuracy:       0.5769 ± 0.0608
+INFO:__main__:
+============================================================
+INFO:__main__:Scenario: switch every 25
+INFO:__main__:============================================================
+INFO:__main__:  [switch every 25] trial 10/100
+INFO:__main__:  [switch every 25] trial 20/100
+INFO:__main__:  [switch every 25] trial 30/100
+INFO:__main__:  [switch every 25] trial 40/100
+INFO:__main__:  [switch every 25] trial 50/100
+INFO:__main__:  [switch every 25] trial 60/100
+INFO:__main__:  [switch every 25] trial 70/100
+INFO:__main__:  [switch every 25] trial 80/100
+INFO:__main__:  [switch every 25] trial 90/100
+INFO:__main__:  [switch every 25] trial 100/100
+INFO:__main__:  Learned regret: 2.19 ± 3.02
+INFO:__main__:  Optimal regret: 4.98 ± 2.20
+INFO:__main__:  Ratio:          0.57 ± 1.24
+INFO:__main__:  Accuracy:       0.6442 ± 0.0740
+INFO:__main__:
+============================================================
+INFO:__main__:Scenario: switch every 50
+INFO:__main__:============================================================
+INFO:__main__:  [switch every 50] trial 10/100
+INFO:__main__:  [switch every 50] trial 20/100
+INFO:__main__:  [switch every 50] trial 30/100
+INFO:__main__:  [switch every 50] trial 40/100
+INFO:__main__:  [switch every 50] trial 50/100
+INFO:__main__:  [switch every 50] trial 60/100
+INFO:__main__:  [switch every 50] trial 70/100
+INFO:__main__:  [switch every 50] trial 80/100
+INFO:__main__:  [switch every 50] trial 90/100
+INFO:__main__:  [switch every 50] trial 100/100
+INFO:__main__:  Learned regret: 0.50 ± 1.05
+INFO:__main__:  Optimal regret: 5.16 ± 1.61
+INFO:__main__:  Ratio:          0.10 ± 0.24
+INFO:__main__:  Accuracy:       0.7464 ± 0.0596
+INFO:__main__:
+============================================================
+INFO:__main__:Scenario: gradual drift
+INFO:__main__:============================================================
+INFO:__main__:  [gradual drift] trial 10/100
+INFO:__main__:  [gradual drift] trial 20/100
+INFO:__main__:  [gradual drift] trial 30/100
+INFO:__main__:  [gradual drift] trial 40/100
+INFO:__main__:  [gradual drift] trial 50/100
+INFO:__main__:  [gradual drift] trial 60/100
+INFO:__main__:  [gradual drift] trial 70/100
+INFO:__main__:  [gradual drift] trial 80/100
+INFO:__main__:  [gradual drift] trial 90/100
+INFO:__main__:  [gradual drift] trial 100/100
+INFO:__main__:  Learned regret: 2.35 ± 2.53
+INFO:__main__:  Optimal regret: 2.69 ± 2.81
+INFO:__main__:  Ratio:          2.42 ± 3.46
+INFO:__main__:  Accuracy:       0.7526 ± 0.0946
+INFO:__main__:
+============================================================
+INFO:__main__:Scenario: correlation=0.3
+INFO:__main__:============================================================
+INFO:__main__:  [correlation=0.3] trial 10/100
+INFO:__main__:  [correlation=0.3] trial 20/100
+INFO:__main__:  [correlation=0.3] trial 30/100
+INFO:__main__:  [correlation=0.3] trial 40/100
+INFO:__main__:  [correlation=0.3] trial 50/100
+INFO:__main__:  [correlation=0.3] trial 60/100
+INFO:__main__:  [correlation=0.3] trial 70/100
+INFO:__main__:  [correlation=0.3] trial 80/100
+INFO:__main__:  [correlation=0.3] trial 90/100
+INFO:__main__:  [correlation=0.3] trial 100/100
+INFO:__main__:  Learned regret: 3.21 ± 2.71
+INFO:__main__:  Optimal regret: 2.46 ± 2.30
+INFO:__main__:  Ratio:          2.99 ± 3.58
+INFO:__main__:  Accuracy:       0.6589 ± 0.0860
+INFO:__main__:
+============================================================
+INFO:__main__:Scenario: correlation=0.7
+INFO:__main__:============================================================
+INFO:__main__:  [correlation=0.7] trial 10/100
+INFO:__main__:  [correlation=0.7] trial 20/100
+INFO:__main__:  [correlation=0.7] trial 30/100
+INFO:__main__:  [correlation=0.7] trial 40/100
+INFO:__main__:  [correlation=0.7] trial 50/100
+INFO:__main__:  [correlation=0.7] trial 60/100
+INFO:__main__:  [correlation=0.7] trial 70/100
+INFO:__main__:  [correlation=0.7] trial 80/100
+INFO:__main__:  [correlation=0.7] trial 90/100
+INFO:__main__:  [correlation=0.7] trial 100/100
+INFO:__main__:  Learned regret: 3.76 ± 2.93
+INFO:__main__:  Optimal regret: 2.11 ± 1.64
+INFO:__main__:  Ratio:          3.08 ± 3.33
+INFO:__main__:  Accuracy:       0.6087 ± 0.0823
+INFO:__main__:
+============================================================
+INFO:__main__:Scenario: correlation=0.9
+INFO:__main__:============================================================
+INFO:__main__:  [correlation=0.9] trial 10/100
+INFO:__main__:  [correlation=0.9] trial 20/100
+INFO:__main__:  [correlation=0.9] trial 30/100
+INFO:__main__:  [correlation=0.9] trial 40/100
+INFO:__main__:  [correlation=0.9] trial 50/100
+INFO:__main__:  [correlation=0.9] trial 60/100
+INFO:__main__:  [correlation=0.9] trial 70/100
+INFO:__main__:  [correlation=0.9] trial 80/100
+INFO:__main__:  [correlation=0.9] trial 90/100
+INFO:__main__:  [correlation=0.9] trial 100/100
+INFO:__main__:  Learned regret: 2.37 ± 2.60
+INFO:__main__:  Optimal regret: 1.13 ± 1.01
+INFO:__main__:  Ratio:          3.20 ± 3.68
+INFO:__main__:  Accuracy:       0.6112 ± 0.0754
+INFO:__main__:Saved ../figures/eval_robustness/robustness_summary.png
+INFO:__main__:Saved ../figures/eval_robustness/robustness_trajectories.png
+
+====================================================================================================
+Scenario                  |     Learned Regret |     Optimal Regret |        Ratio |     Accuracy
+----------------------------------------------------------------------------------------------------
+1 real expert             |    3.98 ±   3.00 |    3.89 ±   2.35 |  1.76 ± 2.40 | 0.6817 ± 0.1108
+2 real experts            |    3.25 ±   2.44 |    2.57 ±   2.09 |  2.72 ± 3.33 | 0.7545 ± 0.0770
+3 real experts            |    1.78 ±   2.30 |    1.27 ±   1.80 |  2.72 ± 3.59 | 0.7877 ± 0.0768
+4 real experts            |    1.14 ±   2.20 |    0.59 ±   1.27 |  2.77 ± 3.60 | 0.8166 ± 0.0667
+quality: dominant         |    1.81 ±   1.19 |    4.12 ±   1.37 |  0.50 ± 0.50 | 0.8810 ± 0.0351
+quality: close            |    4.24 ±   3.50 |    1.82 ±   2.22 |  4.46 ± 4.03 | 0.6200 ± 0.0582
+quality: spread           |    2.28 ±   2.62 |    2.65 ±   2.57 |  1.80 ± 2.65 | 0.7841 ± 0.0951
+switch every 10           |    3.81 ±   3.29 |    5.27 ±   2.39 |  1.17 ± 1.75 | 0.5769 ± 0.0608
+switch every 25           |    2.19 ±   3.02 |    4.98 ±   2.20 |  0.57 ± 1.24 | 0.6442 ± 0.0740
+switch every 50           |    0.50 ±   1.05 |    5.16 ±   1.61 |  0.10 ± 0.24 | 0.7464 ± 0.0596
+gradual drift             |    2.35 ±   2.53 |    2.69 ±   2.81 |  2.42 ± 3.46 | 0.7526 ± 0.0946
+correlation=0.3           |    3.21 ±   2.71 |    2.46 ±   2.30 |  2.99 ± 3.58 | 0.6589 ± 0.0860
+correlation=0.7           |    3.76 ±   2.93 |    2.11 ±   1.64 |  3.08 ± 3.33 | 0.6087 ± 0.0823
+correlation=0.9           |    2.37 ±   2.60 |    1.13 ±   1.01 |  3.20 ± 3.68 | 0.6112 ± 0.0754
+====================================================================================================
