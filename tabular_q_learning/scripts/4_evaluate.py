@@ -163,6 +163,46 @@ def generate_ood_mdp(
     return P, R
 
 
+def generate_reward_dist_mdp(
+    n_states: int,
+    n_actions: int,
+    dist_name: str,
+    seed: int = 9999,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """MDPs with a fixed transition prior (Dirichlet 1.0) but varying reward
+    distributions. Used to compare cumulative reward across reward shapes
+    while holding dynamics structure constant.
+    """
+    rng = np.random.default_rng(seed)
+    P = rng.dirichlet(np.ones(n_states), size=(n_states, n_actions)).astype(np.float32)
+    if dist_name == 'beta_2_2':
+        R = rng.beta(2.0, 2.0, size=(n_states, n_actions)).astype(np.float32)
+    elif dist_name == 'sparse':
+        R = rng.beta(0.1, 2.0, size=(n_states, n_actions)).astype(np.float32)
+    elif dist_name == 'dense':
+        R = rng.beta(10.0, 10.0, size=(n_states, n_actions)).astype(np.float32)
+    elif dist_name == 'uniform':
+        R = rng.uniform(0.0, 1.0, size=(n_states, n_actions)).astype(np.float32)
+    elif dist_name == 'bimodal':
+        R = rng.beta(0.1, 0.1, size=(n_states, n_actions)).astype(np.float32)
+    elif dist_name == 'bernoulli':
+        R = (rng.random(size=(n_states, n_actions)) < 0.5).astype(np.float32)
+    else:
+        raise ValueError(f"Unknown reward distribution: {dist_name!r}")
+    R = np.clip(R, 0.0, 1.0)
+    return P, R
+
+
+REWARD_DISTRIBUTIONS: List[Tuple[str, str]] = [
+    ('beta_2_2',  'Beta(2,2) — balanced'),
+    ('sparse',    'Beta(0.1,2) — sparse'),
+    ('dense',     'Beta(10,10) — dense'),
+    ('uniform',   'Uniform(0,1)'),
+    ('bimodal',   'Beta(0.1,0.1) — bimodal'),
+    ('bernoulli', 'Bernoulli(0.5)'),
+]
+
+
 OOD_VARIANTS: List[Tuple[str, str]] = [
     ('deterministic', 'Deterministic transitions (Dir 0.001), same rewards'),
     ('sparse_reward', 'Sparse rewards (Beta 0.1,2), same transitions'),
@@ -1109,6 +1149,58 @@ def plot_regret(
     print(f"  Saved: {save_path}")
 
 
+def plot_reward_dist_grid(
+    results: List[Dict],
+    n_mdps: int,
+    save_path: str,
+) -> None:
+    """Multi-panel figure: one subplot per reward distribution, each showing
+    cumulative reward (mean ± std over MDPs) for transformer + benchmarks.
+
+    `results` is a list of dicts with keys:
+      'name', 'label', 'cumrew_t', 'cumrew_g', 'cumrew_e', 'cumrew_o'
+    """
+    n = len(results)
+    ncols = min(3, n)
+    nrows = (n + ncols - 1) // ncols
+    fig, axes = plt.subplots(nrows, ncols, figsize=(6 * ncols, 5 * nrows),
+                             squeeze=False)
+
+    series_spec = [
+        ('Optimal',           'cumrew_o', 'black'),
+        ('Transformer',       'cumrew_t', 'steelblue'),
+        ('Greedy Q (ε=0)',    'cumrew_g', 'darkorange'),
+        ('ε-greedy Q',        'cumrew_e', 'forestgreen'),
+    ]
+
+    for idx, res in enumerate(results):
+        ax = axes[idx // ncols][idx % ncols]
+        n_steps = res['cumrew_t'].shape[1]
+        steps = np.arange(1, n_steps + 1)
+        for label, key, color in series_spec:
+            data = res[key]
+            mean = data.mean(axis=0)
+            std = data.std(axis=0)
+            ax.plot(steps, mean, color=color, linewidth=2, label=label)
+            ax.fill_between(steps, mean - std, mean + std, alpha=0.15, color=color)
+        ax.set_title(res['label'], fontsize=13)
+        ax.set_xlabel('Timestep')
+        ax.set_ylabel('Cumulative Reward')
+        ax.grid(True, alpha=0.3)
+        if idx == 0:
+            ax.legend(fontsize=10, loc='upper left')
+
+    for j in range(n, nrows * ncols):
+        axes[j // ncols][j % ncols].axis('off')
+
+    fig.suptitle(f'Cumulative Reward by Reward Distribution '
+                 f'(mean ± std, {n_mdps} MDPs each)', fontsize=15)
+    plt.tight_layout(rect=[0, 0, 1, 0.96])
+    plt.savefig(save_path, dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"  Saved: {save_path}")
+
+
 def plot_combined_row(
     cumrew_transformer: np.ndarray,
     cumrew_greedy: np.ndarray,
@@ -1212,6 +1304,11 @@ def plot_combined_row(
                         color='black' if 0.3 < val < 0.85 else 'white')
 
     plt.tight_layout()
+    # The right heatmap has long y-tick labels that eat into the gap between
+    # the middle and right axes, making the inter-plot buffers look unequal.
+    # Shift the middle axes left so the visual spacing matches.
+    pos = axes[1].get_position()
+    axes[1].set_position([pos.x0 - 0.03, pos.y0, pos.width, pos.height])
     plt.savefig(save_path, dpi=150, bbox_inches='tight')
     plt.close()
     print(f"  Saved: {save_path}")
@@ -2094,6 +2191,71 @@ def main():
             n_mdps=args.n_eval_mdps,
             save_path=os.path.join(args.figures_dir, 'long_horizon.png'),
         )
+
+    # -----------------------------------------------------------------------
+    # Part 4c: Cumulative reward across reward distributions
+    # -----------------------------------------------------------------------
+    print(f"\n{'=' * 60}")
+    print(f"Part 4c: Cumulative reward by reward distribution "
+          f"({len(REWARD_DISTRIBUTIONS)} dists × {args.n_eval_mdps} MDPs)")
+    print(f"{'=' * 60}")
+
+    rdist_results: List[Dict] = []
+    for dist_name, dist_label in REWARD_DISTRIBUTIONS:
+        print(f"\n  Reward dist: {dist_name} — {dist_label}")
+        cum_t, cum_g, cum_e, cum_o = [], [], [], []
+        for seed_i, seed in enumerate(eval_seeds):
+            print(f"    MDP {seed_i+1}/{args.n_eval_mdps} (seed={seed}) ...",
+                  flush=True)
+            P, R = generate_reward_dist_mdp(n_states, n_actions, dist_name,
+                                            seed=seed)
+            rng_t = np.random.default_rng(seed + 100)
+            rng_g = np.random.default_rng(seed + 100)
+            rng_e = np.random.default_rng(seed + 100)
+            rng_o = np.random.default_rng(seed + 100)
+
+            rew_t = run_transformer_autonomous(
+                model, P, R, n_states, n_actions, args.n_steps,
+                vocab, config, device, epsilon=0.0, rng=rng_t,
+            )
+            rew_g = run_q_learner_autonomous(
+                P, R, n_states, n_actions, args.n_steps,
+                alpha=args.alpha, gamma=args.gamma, epsilon=0.0, rng=rng_g,
+            )
+            rew_e = run_q_learner_autonomous(
+                P, R, n_states, n_actions, args.n_steps,
+                alpha=args.alpha, gamma=args.gamma,
+                epsilon=args.epsilon, rng=rng_e,
+            )
+            rew_o = run_optimal_autonomous(
+                P, R, n_states, n_actions, args.n_steps,
+                gamma=args.gamma, rng=rng_o,
+            )
+            cum_t.append(np.cumsum(rew_t))
+            cum_g.append(np.cumsum(rew_g))
+            cum_e.append(np.cumsum(rew_e))
+            cum_o.append(np.cumsum(rew_o))
+
+        ct = np.stack(cum_t, axis=0)
+        cg = np.stack(cum_g, axis=0)
+        ce = np.stack(cum_e, axis=0)
+        co = np.stack(cum_o, axis=0)
+        print(f"    Final cumulative reward (mean ± std):")
+        print(f"      Optimal:     {co[:, -1].mean():.2f} ± {co[:, -1].std():.2f}")
+        print(f"      Transformer: {ct[:, -1].mean():.2f} ± {ct[:, -1].std():.2f}")
+        print(f"      Greedy Q:    {cg[:, -1].mean():.2f} ± {cg[:, -1].std():.2f}")
+        print(f"      ε-greedy Q:  {ce[:, -1].mean():.2f} ± {ce[:, -1].std():.2f}")
+
+        rdist_results.append({
+            'name': dist_name, 'label': dist_label,
+            'cumrew_t': ct, 'cumrew_g': cg,
+            'cumrew_e': ce, 'cumrew_o': co,
+        })
+
+    plot_reward_dist_grid(
+        rdist_results, n_mdps=args.n_eval_mdps,
+        save_path=os.path.join(args.figures_dir, 'cumrew_by_reward_dist.png'),
+    )
 
     # -----------------------------------------------------------------------
     # Part 5: Effective alpha/gamma recovery
