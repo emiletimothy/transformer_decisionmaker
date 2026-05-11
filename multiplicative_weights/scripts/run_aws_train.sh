@@ -1,18 +1,4 @@
 #!/usr/bin/env bash
-# =============================================================================
-# AWS GPU Training Script for MW Transformer
-#
-# Usage:
-#   1. Launch a g4dn.2xlarge (T4) or g5.xlarge (A10G) with Deep Learning AMI
-#   2. SSH in and clone the repo:
-#        git clone https://github.com/emiletimothy/transformer_decisionmaker.git
-#        cd transformer_decisionmaker
-#   3. Run this script:
-#        bash multiplicative_weights/scripts/run_aws_train.sh
-#
-# The Deep Learning AMI comes with PyTorch + CUDA pre-installed.
-# If using a vanilla Ubuntu AMI, uncomment the pip install section below.
-# =============================================================================
 
 set -euo pipefail
 
