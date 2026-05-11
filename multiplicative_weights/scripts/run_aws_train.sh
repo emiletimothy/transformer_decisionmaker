@@ -15,7 +15,6 @@ pip install -r "$REPO_ROOT/requirements.txt"
 python3 -c "import torch; assert torch.cuda.is_available(), 'CUDA not available!'; print(f'GPU: {torch.cuda.get_device_name(0)}')"
 
 # --- wandb (authenticate via WANDB_API_KEY env var or `wandb login` beforehand) ---
-WANDB_ARGS="--wandb_entity emiletimothyanand --wandb_project transformers_online_decision_makers --wandb_run_name cuda-$(date +%Y%m%d-%H%M%S)"
 
 echo "=================================================="
 echo "Starting MW Transformer training on CUDA"
