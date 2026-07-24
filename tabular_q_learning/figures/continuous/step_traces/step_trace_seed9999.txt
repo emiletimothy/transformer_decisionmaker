@@ -59,10 +59,10 @@ MDP reward matrix R[s, a]:
   MODEL action choice this step: a_hat=1  (oracle a*=2)
   MODEL context update (slot a=2):
     ||c[a]|| before = 0.0000   after = 16.2459   ||delta_c|| = 16.2459
-    reward probe on delta_c: r_hat = +0.6773   (true r = +0.7299   |err| = 0.0526)
-    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [0.0009 0.001  0.0015 0.0005 0.0004 0.0014 0.0012 0.0014]
+    reward probe on delta_c: r_hat = +0.6428   (true r = +0.7299   |err| = 0.0871)
+    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [0.0009 0.0007 0.0012 0.0003 0.0001 0.0012 0.0014 0.0014]
                                     oracle Q[:,2] = [0. 0. 0. 0. 0. 0. 0. 0.]
-    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [-0.0327  0.1056  0.0157  0.0202 -0.0387  0.003   0.011  -0.0125]
+    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.007   0.0648  0.0156 -0.0146  0.0141 -0.0297  0.0027  0.0068]
                                     oracle Q[:,2] = [0.    0.073 0.    0.    0.    0.    0.    0.   ]
 
 --- Step   1 ---
@@ -77,10 +77,10 @@ MDP reward matrix R[s, a]:
   MODEL action choice this step: a_hat=2  (oracle a*=0)
   MODEL context update (slot a=0):
     ||c[a]|| before = 0.0000   after = 16.2055   ||delta_c|| = 16.2055
-    reward probe on delta_c: r_hat = +0.4401   (true r = +0.3801   |err| = 0.0600)
-    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [0.0009 0.001  0.0015 0.0005 0.0004 0.0014 0.0012 0.0014]
+    reward probe on delta_c: r_hat = +0.4680   (true r = +0.3801   |err| = 0.0879)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [0.0009 0.0007 0.0012 0.0003 0.0001 0.0012 0.0014 0.0014]
                                     oracle Q[:,0] = [0. 0. 0. 0. 0. 0. 0. 0.]
-    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [-0.0235  0.0139 -0.0346  0.077   0.0321 -0.0178  0.0063  0.0004]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [ 0.0124 -0.0111 -0.0451  0.0562 -0.0062 -0.0122 -0.0085 -0.0472]
                                     oracle Q[:,0] = [0.    0.    0.    0.038 0.    0.    0.    0.   ]
 
 --- Step   2 ---
@@ -95,10 +95,10 @@ MDP reward matrix R[s, a]:
   MODEL action choice this step: a_hat=3  (oracle a*=0)
   MODEL context update (slot a=1):
     ||c[a]|| before = 0.0000   after = 16.1935   ||delta_c|| = 16.1935
-    reward probe on delta_c: r_hat = +0.5657   (true r = +0.5141   |err| = 0.0515)
-    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [0.0009 0.001  0.0015 0.0005 0.0004 0.0014 0.0012 0.0014]
+    reward probe on delta_c: r_hat = +0.6143   (true r = +0.5141   |err| = 0.1002)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [0.0009 0.0007 0.0012 0.0003 0.0001 0.0012 0.0014 0.0014]
                                     oracle Q[:,1] = [0. 0. 0. 0. 0. 0. 0. 0.]
-    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0238  0.0126 -0.0189 -0.0566  0.0371  0.0096 -0.0578  0.116 ]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0235  0.0382 -0.0087 -0.0426  0.0234 -0.0091 -0.0532  0.1162]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.     0.     0.     0.0514]
 
 --- Step   3 ---
@@ -114,10 +114,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=0):
     ||c[a]|| before = 16.2055   after = 16.2973   ||delta_c|| = 14.8423
     cosine(delta_c_t, delta_c_prev for same a) = -0.4517
-    reward probe on delta_c: r_hat = +0.7398   (true r = +0.6117   |err| = 0.1281)
-    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [-0.0235  0.0139 -0.0346  0.077   0.0321 -0.0178  0.0063  0.0004]
+    reward probe on delta_c: r_hat = +0.6019   (true r = +0.6117   |err| = 0.0099)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [ 0.0124 -0.0111 -0.0451  0.0562 -0.0062 -0.0122 -0.0085 -0.0472]
                                     oracle Q[:,0] = [0.    0.    0.    0.038 0.    0.    0.    0.   ]
-    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [-0.0157  0.0163  0.0317  0.0875  0.0413  0.0579  0.0278  0.0417]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [ 0.0059 -0.0213  0.0223  0.053   0.0179  0.0524  0.0551  0.0004]
                                     oracle Q[:,0] = [0.     0.     0.     0.038  0.     0.0612 0.     0.    ]
 
 --- Step   4 ---
@@ -133,10 +133,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=1):
     ||c[a]|| before = 16.1935   after = 16.2879   ||delta_c|| = 11.4333
     cosine(delta_c_t, delta_c_prev for same a) = -0.3447
-    reward probe on delta_c: r_hat = +0.3415   (true r = +0.2649   |err| = 0.0766)
-    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0238  0.0126 -0.0189 -0.0566  0.0371  0.0096 -0.0578  0.116 ]
+    reward probe on delta_c: r_hat = +0.3583   (true r = +0.2649   |err| = 0.0934)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0235  0.0382 -0.0087 -0.0426  0.0234 -0.0091 -0.0532  0.1162]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.     0.     0.     0.0514]
-    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0285  0.0606  0.0164 -0.0399  0.0205 -0.0341 -0.027   0.0974]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0108  0.1004  0.0396 -0.0096  0.0242 -0.0662 -0.0671  0.1433]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.     0.     0.0265 0.0514]
 
 --- Step   5 ---
@@ -152,10 +152,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=2):
     ||c[a]|| before = 16.2459   after = 16.3797   ||delta_c|| = 12.5060
     cosine(delta_c_t, delta_c_prev for same a) = -0.3742
-    reward probe on delta_c: r_hat = +0.6927   (true r = +0.6779   |err| = 0.0148)
-    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [-0.0327  0.1056  0.0157  0.0202 -0.0387  0.003   0.011  -0.0125]
+    reward probe on delta_c: r_hat = +0.6040   (true r = +0.6779   |err| = 0.0739)
+    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.007   0.0648  0.0156 -0.0146  0.0141 -0.0297  0.0027  0.0068]
                                     oracle Q[:,2] = [0.    0.073 0.    0.    0.    0.    0.    0.   ]
-    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.0598  0.0778 -0.0048  0.0434 -0.0109  0.0093  0.0376  0.019 ]
+    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.0957  0.0535  0.015   0.0211  0.0365 -0.0285  0.0569 -0.0059]
                                     oracle Q[:,2] = [0.0678 0.073  0.     0.     0.     0.     0.     0.    ]
 
 --- Step   6 ---
@@ -171,10 +171,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=2):
     ||c[a]|| before = 16.3797   after = 16.4641   ||delta_c|| = 5.7281
     cosine(delta_c_t, delta_c_prev for same a) = +0.4654
-    reward probe on delta_c: r_hat = +0.5836   (true r = +0.6779   |err| = 0.0944)
-    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.0598  0.0778 -0.0048  0.0434 -0.0109  0.0093  0.0376  0.019 ]
+    reward probe on delta_c: r_hat = +0.5757   (true r = +0.6779   |err| = 0.1022)
+    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.0957  0.0535  0.015   0.0211  0.0365 -0.0285  0.0569 -0.0059]
                                     oracle Q[:,2] = [0.0678 0.073  0.     0.     0.     0.     0.     0.    ]
-    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.1825  0.0947 -0.0331  0.0203 -0.0396 -0.0197  0.03   -0.0007]
+    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.2068  0.0774  0.0016 -0.0016 -0.0045 -0.0566  0.0546 -0.0277]
                                     oracle Q[:,2] = [0.1349 0.073  0.     0.     0.     0.     0.     0.    ]
 
 --- Step   7 ---
@@ -190,10 +190,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=2):
     ||c[a]|| before = 16.4641   after = 16.5145   ||delta_c|| = 3.3847
     cosine(delta_c_t, delta_c_prev for same a) = +0.9045
-    reward probe on delta_c: r_hat = +0.5808   (true r = +0.6779   |err| = 0.0972)
-    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.1825  0.0947 -0.0331  0.0203 -0.0396 -0.0197  0.03   -0.0007]
+    reward probe on delta_c: r_hat = +0.5879   (true r = +0.6779   |err| = 0.0900)
+    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.2068  0.0774  0.0016 -0.0016 -0.0045 -0.0566  0.0546 -0.0277]
                                     oracle Q[:,2] = [0.1349 0.073  0.     0.     0.     0.     0.     0.    ]
-    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.2615  0.0996 -0.0292  0.0228 -0.0302 -0.0339  0.0268 -0.0041]
+    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.2825  0.0837  0.0107  0.0002 -0.004  -0.0677  0.0627 -0.0359]
                                     oracle Q[:,2] = [0.2013 0.073  0.     0.     0.     0.     0.     0.    ]
 
 --- Step   8 ---
@@ -208,10 +208,10 @@ MDP reward matrix R[s, a]:
   MODEL action choice this step: a_hat=0  (oracle a*=0)
   MODEL context update (slot a=3):
     ||c[a]|| before = 0.0000   after = 16.3443   ||delta_c|| = 16.3443
-    reward probe on delta_c: r_hat = +0.4519   (true r = +0.4298   |err| = 0.0221)
-    Q-probe on c[a=3]   BEFORE: pred Q[:,3] = [0.0009 0.001  0.0015 0.0005 0.0004 0.0014 0.0012 0.0014]
+    reward probe on delta_c: r_hat = +0.4322   (true r = +0.4298   |err| = 0.0024)
+    Q-probe on c[a=3]   BEFORE: pred Q[:,3] = [0.0009 0.0007 0.0012 0.0003 0.0001 0.0012 0.0014 0.0014]
                                     oracle Q[:,3] = [0. 0. 0. 0. 0. 0. 0. 0.]
-    Q-probe on c[a=3]   AFTER : pred Q[:,3] = [ 0.0146 -0.0409 -0.0399  0.0522 -0.0466 -0.0486 -0.0391  0.0334]
+    Q-probe on c[a=3]   AFTER : pred Q[:,3] = [ 0.0236 -0.0058 -0.0441  0.0344 -0.0658 -0.0394 -0.0424 -0.0349]
                                     oracle Q[:,3] = [0.0464 0.     0.     0.     0.     0.     0.     0.    ]
 
 --- Step   9 ---
@@ -227,10 +227,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=0):
     ||c[a]|| before = 16.2973   after = 16.3116   ||delta_c|| = 7.8167
     cosine(delta_c_t, delta_c_prev for same a) = -0.2231
-    reward probe on delta_c: r_hat = +0.4024   (true r = +0.3801   |err| = 0.0223)
-    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [-0.0157  0.0163  0.0317  0.0875  0.0413  0.0579  0.0278  0.0417]
+    reward probe on delta_c: r_hat = +0.5174   (true r = +0.3801   |err| = 0.1372)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [ 0.0059 -0.0213  0.0223  0.053   0.0179  0.0524  0.0551  0.0004]
                                     oracle Q[:,0] = [0.     0.     0.     0.038  0.     0.0612 0.     0.    ]
-    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [-0.0515 -0.0015  0.0195  0.1811 -0.0193  0.057  -0.0453  0.0143]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [-0.0207 -0.0392 -0.0062  0.1478 -0.0518  0.0577 -0.0131 -0.0335]
                                     oracle Q[:,0] = [0.     0.     0.     0.0722 0.     0.0612 0.     0.    ]
 
 --- Step  10 ---
@@ -246,10 +246,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=3):
     ||c[a]|| before = 16.3443   after = 16.3548   ||delta_c|| = 18.6854
     cosine(delta_c_t, delta_c_prev for same a) = -0.5711
-    reward probe on delta_c: r_hat = +0.6227   (true r = +0.6451   |err| = 0.0224)
-    Q-probe on c[a=3]   BEFORE: pred Q[:,3] = [ 0.0146 -0.0409 -0.0399  0.0522 -0.0466 -0.0486 -0.0391  0.0334]
+    reward probe on delta_c: r_hat = +0.6787   (true r = +0.6451   |err| = 0.0336)
+    Q-probe on c[a=3]   BEFORE: pred Q[:,3] = [ 0.0236 -0.0058 -0.0441  0.0344 -0.0658 -0.0394 -0.0424 -0.0349]
                                     oracle Q[:,3] = [0.0464 0.     0.     0.     0.     0.     0.     0.    ]
-    Q-probe on c[a=3]   AFTER : pred Q[:,3] = [ 0.0274 -0.0076  0.107   0.0355 -0.0376 -0.0222  0.029   0.0037]
+    Q-probe on c[a=3]   AFTER : pred Q[:,3] = [ 0.0099  0.0256  0.0975  0.0455 -0.0391 -0.0316  0.0655 -0.0258]
                                     oracle Q[:,3] = [0.0464 0.     0.0711 0.     0.     0.     0.     0.    ]
 
 --- Step  11 ---
@@ -265,10 +265,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=2):
     ||c[a]|| before = 16.5145   after = 16.5288   ||delta_c|| = 5.4993
     cosine(delta_c_t, delta_c_prev for same a) = -0.0611
-    reward probe on delta_c: r_hat = +0.6213   (true r = +0.7299   |err| = 0.1085)
-    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.2615  0.0996 -0.0292  0.0228 -0.0302 -0.0339  0.0268 -0.0041]
+    reward probe on delta_c: r_hat = +0.6271   (true r = +0.7299   |err| = 0.1028)
+    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.2825  0.0837  0.0107  0.0002 -0.004  -0.0677  0.0627 -0.0359]
                                     oracle Q[:,2] = [0.2013 0.073  0.     0.     0.     0.     0.     0.    ]
-    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.2066  0.2078  0.0034  0.0474 -0.0193 -0.0113  0.0226 -0.044 ]
+    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.2391  0.1822  0.0356  0.0171  0.0128 -0.0354  0.0704 -0.0619]
                                     oracle Q[:,2] = [0.2013 0.1568 0.     0.     0.     0.     0.     0.    ]
 
 --- Step  12 ---
@@ -284,10 +284,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=2):
     ||c[a]|| before = 16.5288   after = 16.5695   ||delta_c|| = 6.4675
     cosine(delta_c_t, delta_c_prev for same a) = -0.1575
-    reward probe on delta_c: r_hat = +0.4610   (true r = +0.6779   |err| = 0.2170)
-    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.2066  0.2078  0.0034  0.0474 -0.0193 -0.0113  0.0226 -0.044 ]
+    reward probe on delta_c: r_hat = +0.4814   (true r = +0.6779   |err| = 0.1965)
+    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.2391  0.1822  0.0356  0.0171  0.0128 -0.0354  0.0704 -0.0619]
                                     oracle Q[:,2] = [0.2013 0.1568 0.     0.     0.     0.     0.     0.    ]
-    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.2453  0.2175 -0.0181  0.0234 -0.0164 -0.0131 -0.0143  0.0156]
+    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.2785  0.1907  0.0271 -0.0206  0.0097 -0.0252  0.0287 -0.0255]
                                     oracle Q[:,2] = [0.2555 0.1568 0.     0.     0.     0.     0.     0.    ]
 
 --- Step  13 ---
@@ -303,10 +303,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=0):
     ||c[a]|| before = 16.3116   after = 16.3856   ||delta_c|| = 6.2855
     cosine(delta_c_t, delta_c_prev for same a) = +0.1509
-    reward probe on delta_c: r_hat = +0.4490   (true r = +0.3801   |err| = 0.0689)
-    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [-0.0515 -0.0015  0.0195  0.1811 -0.0193  0.057  -0.0453  0.0143]
+    reward probe on delta_c: r_hat = +0.4441   (true r = +0.3801   |err| = 0.0640)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [-0.0207 -0.0392 -0.0062  0.1478 -0.0518  0.0577 -0.0131 -0.0335]
                                     oracle Q[:,0] = [0.     0.     0.     0.0722 0.     0.0612 0.     0.    ]
-    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [-0.0481 -0.005   0.013   0.1931 -0.0133  0.0527 -0.0544  0.0159]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [-0.0158 -0.0428 -0.0045  0.1559 -0.0632  0.0602 -0.0044 -0.0515]
                                     oracle Q[:,0] = [0.     0.     0.     0.1094 0.     0.0612 0.     0.    ]
 
 --- Step  14 ---
@@ -322,10 +322,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=3):
     ||c[a]|| before = 16.3548   after = 16.4460   ||delta_c|| = 9.7346
     cosine(delta_c_t, delta_c_prev for same a) = -0.2173
-    reward probe on delta_c: r_hat = +0.6631   (true r = +0.6451   |err| = 0.0180)
-    Q-probe on c[a=3]   BEFORE: pred Q[:,3] = [ 0.0274 -0.0076  0.107   0.0355 -0.0376 -0.0222  0.029   0.0037]
+    reward probe on delta_c: r_hat = +0.6207   (true r = +0.6451   |err| = 0.0244)
+    Q-probe on c[a=3]   BEFORE: pred Q[:,3] = [ 0.0099  0.0256  0.0975  0.0455 -0.0391 -0.0316  0.0655 -0.0258]
                                     oracle Q[:,3] = [0.0464 0.     0.0711 0.     0.     0.     0.     0.    ]
-    Q-probe on c[a=3]   AFTER : pred Q[:,3] = [ 0.0414 -0.0203  0.1894 -0.0355 -0.0254 -0.0394 -0.03    0.0645]
+    Q-probe on c[a=3]   AFTER : pred Q[:,3] = [ 0.0414  0.0127  0.2026 -0.0381 -0.0442 -0.0348  0.0261  0.0079]
                                     oracle Q[:,3] = [0.0464 0.     0.134  0.     0.     0.     0.     0.    ]
 
 --- Step  15 ---
@@ -341,10 +341,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=0):
     ||c[a]|| before = 16.3856   after = 16.3861   ||delta_c|| = 7.6413
     cosine(delta_c_t, delta_c_prev for same a) = -0.2324
-    reward probe on delta_c: r_hat = +0.7069   (true r = +0.6117   |err| = 0.0952)
-    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [-0.0481 -0.005   0.013   0.1931 -0.0133  0.0527 -0.0544  0.0159]
+    reward probe on delta_c: r_hat = +0.6651   (true r = +0.6117   |err| = 0.0534)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [-0.0158 -0.0428 -0.0045  0.1559 -0.0632  0.0602 -0.0044 -0.0515]
                                     oracle Q[:,0] = [0.     0.     0.     0.1094 0.     0.0612 0.     0.    ]
-    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [-0.0524  0.0229  0.0066  0.1632  0.0408  0.1641 -0.0444  0.04  ]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [-0.0311 -0.0134 -0.0088  0.1353  0.0184  0.1698  0.0102 -0.0096]
                                     oracle Q[:,0] = [0.     0.     0.     0.1094 0.     0.1303 0.     0.    ]
 
 --- Step  16 ---
@@ -360,10 +360,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=2):
     ||c[a]|| before = 16.5695   after = 16.5670   ||delta_c|| = 3.0793
     cosine(delta_c_t, delta_c_prev for same a) = -0.4814
-    reward probe on delta_c: r_hat = +0.4920   (true r = +0.7299   |err| = 0.2379)
-    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.2453  0.2175 -0.0181  0.0234 -0.0164 -0.0131 -0.0143  0.0156]
+    reward probe on delta_c: r_hat = +0.4980   (true r = +0.7299   |err| = 0.2319)
+    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.2785  0.1907  0.0271 -0.0206  0.0097 -0.0252  0.0287 -0.0255]
                                     oracle Q[:,2] = [0.2555 0.1568 0.     0.     0.     0.     0.     0.    ]
-    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.2111  0.2496  0.0105  0.0486 -0.0213 -0.0048  0.0184  0.0021]
+    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.2455  0.2217  0.0478  0.0074  0.0054 -0.0138  0.0637 -0.0222]
                                     oracle Q[:,2] = [0.2555 0.224  0.     0.     0.     0.     0.     0.    ]
 
 --- Step  17 ---
@@ -379,10 +379,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=0):
     ||c[a]|| before = 16.3861   after = 16.4104   ||delta_c|| = 3.9763
     cosine(delta_c_t, delta_c_prev for same a) = -0.5552
-    reward probe on delta_c: r_hat = +0.4644   (true r = +0.3801   |err| = 0.0843)
-    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [-0.0524  0.0229  0.0066  0.1632  0.0408  0.1641 -0.0444  0.04  ]
+    reward probe on delta_c: r_hat = +0.5073   (true r = +0.3801   |err| = 0.1272)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [-0.0311 -0.0134 -0.0088  0.1353  0.0184  0.1698  0.0102 -0.0096]
                                     oracle Q[:,0] = [0.     0.     0.     0.1094 0.     0.1303 0.     0.    ]
-    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [-0.019   0.0426  0.0155  0.2151  0.0391  0.1268 -0.0339  0.07  ]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [0.0081 0.0059 0.0058 0.1889 0.002  0.1291 0.0307 0.0139]
                                     oracle Q[:,0] = [0.     0.     0.     0.1566 0.     0.1303 0.     0.    ]
 
 --- Step  18 ---
@@ -398,10 +398,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=2):
     ||c[a]|| before = 16.5670   after = 16.5594   ||delta_c|| = 5.6399
     cosine(delta_c_t, delta_c_prev for same a) = +0.3958
-    reward probe on delta_c: r_hat = +0.5111   (true r = +0.7299   |err| = 0.2188)
-    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.2111  0.2496  0.0105  0.0486 -0.0213 -0.0048  0.0184  0.0021]
+    reward probe on delta_c: r_hat = +0.5157   (true r = +0.7299   |err| = 0.2142)
+    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.2455  0.2217  0.0478  0.0074  0.0054 -0.0138  0.0637 -0.0222]
                                     oracle Q[:,2] = [0.2555 0.224  0.     0.     0.     0.     0.     0.    ]
-    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.1696  0.2855  0.0369  0.0578 -0.0062  0.012   0.0324  0.0171]
+    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.2104  0.2564  0.0687  0.0258  0.0177 -0.0058  0.0877 -0.0026]
                                     oracle Q[:,2] = [0.2555 0.2975 0.     0.     0.     0.     0.     0.    ]
 
 --- Step  19 ---
@@ -417,10 +417,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=2):
     ||c[a]|| before = 16.5594   after = 16.5824   ||delta_c|| = 5.9471
     cosine(delta_c_t, delta_c_prev for same a) = -0.9314
-    reward probe on delta_c: r_hat = +0.4917   (true r = +0.6779   |err| = 0.1862)
-    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.1696  0.2855  0.0369  0.0578 -0.0062  0.012   0.0324  0.0171]
+    reward probe on delta_c: r_hat = +0.4876   (true r = +0.6779   |err| = 0.1903)
+    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.2104  0.2564  0.0687  0.0258  0.0177 -0.0058  0.0877 -0.0026]
                                     oracle Q[:,2] = [0.2555 0.2975 0.     0.     0.     0.     0.     0.    ]
-    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.2088  0.283   0.0117  0.0367 -0.0041  0.0117  0.0065  0.0357]
+    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.248   0.2494  0.0548 -0.0065  0.0196  0.0003  0.0607 -0.0071]
                                     oracle Q[:,2] = [0.3118 0.2975 0.     0.     0.     0.     0.     0.    ]
 
 --- Step  20 ---
@@ -436,10 +436,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=0):
     ||c[a]|| before = 16.4104   after = 16.4714   ||delta_c|| = 6.8566
     cosine(delta_c_t, delta_c_prev for same a) = +0.1319
-    reward probe on delta_c: r_hat = +0.4860   (true r = +0.3801   |err| = 0.1059)
-    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [-0.019   0.0426  0.0155  0.2151  0.0391  0.1268 -0.0339  0.07  ]
+    reward probe on delta_c: r_hat = +0.4494   (true r = +0.3801   |err| = 0.0693)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [0.0081 0.0059 0.0058 0.1889 0.002  0.1291 0.0307 0.0139]
                                     oracle Q[:,0] = [0.     0.     0.     0.1566 0.     0.1303 0.     0.    ]
-    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [-0.0335  0.0097  0.0027  0.2786  0.0378  0.141  -0.0414  0.0636]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [-0.0077 -0.0196 -0.0028  0.2469 -0.0159  0.1394  0.0154 -0.0128]
                                     oracle Q[:,0] = [0.     0.     0.     0.1836 0.     0.1303 0.     0.    ]
 
 --- Step  21 ---
@@ -455,10 +455,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=1):
     ||c[a]|| before = 16.2879   after = 16.3596   ||delta_c|| = 12.9203
     cosine(delta_c_t, delta_c_prev for same a) = -0.3230
-    reward probe on delta_c: r_hat = +0.6478   (true r = +0.5141   |err| = 0.1337)
-    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0285  0.0606  0.0164 -0.0399  0.0205 -0.0341 -0.027   0.0974]
+    reward probe on delta_c: r_hat = +0.5761   (true r = +0.5141   |err| = 0.0620)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0108  0.1004  0.0396 -0.0096  0.0242 -0.0662 -0.0671  0.1433]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.     0.     0.0265 0.0514]
-    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.021  -0.0208 -0.0058 -0.0347 -0.0114 -0.0225  0.0041  0.1943]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0231  0.0363  0.0229 -0.0175 -0.0453 -0.0294  0.0155  0.1968]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.     0.     0.0265 0.1023]
 
 --- Step  22 ---
@@ -474,10 +474,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=1):
     ||c[a]|| before = 16.3596   after = 16.3515   ||delta_c|| = 7.8331
     cosine(delta_c_t, delta_c_prev for same a) = -0.2997
-    reward probe on delta_c: r_hat = +0.5887   (true r = +0.5141   |err| = 0.0746)
-    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.021  -0.0208 -0.0058 -0.0347 -0.0114 -0.0225  0.0041  0.1943]
+    reward probe on delta_c: r_hat = +0.6000   (true r = +0.5141   |err| = 0.0859)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0231  0.0363  0.0229 -0.0175 -0.0453 -0.0294  0.0155  0.1968]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.     0.     0.0265 0.1023]
-    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0201 -0.0108 -0.0213 -0.0112  0.0543 -0.0012 -0.0081  0.2442]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0083  0.038  -0.0024  0.0048  0.0209 -0.0113  0.0099  0.2558]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.     0.     0.0265 0.1435]
 
 --- Step  23 ---
@@ -493,10 +493,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=1):
     ||c[a]|| before = 16.3515   after = 16.4301   ||delta_c|| = 12.0672
     cosine(delta_c_t, delta_c_prev for same a) = -0.1410
-    reward probe on delta_c: r_hat = +0.6329   (true r = +0.5799   |err| = 0.0530)
-    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0201 -0.0108 -0.0213 -0.0112  0.0543 -0.0012 -0.0081  0.2442]
+    reward probe on delta_c: r_hat = +0.6045   (true r = +0.5799   |err| = 0.0246)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0083  0.038  -0.0024  0.0048  0.0209 -0.0113  0.0099  0.2558]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.     0.     0.0265 0.1435]
-    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0513  0.0397  0.0384 -0.0125  0.1434 -0.0167 -0.0149  0.1645]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0132  0.0371  0.0507  0.0153  0.0983 -0.0046  0.032   0.1681]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.     0.0265 0.1435]
 
 --- Step  24 ---
@@ -512,10 +512,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=3):
     ||c[a]|| before = 16.4460   after = 16.4767   ||delta_c|| = 6.1100
     cosine(delta_c_t, delta_c_prev for same a) = +0.2005
-    reward probe on delta_c: r_hat = +0.6074   (true r = +0.6451   |err| = 0.0376)
-    Q-probe on c[a=3]   BEFORE: pred Q[:,3] = [ 0.0414 -0.0203  0.1894 -0.0355 -0.0254 -0.0394 -0.03    0.0645]
+    reward probe on delta_c: r_hat = +0.6031   (true r = +0.6451   |err| = 0.0420)
+    Q-probe on c[a=3]   BEFORE: pred Q[:,3] = [ 0.0414  0.0127  0.2026 -0.0381 -0.0442 -0.0348  0.0261  0.0079]
                                     oracle Q[:,3] = [0.0464 0.     0.134  0.     0.     0.     0.     0.    ]
-    Q-probe on c[a=3]   AFTER : pred Q[:,3] = [ 0.0697 -0.015   0.268  -0.0253 -0.0271 -0.0653 -0.0446  0.0758]
+    Q-probe on c[a=3]   AFTER : pred Q[:,3] = [ 0.0708  0.0124  0.2892 -0.0342 -0.0534 -0.0488  0.0178 -0.0021]
                                     oracle Q[:,3] = [0.0464 0.     0.2016 0.     0.     0.     0.     0.    ]
 
 --- Step  25 ---
@@ -531,10 +531,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=0):
     ||c[a]|| before = 16.4714   after = 16.4689   ||delta_c|| = 4.8202
     cosine(delta_c_t, delta_c_prev for same a) = -0.4786
-    reward probe on delta_c: r_hat = +0.5089   (true r = +0.3801   |err| = 0.1288)
-    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [-0.0335  0.0097  0.0027  0.2786  0.0378  0.141  -0.0414  0.0636]
+    reward probe on delta_c: r_hat = +0.5344   (true r = +0.3801   |err| = 0.1543)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [-0.0077 -0.0196 -0.0028  0.2469 -0.0159  0.1394  0.0154 -0.0128]
                                     oracle Q[:,0] = [0.     0.     0.     0.1836 0.     0.1303 0.     0.    ]
-    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [-0.0205  0.0049 -0.0064  0.2826  0.0445  0.1262 -0.0586  0.0281]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [ 0.0103 -0.0303 -0.0029  0.2519 -0.0117  0.1372  0.0108 -0.0419]
                                     oracle Q[:,0] = [0.     0.     0.     0.2214 0.     0.1303 0.     0.    ]
 
 --- Step  26 ---
@@ -550,10 +550,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=3):
     ||c[a]|| before = 16.4767   after = 16.4881   ||delta_c|| = 4.6210
     cosine(delta_c_t, delta_c_prev for same a) = -0.6492
-    reward probe on delta_c: r_hat = +0.5620   (true r = +0.6451   |err| = 0.0831)
-    Q-probe on c[a=3]   BEFORE: pred Q[:,3] = [ 0.0697 -0.015   0.268  -0.0253 -0.0271 -0.0653 -0.0446  0.0758]
+    reward probe on delta_c: r_hat = +0.5923   (true r = +0.6451   |err| = 0.0528)
+    Q-probe on c[a=3]   BEFORE: pred Q[:,3] = [ 0.0708  0.0124  0.2892 -0.0342 -0.0534 -0.0488  0.0178 -0.0021]
                                     oracle Q[:,3] = [0.0464 0.     0.2016 0.     0.     0.     0.     0.    ]
-    Q-probe on c[a=3]   AFTER : pred Q[:,3] = [ 0.0577 -0.0206  0.3162 -0.0165 -0.0101 -0.043  -0.0135  0.0644]
+    Q-probe on c[a=3]   AFTER : pred Q[:,3] = [ 0.0667  0.0047  0.338  -0.0212 -0.0302 -0.0396  0.0619  0.002 ]
                                     oracle Q[:,3] = [0.0464 0.     0.2577 0.     0.     0.     0.     0.    ]
 
 --- Step  27 ---
@@ -569,10 +569,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=0):
     ||c[a]|| before = 16.4689   after = 16.4741   ||delta_c|| = 6.6983
     cosine(delta_c_t, delta_c_prev for same a) = -0.5054
-    reward probe on delta_c: r_hat = +0.6222   (true r = +0.6117   |err| = 0.0105)
-    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [-0.0205  0.0049 -0.0064  0.2826  0.0445  0.1262 -0.0586  0.0281]
+    reward probe on delta_c: r_hat = +0.5907   (true r = +0.6117   |err| = 0.0210)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [ 0.0103 -0.0303 -0.0029  0.2519 -0.0117  0.1372  0.0108 -0.0419]
                                     oracle Q[:,0] = [0.     0.     0.     0.2214 0.     0.1303 0.     0.    ]
-    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [-0.0274  0.0213 -0.0008  0.2385  0.0649  0.2008 -0.0176  0.0445]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [ 0.0098 -0.0088  0.0003  0.2109  0.0308  0.2011  0.0475 -0.0259]
                                     oracle Q[:,0] = [0.     0.     0.     0.2214 0.     0.2065 0.     0.    ]
 
 --- Step  28 ---
@@ -588,10 +588,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=2):
     ||c[a]|| before = 16.5824   after = 16.5899   ||delta_c|| = 5.6553
     cosine(delta_c_t, delta_c_prev for same a) = -0.8019
-    reward probe on delta_c: r_hat = +0.5010   (true r = +0.6779   |err| = 0.1769)
-    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.2088  0.283   0.0117  0.0367 -0.0041  0.0117  0.0065  0.0357]
+    reward probe on delta_c: r_hat = +0.5058   (true r = +0.6779   |err| = 0.1721)
+    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.248   0.2494  0.0548 -0.0065  0.0196  0.0003  0.0607 -0.0071]
                                     oracle Q[:,2] = [0.3118 0.2975 0.     0.     0.     0.     0.     0.    ]
-    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.2399  0.2284  0.0399  0.0603 -0.0104  0.0173  0.0469  0.0468]
+    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.2787  0.2055  0.0818  0.0293  0.0116 -0.0015  0.1072  0.0128]
                                     oracle Q[:,2] = [0.3765 0.2975 0.     0.     0.     0.     0.     0.    ]
 
 --- Step  29 ---
@@ -607,10 +607,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=2):
     ||c[a]|| before = 16.5899   after = 16.6207   ||delta_c|| = 5.7759
     cosine(delta_c_t, delta_c_prev for same a) = -0.5432
-    reward probe on delta_c: r_hat = +0.5248   (true r = +0.6779   |err| = 0.1531)
-    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.2399  0.2284  0.0399  0.0603 -0.0104  0.0173  0.0469  0.0468]
+    reward probe on delta_c: r_hat = +0.5106   (true r = +0.6779   |err| = 0.1673)
+    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.2787  0.2055  0.0818  0.0293  0.0116 -0.0015  0.1072  0.0128]
                                     oracle Q[:,2] = [0.3765 0.2975 0.     0.     0.     0.     0.     0.    ]
-    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [0.2746 0.2258 0.0398 0.0929 0.0071 0.0174 0.0275 0.0584]
+    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [0.3018 0.2056 0.0712 0.046  0.0217 0.011  0.0757 0.0289]
                                     oracle Q[:,2] = [0.4196 0.2975 0.     0.     0.     0.     0.     0.    ]
 
 --- Step  30 ---
@@ -626,10 +626,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=1):
     ||c[a]|| before = 16.4301   after = 16.4328   ||delta_c|| = 5.5474
     cosine(delta_c_t, delta_c_prev for same a) = -0.7116
-    reward probe on delta_c: r_hat = +0.4180   (true r = +0.5141   |err| = 0.0961)
-    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0513  0.0397  0.0384 -0.0125  0.1434 -0.0167 -0.0149  0.1645]
+    reward probe on delta_c: r_hat = +0.4298   (true r = +0.5141   |err| = 0.0843)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0132  0.0371  0.0507  0.0153  0.0983 -0.0046  0.032   0.1681]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.     0.0265 0.1435]
-    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0413 -0.0416 -0.0001 -0.0102  0.1415 -0.0124 -0.0224  0.2236]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0245 -0.0259  0.0243  0.0117  0.0966 -0.0104  0.0337  0.2065]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.     0.0265 0.2037]
 
 --- Step  31 ---
@@ -645,10 +645,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=0):
     ||c[a]|| before = 16.4741   after = 16.5201   ||delta_c|| = 7.0472
     cosine(delta_c_t, delta_c_prev for same a) = -0.5496
-    reward probe on delta_c: r_hat = +0.4073   (true r = +0.2914   |err| = 0.1159)
-    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [-0.0274  0.0213 -0.0008  0.2385  0.0649  0.2008 -0.0176  0.0445]
+    reward probe on delta_c: r_hat = +0.4155   (true r = +0.2914   |err| = 0.1241)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [ 0.0098 -0.0088  0.0003  0.2109  0.0308  0.2011  0.0475 -0.0259]
                                     oracle Q[:,0] = [0.     0.     0.     0.2214 0.     0.2065 0.     0.    ]
-    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [-0.0371  0.0218  0.0358  0.2606  0.04    0.1832 -0.0156  0.0648]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [-0.012  -0.0045  0.0378  0.235  -0.0101  0.1922  0.0696 -0.0194]
                                     oracle Q[:,0] = [0.     0.     0.0475 0.2214 0.     0.2065 0.     0.    ]
 
 --- Step  32 ---
@@ -664,10 +664,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=1):
     ||c[a]|| before = 16.4328   after = 16.4331   ||delta_c|| = 2.3945
     cosine(delta_c_t, delta_c_prev for same a) = +0.5812
-    reward probe on delta_c: r_hat = +0.5188   (true r = +0.5141   |err| = 0.0047)
-    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0413 -0.0416 -0.0001 -0.0102  0.1415 -0.0124 -0.0224  0.2236]
+    reward probe on delta_c: r_hat = +0.5220   (true r = +0.5141   |err| = 0.0079)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0245 -0.0259  0.0243  0.0117  0.0966 -0.0104  0.0337  0.2065]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.     0.0265 0.2037]
-    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0399 -0.0428  0.007   0.0173  0.1124  0.0016 -0.0095  0.2596]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0272 -0.0238  0.0334  0.0347  0.0686  0.0004  0.0473  0.2345]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.     0.0265 0.258 ]
 
 --- Step  33 ---
@@ -683,10 +683,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=3):
     ||c[a]|| before = 16.4881   after = 16.5023   ||delta_c|| = 2.0669
     cosine(delta_c_t, delta_c_prev for same a) = +0.0785
-    reward probe on delta_c: r_hat = +0.5231   (true r = +0.6451   |err| = 0.1220)
-    Q-probe on c[a=3]   BEFORE: pred Q[:,3] = [ 0.0577 -0.0206  0.3162 -0.0165 -0.0101 -0.043  -0.0135  0.0644]
+    reward probe on delta_c: r_hat = +0.5169   (true r = +0.6451   |err| = 0.1282)
+    Q-probe on c[a=3]   BEFORE: pred Q[:,3] = [ 0.0667  0.0047  0.338  -0.0212 -0.0302 -0.0396  0.0619  0.002 ]
                                     oracle Q[:,3] = [0.0464 0.     0.2577 0.     0.     0.     0.     0.    ]
-    Q-probe on c[a=3]   AFTER : pred Q[:,3] = [ 0.0571 -0.0138  0.325   0.0042  0.0004 -0.0208 -0.003   0.0694]
+    Q-probe on c[a=3]   AFTER : pred Q[:,3] = [ 0.0724  0.0082  0.3535 -0.0025 -0.0217 -0.0188  0.0772  0.005 ]
                                     oracle Q[:,3] = [0.0464 0.     0.315  0.     0.     0.     0.     0.    ]
 
 --- Step  34 ---
@@ -702,10 +702,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=0):
     ||c[a]|| before = 16.5201   after = 16.5239   ||delta_c|| = 3.8593
     cosine(delta_c_t, delta_c_prev for same a) = -0.3921
-    reward probe on delta_c: r_hat = +0.6390   (true r = +0.6117   |err| = 0.0273)
-    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [-0.0371  0.0218  0.0358  0.2606  0.04    0.1832 -0.0156  0.0648]
+    reward probe on delta_c: r_hat = +0.6483   (true r = +0.6117   |err| = 0.0365)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [-0.012  -0.0045  0.0378  0.235  -0.0101  0.1922  0.0696 -0.0194]
                                     oracle Q[:,0] = [0.     0.     0.0475 0.2214 0.     0.2065 0.     0.    ]
-    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [-0.0309  0.0069  0.0443  0.2292  0.0633  0.2261 -0.0003  0.0857]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [-0.014  -0.0167  0.0507  0.2039  0.0247  0.2325  0.0842  0.0113]
                                     oracle Q[:,0] = [0.     0.     0.0475 0.2214 0.     0.2494 0.     0.    ]
 
 --- Step  35 ---
@@ -721,10 +721,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=1):
     ||c[a]|| before = 16.4331   after = 16.4261   ||delta_c|| = 8.1430
     cosine(delta_c_t, delta_c_prev for same a) = +0.0837
-    reward probe on delta_c: r_hat = +0.4125   (true r = +0.2649   |err| = 0.1476)
-    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0399 -0.0428  0.007   0.0173  0.1124  0.0016 -0.0095  0.2596]
+    reward probe on delta_c: r_hat = +0.4412   (true r = +0.2649   |err| = 0.1763)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0272 -0.0238  0.0334  0.0347  0.0686  0.0004  0.0473  0.2345]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.     0.0265 0.258 ]
-    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0162 -0.0037  0.0085  0.0064  0.0888  0.0254  0.0655  0.2288]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [0.0214 0.0221 0.0484 0.02   0.075  0.0086 0.1022 0.2303]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.     0.0728 0.258 ]
 
 --- Step  36 ---
@@ -740,10 +740,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=1):
     ||c[a]|| before = 16.4261   after = 16.4793   ||delta_c|| = 9.3165
     cosine(delta_c_t, delta_c_prev for same a) = -0.5797
-    reward probe on delta_c: r_hat = +0.7915   (true r = +0.8046   |err| = 0.0132)
-    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0162 -0.0037  0.0085  0.0064  0.0888  0.0254  0.0655  0.2288]
+    reward probe on delta_c: r_hat = +0.7471   (true r = +0.8046   |err| = 0.0576)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [0.0214 0.0221 0.0484 0.02   0.075  0.0086 0.1022 0.2303]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.     0.0728 0.258 ]
-    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0567 -0.021   0.0377 -0.0015  0.0751  0.1122  0.1146  0.247 ]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0353  0.007   0.0604 -0.0005  0.0503  0.1082  0.1535  0.2348]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.1037 0.0728 0.258 ]
 
 --- Step  37 ---
@@ -759,10 +759,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=1):
     ||c[a]|| before = 16.4793   after = 16.4544   ||delta_c|| = 6.1417
     cosine(delta_c_t, delta_c_prev for same a) = -0.5892
-    reward probe on delta_c: r_hat = +0.4019   (true r = +0.5141   |err| = 0.1123)
-    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0567 -0.021   0.0377 -0.0015  0.0751  0.1122  0.1146  0.247 ]
+    reward probe on delta_c: r_hat = +0.4025   (true r = +0.5141   |err| = 0.1116)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0353  0.007   0.0604 -0.0005  0.0503  0.1082  0.1535  0.2348]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.1037 0.0728 0.258 ]
-    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [0.0124 0.0005 0.0383 0.0141 0.0975 0.1218 0.0992 0.331 ]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [0.0159 0.0183 0.068  0.0225 0.0773 0.1104 0.1435 0.2933]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.1037 0.0728 0.3035]
 
 --- Step  38 ---
@@ -778,10 +778,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=0):
     ||c[a]|| before = 16.5239   after = 16.5206   ||delta_c|| = 4.7201
     cosine(delta_c_t, delta_c_prev for same a) = -0.3896
-    reward probe on delta_c: r_hat = +0.3937   (true r = +0.3801   |err| = 0.0136)
-    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [-0.0309  0.0069  0.0443  0.2292  0.0633  0.2261 -0.0003  0.0857]
+    reward probe on delta_c: r_hat = +0.4135   (true r = +0.3801   |err| = 0.0334)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [-0.014  -0.0167  0.0507  0.2039  0.0247  0.2325  0.0842  0.0113]
                                     oracle Q[:,0] = [0.     0.     0.0475 0.2214 0.     0.2494 0.     0.    ]
-    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [-0.0154  0.0116  0.0577  0.2586  0.0554  0.2274 -0.0144  0.1018]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [ 0.0088 -0.0211  0.0687  0.2367  0.0108  0.2418  0.0672  0.031 ]
                                     oracle Q[:,0] = [0.     0.     0.0475 0.2656 0.     0.2494 0.     0.    ]
 
 --- Step  39 ---
@@ -797,10 +797,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=3):
     ||c[a]|| before = 16.5023   after = 16.5369   ||delta_c|| = 7.0057
     cosine(delta_c_t, delta_c_prev for same a) = -0.0356
-    reward probe on delta_c: r_hat = +0.5390   (true r = +0.6451   |err| = 0.1061)
-    Q-probe on c[a=3]   BEFORE: pred Q[:,3] = [ 0.0571 -0.0138  0.325   0.0042  0.0004 -0.0208 -0.003   0.0694]
+    reward probe on delta_c: r_hat = +0.5251   (true r = +0.6451   |err| = 0.1200)
+    Q-probe on c[a=3]   BEFORE: pred Q[:,3] = [ 0.0724  0.0082  0.3535 -0.0025 -0.0217 -0.0188  0.0772  0.005 ]
                                     oracle Q[:,3] = [0.0464 0.     0.315  0.     0.     0.     0.     0.    ]
-    Q-probe on c[a=3]   AFTER : pred Q[:,3] = [ 0.0789 -0.0139  0.3585  0.0205  0.0151  0.0012  0.013   0.0937]
+    Q-probe on c[a=3]   AFTER : pred Q[:,3] = [ 0.0742  0.0124  0.3723  0.0115 -0.0113  0.011   0.0846  0.0291]
                                     oracle Q[:,3] = [0.0464 0.     0.3753 0.     0.     0.     0.     0.    ]
 
 --- Step  40 ---
@@ -816,10 +816,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=1):
     ||c[a]|| before = 16.4544   after = 16.4371   ||delta_c|| = 6.2431
     cosine(delta_c_t, delta_c_prev for same a) = -0.5933
-    reward probe on delta_c: r_hat = +0.5266   (true r = +0.5141   |err| = 0.0125)
-    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [0.0124 0.0005 0.0383 0.0141 0.0975 0.1218 0.0992 0.331 ]
+    reward probe on delta_c: r_hat = +0.5367   (true r = +0.5141   |err| = 0.0226)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [0.0159 0.0183 0.068  0.0225 0.0773 0.1104 0.1435 0.2933]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.1037 0.0728 0.3035]
-    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.055  -0.0579  0.0407  0.0405  0.1155  0.1258  0.1031  0.3305]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.042  -0.0235  0.0591  0.0482  0.0803  0.1104  0.1499  0.3218]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.1037 0.0728 0.3309]
 
 --- Step  41 ---
@@ -835,10 +835,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=1):
     ||c[a]|| before = 16.4371   after = 16.4924   ||delta_c|| = 7.7261
     cosine(delta_c_t, delta_c_prev for same a) = -0.5136
-    reward probe on delta_c: r_hat = +0.5436   (true r = +0.5799   |err| = 0.0363)
-    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.055  -0.0579  0.0407  0.0405  0.1155  0.1258  0.1031  0.3305]
+    reward probe on delta_c: r_hat = +0.5246   (true r = +0.5799   |err| = 0.0554)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.042  -0.0235  0.0591  0.0482  0.0803  0.1104  0.1499  0.3218]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.0701 0.1037 0.0728 0.3309]
-    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0554 -0.0176  0.0618  0.0273  0.1811  0.0654  0.0413  0.2252]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.034  -0.0166  0.0843  0.0379  0.1444  0.0723  0.0991  0.2032]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.1548 0.1037 0.0728 0.3309]
 
 --- Step  42 ---
@@ -854,10 +854,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=3):
     ||c[a]|| before = 16.5369   after = 16.5341   ||delta_c|| = 5.1946
     cosine(delta_c_t, delta_c_prev for same a) = -0.6922
-    reward probe on delta_c: r_hat = +0.5380   (true r = +0.6451   |err| = 0.1071)
-    Q-probe on c[a=3]   BEFORE: pred Q[:,3] = [ 0.0789 -0.0139  0.3585  0.0205  0.0151  0.0012  0.013   0.0937]
+    reward probe on delta_c: r_hat = +0.5462   (true r = +0.6451   |err| = 0.0989)
+    Q-probe on c[a=3]   BEFORE: pred Q[:,3] = [ 0.0742  0.0124  0.3723  0.0115 -0.0113  0.011   0.0846  0.0291]
                                     oracle Q[:,3] = [0.0464 0.     0.3753 0.     0.     0.     0.     0.    ]
-    Q-probe on c[a=3]   AFTER : pred Q[:,3] = [ 0.0873  0.0146  0.3503  0.0159  0.0225 -0.0011  0.0134  0.1019]
+    Q-probe on c[a=3]   AFTER : pred Q[:,3] = [ 0.0937  0.0299  0.3788  0.0039 -0.0047  0.0079  0.093   0.022 ]
                                     oracle Q[:,3] = [0.0464 0.     0.4262 0.     0.     0.     0.     0.    ]
 
 --- Step  43 ---
@@ -873,10 +873,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=2):
     ||c[a]|| before = 16.6207   after = 16.6335   ||delta_c|| = 5.5850
     cosine(delta_c_t, delta_c_prev for same a) = +0.1432
-    reward probe on delta_c: r_hat = +0.3556   (true r = +0.5889   |err| = 0.2333)
-    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [0.2746 0.2258 0.0398 0.0929 0.0071 0.0174 0.0275 0.0584]
+    reward probe on delta_c: r_hat = +0.3577   (true r = +0.5889   |err| = 0.2312)
+    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [0.3018 0.2056 0.0712 0.046  0.0217 0.011  0.0757 0.0289]
                                     oracle Q[:,2] = [0.4196 0.2975 0.     0.     0.     0.     0.     0.    ]
-    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.2205  0.189   0.0387  0.122   0.0042  0.0205 -0.0088  0.0368]
+    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [0.2508 0.1811 0.0679 0.0716 0.0011 0.0066 0.0387 0.0164]
                                     oracle Q[:,2] = [0.4196 0.2975 0.     0.0654 0.     0.     0.     0.    ]
 
 --- Step  44 ---
@@ -892,10 +892,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=1):
     ||c[a]|| before = 16.4924   after = 16.4617   ||delta_c|| = 8.3009
     cosine(delta_c_t, delta_c_prev for same a) = -0.3139
-    reward probe on delta_c: r_hat = +0.3468   (true r = +0.2649   |err| = 0.0819)
-    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0554 -0.0176  0.0618  0.0273  0.1811  0.0654  0.0413  0.2252]
+    reward probe on delta_c: r_hat = +0.3882   (true r = +0.2649   |err| = 0.1233)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.034  -0.0166  0.0843  0.0379  0.1444  0.0723  0.0991  0.2032]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.1548 0.1037 0.0728 0.3309]
-    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0405 -0.0053  0.0266  0.0321  0.1862  0.0677  0.1055  0.2258]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [0.0447 0.0075 0.0646 0.0457 0.1713 0.0543 0.1498 0.2207]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.1548 0.1037 0.1144 0.3309]
 
 --- Step  45 ---
@@ -911,10 +911,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=0):
     ||c[a]|| before = 16.5206   after = 16.5032   ||delta_c|| = 4.6633
     cosine(delta_c_t, delta_c_prev for same a) = -0.7599
-    reward probe on delta_c: r_hat = +0.6353   (true r = +0.6117   |err| = 0.0236)
-    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [-0.0154  0.0116  0.0577  0.2586  0.0554  0.2274 -0.0144  0.1018]
+    reward probe on delta_c: r_hat = +0.6052   (true r = +0.6117   |err| = 0.0065)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [ 0.0088 -0.0211  0.0687  0.2367  0.0108  0.2418  0.0672  0.031 ]
                                     oracle Q[:,0] = [0.     0.     0.0475 0.2656 0.     0.2494 0.     0.    ]
-    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [-0.016   0.0102  0.0598  0.2254  0.0722  0.2588 -0.0058  0.1138]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [ 0.0019 -0.0088  0.063   0.2023  0.0356  0.2655  0.0778  0.051 ]
                                     oracle Q[:,0] = [0.     0.     0.0475 0.2656 0.     0.2996 0.     0.    ]
 
 --- Step  46 ---
@@ -930,10 +930,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=0):
     ||c[a]|| before = 16.5032   after = 16.5119   ||delta_c|| = 2.4678
     cosine(delta_c_t, delta_c_prev for same a) = -0.1690
-    reward probe on delta_c: r_hat = +0.4581   (true r = +0.5760   |err| = 0.1179)
-    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [-0.016   0.0102  0.0598  0.2254  0.0722  0.2588 -0.0058  0.1138]
+    reward probe on delta_c: r_hat = +0.4735   (true r = +0.5760   |err| = 0.1025)
+    Q-probe on c[a=0]   BEFORE: pred Q[:,0] = [ 0.0019 -0.0088  0.063   0.2023  0.0356  0.2655  0.0778  0.051 ]
                                     oracle Q[:,0] = [0.     0.     0.0475 0.2656 0.     0.2996 0.     0.    ]
-    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [0.004  0.0183 0.0551 0.2127 0.0757 0.2623 0.0235 0.1193]
+    Q-probe on c[a=0]   AFTER : pred Q[:,0] = [ 0.0123 -0.0055  0.0632  0.1977  0.0414  0.2686  0.1034  0.0651]
                                     oracle Q[:,0] = [0.     0.     0.0475 0.2656 0.0715 0.2996 0.     0.    ]
 
 --- Step  47 ---
@@ -949,10 +949,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=1):
     ||c[a]|| before = 16.4617   after = 16.4990   ||delta_c|| = 7.4087
     cosine(delta_c_t, delta_c_prev for same a) = -0.7527
-    reward probe on delta_c: r_hat = +0.6724   (true r = +0.5799   |err| = 0.0924)
-    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0405 -0.0053  0.0266  0.0321  0.1862  0.0677  0.1055  0.2258]
+    reward probe on delta_c: r_hat = +0.6301   (true r = +0.5799   |err| = 0.0501)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [0.0447 0.0075 0.0646 0.0457 0.1713 0.0543 0.1498 0.2207]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.1548 0.1037 0.1144 0.3309]
-    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0808 -0.0217  0.0435  0.0263  0.2459  0.0922  0.1546  0.2379]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0618 -0.0067  0.0721  0.0365  0.2188  0.0931  0.2075  0.2266]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.2271 0.1037 0.1144 0.3309]
 
 --- Step  48 ---
@@ -968,10 +968,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=1):
     ||c[a]|| before = 16.4990   after = 16.4863   ||delta_c|| = 5.6720
     cosine(delta_c_t, delta_c_prev for same a) = -0.5399
-    reward probe on delta_c: r_hat = +0.4585   (true r = +0.5141   |err| = 0.0556)
-    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0808 -0.0217  0.0435  0.0263  0.2459  0.0922  0.1546  0.2379]
+    reward probe on delta_c: r_hat = +0.4691   (true r = +0.5141   |err| = 0.0450)
+    Q-probe on c[a=1]   BEFORE: pred Q[:,1] = [ 0.0618 -0.0067  0.0721  0.0365  0.2188  0.0931  0.2075  0.2266]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.2271 0.1037 0.1144 0.3309]
-    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0498 -0.0386  0.0315  0.0301  0.2317  0.0797  0.1205  0.2533]
+    Q-probe on c[a=1]   AFTER : pred Q[:,1] = [ 0.0451 -0.024   0.0664  0.0516  0.2117  0.0701  0.1757  0.2321]
                                     oracle Q[:,1] = [0.     0.     0.     0.     0.2271 0.1037 0.1144 0.387 ]
 
 --- Step  49 ---
@@ -987,10 +987,10 @@ MDP reward matrix R[s, a]:
   MODEL context update (slot a=2):
     ||c[a]|| before = 16.6335   after = 16.6078   ||delta_c|| = 7.0321
     cosine(delta_c_t, delta_c_prev for same a) = -0.4952
-    reward probe on delta_c: r_hat = +0.6264   (true r = +0.6779   |err| = 0.0515)
-    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [ 0.2205  0.189   0.0387  0.122   0.0042  0.0205 -0.0088  0.0368]
+    reward probe on delta_c: r_hat = +0.6299   (true r = +0.6779   |err| = 0.0480)
+    Q-probe on c[a=2]   BEFORE: pred Q[:,2] = [0.2508 0.1811 0.0679 0.0716 0.0011 0.0066 0.0387 0.0164]
                                     oracle Q[:,2] = [0.4196 0.2975 0.     0.0654 0.     0.     0.     0.    ]
-    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.2814  0.1422  0.05    0.1017  0.0013  0.0083  0.012  -0.013 ]
+    Q-probe on c[a=2]   AFTER : pred Q[:,2] = [ 0.3114  0.1138  0.0853  0.0622 -0.004   0.0048  0.0817 -0.0502]
                                     oracle Q[:,2] = [0.4838 0.2975 0.     0.0654 0.     0.     0.     0.    ]
 
 ==========================================================================================

@@ -239,6 +239,7 @@ def episode_forward(
     max_actions: int,
     device: torch.device,
     truncate_bptt_window: int = 0,
+    context_tau: float = 1.0,
 ) -> Tuple[torch.Tensor, float, int]:
     """Run BPTT through one episode. Returns (loss, accuracy, n_steps).
 
@@ -286,8 +287,9 @@ def episode_forward(
             n_correct += 1
 
         a_t = tr['a']
+        context_write = model.contextualize(update_hidden, tau=context_tau)
         new_context = context.clone()
-        new_context[0, a_t, :] = update_hidden[0]
+        new_context[0, a_t, :] = context_write[0]
         context = new_context
 
     avg_loss = total_loss / n_steps
@@ -306,6 +308,7 @@ def batched_episode_forward(
     max_actions: int,
     device: torch.device,
     truncate_bptt_window: int = 0,
+    context_tau: float = 1.0,
 ) -> Tuple[torch.Tensor, float, int]:
     """Run BPTT through a batch of episodes in parallel.
 
@@ -390,10 +393,11 @@ def batched_episode_forward(
         total_correct += (preds == targets_t).sum().item()
         total_valid += len(active_mask)
 
+        context_write = model.contextualize(update_hidden, tau=context_tau)
         new_context = context.clone()
         for j, i in enumerate(active_mask):
             a_t = batch_actions[j]
-            new_context[i, a_t, :] = update_hidden[j]
+            new_context[i, a_t, :] = context_write[j]
         context = new_context
 
     avg_loss = total_loss / max(total_valid, 1)
@@ -475,6 +479,9 @@ def train(args) -> None:
         dropout     = args.dropout,
         max_seq_len = max_seq_per_step + 16,
         use_ffns    = not args.no_ffns,
+        context_mode = args.context_mode,
+        gumbel_tau   = args.gumbel_tau_end,
+        discrete_tie_embeddings = not args.discrete_untied,
     )
 
     vocab = build_vocab(max_states, max_actions)
@@ -529,7 +536,11 @@ def train(args) -> None:
     use_amp = (device.type == 'cuda')
     scaler  = torch.amp.GradScaler('cuda', enabled=use_amp)
 
-    print(f"\nTraining for {args.epochs} epochs (BPTT, continuous context from epoch 1)")
+    print(f"\nTraining for {args.epochs} epochs (BPTT, {model_config.context_mode} context from epoch 1)")
+    print(f"  context_mode: {model_config.context_mode}"
+          + (f"  |  gumbel_tau: {args.gumbel_tau_start} -> {args.gumbel_tau_end}"
+             f"  |  tie_embeddings: {model_config.discrete_tie_embeddings}"
+             if model_config.context_mode == 'discrete' else ""))
     print(f"  batch_size: {args.batch_size}  |  lr: {args.lr}  |  weight_decay: {args.weight_decay}")
     print(f"  truncate_bptt: {args.truncate_bptt}")
     print(f"  max_steps: {args.max_steps}")
@@ -542,9 +553,13 @@ def train(args) -> None:
         wandb.init(
             project = "coconut-qlearning",
             name    = args.run_name if args.run_name else None,
-            tags    = ["recurrent-context", "bptt"],
+            tags    = ["recurrent-context", "bptt", f"context-{model_config.context_mode}"],
             config  = {
                 "architecture":    "Recurrent Context Transformer",
+                "context_mode":    model_config.context_mode,
+                "gumbel_tau_start": args.gumbel_tau_start,
+                "gumbel_tau_end":  args.gumbel_tau_end,
+                "discrete_tie_embeddings": model_config.discrete_tie_embeddings,
                 "n_layers":        args.n_layers,
                 "n_heads":         args.n_heads,
                 "d_model":         args.d_model,
@@ -596,10 +611,18 @@ def train(args) -> None:
         for episodes in train_loader:
             optimizer.zero_grad(set_to_none=True)
 
+            # Linear anneal of the Gumbel-softmax temperature (discrete mode only;
+            # ignored by contextualize when context_mode == 'continuous').
+            anneal = min(1.0, global_step / max(1, total_steps))
+            current_tau = args.gumbel_tau_start + (
+                args.gumbel_tau_end - args.gumbel_tau_start
+            ) * anneal
+
             with torch.amp.autocast('cuda', enabled=use_amp):
                 loss, acc, n_valid = batched_episode_forward(
                     model, episodes, vocab, max_actions, device,
                     truncate_bptt_window=args.truncate_bptt,
+                    context_tau=current_tau,
                 )
 
             scaler.scale(loss).backward()
@@ -739,6 +762,21 @@ def main():
     parser.add_argument('--dropout',     type=float, default=0.1)
     parser.add_argument('--no_ffns',     action='store_true',
                         help='Disable FFN layers (attention-only transformer)')
+
+    # Context recurrence channel
+    parser.add_argument('--context_mode', type=str, default='continuous',
+                        choices=['continuous', 'discrete'],
+                        help="Recurrent context channel: 'continuous' carries the "
+                             "raw UPDATE hidden vector (latent thought); 'discrete' "
+                             "snaps it to a vocabulary token embedding each step.")
+    parser.add_argument('--gumbel_tau_start', type=float, default=2.0,
+                        help='Initial Gumbel-softmax temperature (discrete mode).')
+    parser.add_argument('--gumbel_tau_end',   type=float, default=0.5,
+                        help='Final Gumbel-softmax temperature (discrete mode); '
+                             'also stored as the eval-time config gumbel_tau.')
+    parser.add_argument('--discrete_untied', action='store_true',
+                        help='Use a separate Linear token-decode head instead of '
+                             'tying to tok_emb (discrete mode).')
 
     # Training hyperparameters
     parser.add_argument('--epochs',       type=int,   default=25)

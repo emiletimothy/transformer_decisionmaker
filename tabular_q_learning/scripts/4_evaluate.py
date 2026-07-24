@@ -307,7 +307,7 @@ def run_action_inference(
 
             a_t = tr['a']
             new_context = context.clone()
-            new_context[0, a_t, :] = update_hidden[0]
+            new_context[0, a_t, :] = model.contextualize(update_hidden)[0]
             context = new_context
 
     context_history.append(context[0].cpu().numpy().copy())
@@ -397,7 +397,7 @@ def collect_context_probe_data(
 
                 a_t = tr['a']
                 new_context = context.clone()
-                new_context[0, a_t, :] = update_hidden[0]
+                new_context[0, a_t, :] = model.contextualize(update_hidden)[0]
                 context = new_context
 
                 del token_ids, reward_val, update_hidden
@@ -790,7 +790,7 @@ def plot_full_attention_heatmap(
                 accum[layer_idx] += all_attn[layer_idx][0].cpu().numpy()
 
             new_ctx = context.clone()
-            new_ctx[0, tr['a'], :] = upd_h[0]
+            new_ctx[0, tr['a'], :] = model.contextualize(upd_h)[0]
             context = new_ctx
 
     avg_attn = [a / max(n_steps, 1) for a in accum]
@@ -930,6 +930,82 @@ def plot_per_distribution_agreement(
     print(f"  Saved: {save_path}")
 
 
+def plot_per_distribution_agreement_std(
+    dist_data: List[Tuple[str, np.ndarray]],
+    n_steps: int,
+    save_path: str,
+    n_bins: int = 3,
+) -> None:
+    """Heatmap variant of plot_per_distribution_agreement that annotates each
+    cell with mean ± standard deviation.
+
+    The mean is the fraction of agreeing (state, step) pairs in the bin. The
+    standard deviation is taken across MDPs: for each MDP we compute its mean
+    agreement over the bin's steps, and report the spread of those per-MDP
+    means. This captures how much the agreement varies from environment to
+    environment.
+
+    Parameters
+    ----------
+    dist_data : list of (label, agreements_array)
+        agreements_array has shape (n_mdps, n_steps) with per-step 0/1 agreement.
+    """
+    bin_edges = np.linspace(0, n_steps, n_bins + 1, dtype=int)
+    use_phase = n_bins <= len(_BIN_PHASE_LABELS)
+    if use_phase:
+        bin_labels = [
+            f'{_BIN_PHASE_LABELS[i]}\nt={bin_edges[i]+1}–{bin_edges[i+1]}'
+            for i in range(n_bins)
+        ]
+    else:
+        bin_labels = [
+            f't={bin_edges[i]+1}–{bin_edges[i+1]}'
+            for i in range(n_bins)
+        ]
+
+    n_dists = len(dist_data)
+    agree_matrix = np.full((n_dists, n_bins), np.nan)
+    std_matrix = np.full((n_dists, n_bins), np.nan)
+
+    for row_i, (_, arr) in enumerate(dist_data):
+        for b in range(n_bins):
+            lo, hi = int(bin_edges[b]), int(bin_edges[b + 1])
+            bin_slice = arr[:, lo:hi]
+            agree_matrix[row_i, b] = float(bin_slice.mean())
+            # Per-MDP mean over the bin's steps, then spread across MDPs.
+            per_mdp_means = bin_slice.mean(axis=1)
+            std_matrix[row_i, b] = float(per_mdp_means.std())
+
+    row_labels = [label for label, _ in dist_data]
+
+    fig, ax = plt.subplots(figsize=(6, 5))
+    im = ax.imshow(agree_matrix, aspect='auto', cmap='RdYlGn', vmin=0, vmax=1)
+    ax.set_xticks(range(n_bins))
+    rotation = 0 if use_phase else 45
+    ha = 'center' if use_phase else 'right'
+    ax.set_xticklabels(bin_labels, rotation=rotation, ha=ha, fontsize=11)
+    ax.set_yticks(range(n_dists))
+    ax.set_yticklabels(row_labels, fontsize=11)
+    ax.set_xlabel('Episode timestep bin', fontsize=12)
+    ax.set_ylabel('Reward distribution', fontsize=12)
+    ax.tick_params(axis='both', labelsize=11)
+    ax.set_title('Action Agreement by Reward Distribution\nand Timestep Phase',
+                 fontsize=13)
+    cell_fontsize = 11 if n_bins <= 8 else (9 if n_bins <= 16 else 8)
+    for r in range(n_dists):
+        for b in range(n_bins):
+            val = agree_matrix[r, b]
+            sd = std_matrix[r, b]
+            if not np.isnan(val):
+                ax.text(b, r, f'{val:.2f}\n±{sd:.2f}', ha='center',
+                        va='center', fontsize=cell_fontsize,
+                        color='black' if 0.3 < val < 0.85 else 'white')
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"  Saved: {save_path}")
+
+
 # ---------------------------------------------------------------------------
 # Part 4: Regret — autonomous transformer vs Q-learner baselines
 # ---------------------------------------------------------------------------
@@ -1016,7 +1092,7 @@ def run_transformer_autonomous(
             pred_a = int(select_logits[0].argmax().item())
 
             new_context = context.clone()
-            new_context[0, a, :] = update_hidden[0]
+            new_context[0, a, :] = model.contextualize(update_hidden)[0]
             context = new_context
             s = s_next
 
@@ -1572,14 +1648,19 @@ def collect_reward_probe_data(
                 )
 
                 a_t = tr['a']
+                # Probe the residual actually written into the slot. In discrete
+                # mode this is the token-embedding delta the channel transmits,
+                # not the raw hidden state; in continuous mode contextualize is
+                # the identity, so this matches the original behavior exactly.
+                context_write = model.contextualize(update_hidden)
                 prev_slot = context[0, a_t, :].detach().cpu().numpy()
-                new_slot = update_hidden[0].detach().cpu().numpy()
+                new_slot = context_write[0].detach().cpu().numpy()
                 delta_all[write_idx] = new_slot - prev_slot
                 r_all[write_idx] = tr['r']
                 write_idx += 1
 
                 new_context = context.clone()
-                new_context[0, a_t, :] = update_hidden[0]
+                new_context[0, a_t, :] = context_write[0]
                 context = new_context
 
                 del token_ids, reward_val, update_hidden
@@ -1775,8 +1856,9 @@ def trace_step_log(
                 select_logits[:, n_actions:] = float('-inf')
             model_action = int(select_logits[0].argmax().item())
 
+            context_write = model.contextualize(update_hidden)
             ctx_before_a = context[0, a, :].detach().cpu().numpy()
-            ctx_after_a = update_hidden[0].detach().cpu().numpy()
+            ctx_after_a = context_write[0].detach().cpu().numpy()
             delta = ctx_after_a - ctx_before_a
             delta_norm = float(np.linalg.norm(delta))
             ctx_before_norm = float(np.linalg.norm(ctx_before_a))
@@ -1829,7 +1911,7 @@ def trace_step_log(
 
             # advance context
             new_context = context.clone()
-            new_context[0, a, :] = update_hidden[0]
+            new_context[0, a, :] = context_write[0]
             context = new_context
 
     lines.append("=" * 90)
@@ -1849,6 +1931,10 @@ def main():
                                              'coconut_transformer.pt'))
     parser.add_argument('--figures_dir', type=str,
                         default=os.path.join(_script_dir, '..', 'figures'))
+    parser.add_argument('--label', type=str, default=None,
+                        help="Human label for this run used in figure titles/"
+                             "legends (defaults to the checkpoint's context_mode, "
+                             "e.g. 'continuous' or 'discrete').")
     parser.add_argument('--n_steps',       type=int,   default=50)
     parser.add_argument('--long_horizon_steps', type=int, default=200,
                         help='Steps for the long-horizon evaluation that '
@@ -1883,9 +1969,12 @@ def main():
     n_states = config.max_states
     n_actions = config.max_actions
 
+    run_label = args.label if args.label else getattr(config, 'context_mode', 'continuous')
+
     print(f"\nModel: {model.num_parameters():,} params  |  device: {device}")
     print(f"MDP:   n_states={n_states}, n_actions={n_actions}")
     print(f"FFNs:  {'enabled' if config.use_ffns else 'DISABLED'}")
+    print(f"Context mode: {getattr(config, 'context_mode', 'continuous')}  |  label: {run_label}")
 
     eval_seeds = list(range(args.eval_seed, args.eval_seed + args.n_eval_mdps))
 
@@ -1961,7 +2050,7 @@ def main():
     plot_action_agreement(
         aa_id_mean, aa_id_std, ood_plot_results,
         save_path=os.path.join(args.figures_dir, 'action_agreement.png'),
-        n_mdps=args.n_eval_mdps, label_suffix='recurrent context',
+        n_mdps=args.n_eval_mdps, label_suffix=f'{run_label} context',
     )
 
     # -----------------------------------------------------------------------
@@ -2077,6 +2166,11 @@ def main():
     plot_per_distribution_agreement(
         dist_data, args.n_steps,
         os.path.join(args.figures_dir, 'per_state_agreement.png'),
+        n_bins=3,
+    )
+    plot_per_distribution_agreement_std(
+        dist_data, args.n_steps,
+        os.path.join(args.figures_dir, 'per_state_agreement_std.png'),
         n_bins=3,
     )
 

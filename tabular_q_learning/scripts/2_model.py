@@ -51,6 +51,15 @@ class COCONUTConfig:
     dropout:     float = 0.1
     max_seq_len: int   = 128
     use_ffns:    bool  = True
+    # Context recurrence channel:
+    #   'continuous' — carry the raw UPDATE hidden vector (latent thought).
+    #   'discrete'   — snap it to a genuine vocabulary token (tok_emb[argmax])
+    #                  via a straight-through estimator (Gumbel-softmax in train).
+    context_mode: str  = 'continuous'
+    gumbel_tau:   float = 1.0
+    # When discrete: tie the token-decode head to tok_emb (logits = h @ E^T)
+    # instead of a separate Linear. Keeps the discrete channel parameter-free.
+    discrete_tie_embeddings: bool = True
 
     @property
     def vocab_size(self) -> int:
@@ -223,6 +232,15 @@ class COCONUTTransformer(nn.Module):
 
         self.action_head = nn.Linear(config.d_model, config.max_actions)
 
+        # Discrete context channel: decode the UPDATE hidden into a vocabulary
+        # token whose embedding is carried forward. A separate untied head is
+        # only created when not weight-tying to tok_emb.
+        self.context_token_head = None
+        if config.context_mode == 'discrete' and not config.discrete_tie_embeddings:
+            self.context_token_head = nn.Linear(
+                config.d_model, config.vocab_size, bias=False
+            )
+
         self._init_weights()
 
     def _init_weights(self):
@@ -240,11 +258,70 @@ class COCONUTTransformer(nn.Module):
     def get_init_context(
         self, batch_size: int, n_actions: int, device: torch.device
     ) -> torch.Tensor:
-        """Return fixed zero context tokens: (batch, n_actions, d_model).
+        """Return initial context tokens: (batch, n_actions, d_model).
 
         n_actions is the MDP's actual action count for this batch (dynamic).
+
+        Continuous mode starts from zeros. Discrete mode starts from a genuine
+        token (TOK_NULL), so the very first carried context is also a real
+        vocabulary token rather than a free vector.
         """
+        if self.config.context_mode == 'discrete':
+            null_id = torch.zeros(1, dtype=torch.long, device=device)  # TOK_NULL == 0
+            null_emb = self.tok_emb(null_id)[0]  # [d_model]
+            return null_emb.view(1, 1, self.d_model).expand(
+                batch_size, n_actions, self.d_model
+            ).contiguous()
         return torch.zeros(batch_size, n_actions, self.d_model, device=device)
+
+    def _context_logits(self, update_hidden: torch.Tensor) -> torch.Tensor:
+        """Logits over the vocabulary for decoding a context token."""
+        if self.context_token_head is not None:
+            return self.context_token_head(update_hidden)
+        # Weight-tied decode: logits = h @ E^T
+        return update_hidden @ self.tok_emb.weight.t()
+
+    def contextualize(
+        self, update_hidden: torch.Tensor, tau: Optional[float] = None
+    ) -> torch.Tensor:
+        """Map an UPDATE hidden state to the value written into a context slot.
+
+        Continuous mode: identity (carry the raw latent vector).
+        Discrete mode: decode to a vocabulary token and return its embedding,
+        using a straight-through estimator so gradients flow through the hard
+        selection. Training uses Gumbel-softmax noise; eval uses deterministic
+        argmax. The forward value is always exactly one token embedding.
+
+        Parameters
+        ----------
+        update_hidden : [..., d_model]
+        tau           : softmax/Gumbel temperature (defaults to config.gumbel_tau)
+
+        Returns
+        -------
+        context_write : [..., d_model]
+        """
+        if self.config.context_mode != 'discrete':
+            return update_hidden
+
+        if tau is None:
+            tau = self.config.gumbel_tau
+        tau = max(float(tau), 1e-6)
+
+        logits = self._context_logits(update_hidden)  # [..., vocab]
+
+        if self.training:
+            onehot = F.gumbel_softmax(logits, tau=tau, hard=True, dim=-1)
+        else:
+            # Deterministic hard argmax with straight-through gradient. The
+            # (soft - soft.detach()) term is 0 in value, so the forward pass is
+            # exactly the argmax token; gradients (e.g. for probes) use softmax.
+            idx = logits.argmax(dim=-1)
+            hard = F.one_hot(idx, num_classes=logits.shape[-1]).to(logits.dtype)
+            soft = F.softmax(logits / tau, dim=-1)
+            onehot = hard + soft - soft.detach()
+
+        return onehot @ self.tok_emb.weight  # [..., d_model]
 
     def _embed_step_tokens(
         self,
@@ -414,3 +491,40 @@ if __name__ == '__main__':
         dropout=0.1, max_seq_len=128, use_ffns=False,
     )
     print_model_summary(cfg_no_ffn)
+
+    print("\nSmoke test with context_mode='discrete':")
+    cfg_disc = COCONUTConfig(
+        max_states=4, max_actions=2,
+        n_layers=4, n_heads=8, d_model=256, d_ff=1024,
+        dropout=0.1, max_seq_len=128, use_ffns=True,
+        context_mode='discrete',
+    )
+    disc_model = COCONUTTransformer(cfg_disc)
+
+    # Initial context should be a genuine token embedding (TOK_NULL), not zeros.
+    init_ctx = disc_model.get_init_context(2, cfg_disc.max_actions, torch.device('cpu'))
+    print(f"  init context shape: {list(init_ctx.shape)}  "
+          f"(nonzero: {bool(init_ctx.abs().sum() > 0)})")
+
+    # Train mode: Gumbel STE — gradients must flow back to update_hidden.
+    disc_model.train()
+    h = torch.randn(2, cfg_disc.d_model, requires_grad=True)
+    write_train = disc_model.contextualize(h, tau=1.0)
+    write_train.sum().backward()
+    print(f"  train contextualize shape: {list(write_train.shape)}  "
+          f"grad flows: {h.grad is not None and bool(h.grad.abs().sum() > 0)}")
+
+    # Eval mode: deterministic argmax — same input maps to the same token.
+    disc_model.eval()
+    with torch.no_grad():
+        h2 = torch.randn(3, cfg_disc.d_model)
+        w1 = disc_model.contextualize(h2)
+        w2 = disc_model.contextualize(h2)
+        emb = disc_model.tok_emb.weight  # [vocab, d_model]
+        # Each write must equal exactly one row of the embedding table.
+        matches = [
+            int(torch.argmin(((emb - w1[i]) ** 2).sum(dim=-1)))
+            for i in range(w1.shape[0])
+        ]
+    print(f"  eval deterministic: {bool(torch.allclose(w1, w2))}  "
+          f"selected token ids: {matches}")
