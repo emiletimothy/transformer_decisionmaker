@@ -9,6 +9,9 @@ by running the MultiplicativeWeights algorithm on random online-learning problem
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # scripts/
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+import paths  # noqa: E402
 
 import numpy as np
 import json
@@ -72,7 +75,7 @@ def main():
     parser.add_argument('--max_steps', type=int, default=10, help='Maximum sequence length')
     parser.add_argument('--n_experts', type=int, default=4, help='Number of experts')
     parser.add_argument('--seed', type=int, default=42, help='Random seed')
-    parser.add_argument('--output', type=str, default='../data/mw_dataset.json',
+    parser.add_argument('--output', type=str, default=str(paths.DATA / 'earlier' / 'mw_dataset.json'),
                         help='Output file path')
     args = parser.parse_args()
 

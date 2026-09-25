@@ -13,6 +13,9 @@ Generates 6 figures:
 
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # scripts/
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+import paths  # noqa: E402
 
 import numpy as np
 import torch
@@ -24,7 +27,7 @@ from typing import Dict, List, Tuple
 import argparse
 import logging
 
-from learned_mw_transformer import (
+from full_history_model import (
     ContinuousCoTTransformer, ModelConfig, MWTokenizer,
 )
 from eval_long_sequences import load_model, get_optimal_mw_decisions
@@ -766,12 +769,12 @@ def plot_token_embedding_space(model, tokenizer, save_dir):
 def main():
     parser = argparse.ArgumentParser(description='Attention analysis for MW transformer')
     parser.add_argument('--checkpoint', type=str,
-                        default='../figures/checkpoints/model_stage_13.pt')
+                        default=str(paths.FULL_HISTORY))
     parser.add_argument('--seq_length', type=int, default=50,
                         help='Sequence length for the analysis')
     parser.add_argument('--n_experts', type=int, default=4)
     parser.add_argument('--device', type=str, default='cpu')
-    parser.add_argument('--save_dir', type=str, default='../figures/attention-figures')
+    parser.add_argument('--save_dir', type=str, default=str(paths.FIGURES / 'full_history' / 'attention'))
     parser.add_argument('--seed', type=int, default=42)
     args = parser.parse_args()
 

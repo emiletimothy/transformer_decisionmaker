@@ -7,6 +7,9 @@ label annotated.
 
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # scripts/
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+import paths  # noqa: E402
 
 import numpy as np
 import torch
@@ -799,12 +802,12 @@ def plot_token_square_heatmap(step_attentions, tokenizer, seq, save_dir,
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--checkpoint', type=str,
-                        default='../figures/checkpoints/model_stage_13.pt')
+                        default=str(paths.FULL_HISTORY))
     parser.add_argument('--seq_length', type=int, default=50)
     parser.add_argument('--n_experts', type=int, default=4)
     parser.add_argument('--device', type=str, default='cpu')
     parser.add_argument('--save_dir', type=str,
-                        default='../figures/attention-figures')
+                        default=str(paths.FIGURES / 'full_history' / 'attention'))
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--qualities', type=str, default=None,
                         help='Comma-separated expert qualities, e.g. "0.15,0.9,0.2,0.18"')

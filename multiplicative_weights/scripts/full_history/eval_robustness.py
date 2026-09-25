@@ -14,6 +14,9 @@ Reuses the eval/regret infrastructure from eval_long_sequences.py.
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # scripts/
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+import paths  # noqa: E402
 
 import numpy as np
 import torch
@@ -24,7 +27,7 @@ from typing import Dict, List, Optional, Tuple
 import argparse
 import logging
 
-from learned_mw_transformer import (
+from full_history_model import (
     ContinuousCoTTransformer, LearnedMWTransformer,
     ModelConfig, MWTokenizer,
 )
@@ -431,13 +434,13 @@ def plot_all_scenarios(all_results, save_dir):
 def main():
     parser = argparse.ArgumentParser(description='Robustness evaluation of MW transformer')
     parser.add_argument('--checkpoint', type=str,
-                        default='../figures/checkpoints/model_stage_13.pt')
+                        default=str(paths.FULL_HISTORY))
     parser.add_argument('--seq_length', type=int, default=100,
                         help='Sequence length for all scenarios')
     parser.add_argument('--n_trials', type=int, default=50)
     parser.add_argument('--n_experts', type=int, default=4)
     parser.add_argument('--device', type=str, default='cpu')
-    parser.add_argument('--save_dir', type=str, default='../figures/eval_robustness')
+    parser.add_argument('--save_dir', type=str, default=str(paths.FIGURES / 'full_history' / 'robustness'))
     parser.add_argument('--seed', type=int, default=42)
     args = parser.parse_args()
 
