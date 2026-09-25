@@ -17,6 +17,7 @@ latent memory token `M` between rounds (see `train.py` for the round layout).
 | `handwired_figure.py` | construction vs exact MW weights | `figures/handwired/` |
 | `full_history_model.py`, `train_full_history.py` | the submitted paper's full-history model (the "raw history" baseline) | `checkpoints/full_history/` |
 | `multiplicative_weights.py` | reference MW implementation | – |
+| `full_history/` | analyses of the full-history model: attention (`eval_attention*.py`), long sequences, robustness, its data generator | `figures/full_history/` |
 
 Jobs (`scripts/jobs/`, submit from this folder, e.g. `sbatch scripts/jobs/train.sh discrete 43`):
 `train.sh <model> <seed>`, `eval_matched_memory.sh`, `eval_mechanism.sh`,
@@ -47,6 +48,7 @@ comparison/
   mechanism/             probes, retention rho, behavioural fit, steering (json)
   earlier_runs/          the same evaluations for superseded models
 handwired/               construction vs exact MW weights
+full_history/            the full-history (raw-history) model: attention/ (expert focus, token maps), robustness/
 ```
 
 `data/earlier/` holds the full-history model's training data (the recurrent models draw fresh

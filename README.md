@@ -21,6 +21,7 @@ multiplicative_weights/     MWU (experts)            ┐ the two projects mirror
 tabular_q_learning/         online tabular Q-learning ┘ README.md, paths.py, scripts/, scripts/jobs/,
                                                        checkpoints/, data/, figures/, logs/
 relaxation/                 both constructions run with their idealised assumptions relaxed
+llm/                        prompted LLMs as online learners on the experts problem (see llm/core/README.md)
 paper/                      make_main_figures.py (main-text figures + matched-memory table);
                             the paper source, notes and rendered figures/tables are git-ignored
 ```
