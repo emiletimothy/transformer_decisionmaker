@@ -18,6 +18,25 @@ Part 4 — Regret comparison
   Runs the transformer autonomously (closed-loop) on fresh MDPs and compares
   cumulative reward against a greedy Q-learner (ε=0) and an ε-greedy Q-learner.
 
+Part 4d — Nonstationary MDPs
+  Same closed-loop rollout, but the MDP is swapped mid-episode (default: 50
+  steps, then 100 more) with no signal to the agent. Compares reward before
+  and after the switch against an oracle that adapts instantly, an oracle
+  frozen on the pre-switch policy, tabular Q-learning, and a random policy.
+
+Part 4e — Reward interventions
+  Closed-loop rollouts in which the reward the agent *observes* is corrupted
+  (zeroed / constant / resampled from R / sign-flipped) while the reward it is
+  *scored on* stays the true environmental reward. Agreement with the tabular
+  policy cannot distinguish an online RL update from reward-independent
+  state-action statistics; this can, because only an agent that uses reward
+  feedback degrades when the feedback is broken.
+
+Part 4f — State-action size sweep
+  Action agreement and closed-loop return across the full trained range
+  (|S| = 2..max_states, |A| = 2..max_actions), rather than at the largest MDP
+  alone.
+
 Part 5 — Effective α/γ recovery
   Fits (α_eff, γ_eff) per trajectory from context-probe Q-value dynamics.
 
@@ -40,8 +59,19 @@ Output files:
     figures/per_state_agreement.png
     figures/regret.png
     figures/long_horizon.png
+    figures/nonstationary.png
+    figures/nonstationary_summary.csv
+    figures/reward_intervention.png
+    figures/reward_intervention_summary.csv
+    figures/size_sweep.png
+    figures/size_sweep_summary.csv
     figures/effective_alpha_gamma.png
     figures/reward_probe.png
+
+`--parts` selects which of the above to run; it defaults to 'all'. The newer
+evals can be regenerated on their own with
+`--parts reward_intervention,size_sweep`, which skips the probe and attention
+parts that dominate runtime and are unaffected by them.
 """
 
 import argparse
@@ -49,7 +79,10 @@ import csv
 import importlib.util
 import math
 import os
-from typing import Dict, List, Optional, Tuple
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import paths  # noqa: E402
+from typing import Callable, Dict, List, Optional, Tuple
 
 import matplotlib
 matplotlib.use('Agg')
@@ -200,6 +233,131 @@ REWARD_DISTRIBUTIONS: List[Tuple[str, str]] = [
     ('uniform',   'Uniform(0,1)'),
     ('bimodal',   'Beta(0.1,0.1) — bimodal'),
     ('bernoulli', 'Bernoulli(0.5)'),
+]
+
+
+def generate_contrast_mdp(
+    n_states: int,
+    n_actions: int,
+    rng: np.random.Generator,
+    low: float = 0.05,
+    high: float = 1.0,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """High-contrast MDP: Dirichlet(1) transitions as usual, but exactly one
+    action per state pays `high` and every other action pays `low`.
+
+    The standard eval MDPs draw rewards from Beta(2,2), which leaves the mean
+    per-state advantage gap around 0.25 — small enough that a uniform random
+    policy already collects ~70% of the optimal return, so cumulative reward
+    barely separates policies. Here the band is ~1.0 (optimal) vs ~0.3
+    (random), which is what makes reward informative about behaviour.
+
+    Takes an explicit `rng` so callers can reproduce a specific draw.
+    """
+    P = rng.dirichlet(alpha=np.ones(n_states),
+                      size=(n_states, n_actions)).astype(np.float32)
+    R = np.full((n_states, n_actions), low, dtype=np.float32)
+    R[np.arange(n_states), rng.integers(n_actions, size=n_states)] = high
+    return P, R
+
+
+def generate_contrast_mdp_seeded(
+    n_states: int,
+    n_actions: int,
+    seed: int = 9999,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """`generate_contrast_mdp` behind the `(n_states, n_actions, seed=...)`
+    signature every other MDP factory here uses, so it can be dropped into the
+    `mdp_fn` hooks (long-horizon eval, reward interventions, size sweep)
+    interchangeably with `generate_eval_mdp`.
+    """
+    return generate_contrast_mdp(n_states, n_actions,
+                                 np.random.default_rng(seed))
+
+
+# MDP families that the reward-intervention and long-horizon evals sweep over.
+# The Beta(2,2) family is the one used throughout the paper; on it a uniform
+# random policy already collects ~70% of the optimal return, so cumulative
+# reward is nearly saturated and large behavioural changes barely move it. The
+# contrast family widens the optimal/random band to ~1.0 vs ~0.3, which is what
+# makes reward informative about behaviour. Results are reported on both.
+MDP_FAMILIES: List[Tuple[str, str, object]] = [
+    ('eval',     'Beta(2,2) rewards (paper default)', generate_eval_mdp),
+    ('contrast', 'High-contrast rewards (one good action per state)',
+     generate_contrast_mdp_seeded),
+]
+
+
+def generate_nonstationary_mdp(
+    n_states: int,
+    n_actions: int,
+    variant: str,
+    seed: int = 9999,
+) -> Tuple[Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray]]:
+    """Two-phase MDP: the agent runs in (P1, R1), then the world changes to
+    (P2, R2) mid-episode without any signal that it happened.
+
+    Phase 1 is always the standard in-distribution eval MDP for `seed`, so the
+    pre-switch segment is directly comparable to the stationary evaluation.
+
+    Variants differ in what the switch destroys:
+      action_permute      — actions are relabeled (P and R permuted along the
+                            action axis). The MDP is isomorphic to phase 1, so
+                            the achievable reward band is identical before and
+                            after; only the mapping from action index to
+                            outcome changes. Any policy that keeps replaying
+                            its phase-1 action choices is now wrong.
+      reward_resample     — fresh reward matrix, same transitions.
+      transition_resample — fresh transitions, same reward matrix.
+      full_resample       — an entirely different MDP.
+      contrast_permute    — like action_permute, but on a high-contrast MDP:
+                            exactly one action per state pays ~1 and the rest
+                            pay ~0. On the Beta(2,2) eval MDPs above, a random
+                            policy already scores ~70% of optimal, so nothing
+                            the agent does after the switch is visible in
+                            reward; here the optimal/random band is ~1.0 vs
+                            ~0.3, so re-adaptation actually shows up.
+    """
+    P1, R1 = generate_eval_mdp(n_states, n_actions, seed=seed)
+    rng = np.random.default_rng(seed + 777)
+
+    if variant == 'contrast_permute':
+        # Phase 1 is *not* the standard eval MDP for this variant.
+        P1, R1 = generate_contrast_mdp(n_states, n_actions, rng)
+        perm = rng.permutation(n_actions)
+        while n_actions > 1 and np.array_equal(perm, np.arange(n_actions)):
+            perm = rng.permutation(n_actions)
+        P2 = np.ascontiguousarray(P1[:, perm, :])
+        R2 = np.ascontiguousarray(R1[:, perm])
+    elif variant == 'action_permute':
+        perm = rng.permutation(n_actions)
+        # A no-op permutation would make the switch invisible.
+        while n_actions > 1 and np.array_equal(perm, np.arange(n_actions)):
+            perm = rng.permutation(n_actions)
+        P2 = np.ascontiguousarray(P1[:, perm, :])
+        R2 = np.ascontiguousarray(R1[:, perm])
+    elif variant == 'reward_resample':
+        P2 = P1.copy()
+        R2 = rng.beta(2.0, 2.0, size=(n_states, n_actions)).astype(np.float32)
+    elif variant == 'transition_resample':
+        P2 = rng.dirichlet(alpha=np.ones(n_states),
+                           size=(n_states, n_actions)).astype(np.float32)
+        R2 = R1.copy()
+    elif variant == 'full_resample':
+        P2, R2 = generate_eval_mdp(n_states, n_actions, seed=seed + 31337)
+    else:
+        raise ValueError(f"Unknown nonstationary variant: {variant!r}")
+
+    R2 = np.clip(R2, 0.0, 1.0).astype(np.float32)
+    return (P1, R1), (P2, R2)
+
+
+NONSTATIONARY_VARIANTS: List[Tuple[str, str]] = [
+    ('action_permute',      'Actions relabeled (same task, new controls)'),
+    ('reward_resample',     'New rewards, same transitions'),
+    ('transition_resample', 'New transitions, same rewards'),
+    ('full_resample',       'Entirely new MDP'),
+    ('contrast_permute',    'High-contrast rewards, actions relabeled'),
 ]
 
 
@@ -1020,7 +1178,15 @@ def run_q_learner_autonomous(
     gamma: float,
     epsilon: float,
     rng: np.random.Generator,
+    reward_transform: Optional[Callable] = None,
 ) -> np.ndarray:
+    """Online tabular Q-learning in closed loop.
+
+    `reward_transform(r, s, a, R) -> r_obs` corrupts the reward the learner
+    *observes* (and updates Q from) while leaving the reward it is *scored on*
+    untouched — see `make_reward_transform`. `None` is the identity and leaves
+    this function's behaviour bit-for-bit unchanged.
+    """
     Q = np.zeros((n_states, n_actions), dtype=np.float32)
     s = int(rng.integers(n_states))
     rewards = np.zeros(n_steps, dtype=np.float32)
@@ -1034,8 +1200,9 @@ def run_q_learner_autonomous(
             a = int(rng.choice(ties))
 
         r = float(R[s, a])
+        r_obs = r if reward_transform is None else float(reward_transform(r, s, a, R))
         s_next = int(rng.choice(n_states, p=P[s, a]))
-        Q[s, a] = (1.0 - alpha) * Q[s, a] + alpha * (r + gamma * float(np.max(Q[s_next])))
+        Q[s, a] = (1.0 - alpha) * Q[s, a] + alpha * (r_obs + gamma * float(np.max(Q[s_next])))
         rewards[t] = r
         s = s_next
 
@@ -1054,7 +1221,18 @@ def run_transformer_autonomous(
     device: torch.device,
     epsilon: float,
     rng: np.random.Generator,
+    reward_transform: Optional[Callable] = None,
 ) -> np.ndarray:
+    """Transformer in closed loop: it picks the action, the MDP answers, and the
+    resulting transition is fed back through the recurrent context.
+
+    `reward_transform(r, s, a, R) -> r_obs` corrupts the reward the *model
+    observes* while `rewards[t]` keeps recording the true environmental reward
+    the policy actually earned — so a corrupted run is still scored on real
+    reward. `None` is the identity and leaves behaviour bit-for-bit unchanged.
+    Note the reward enters only through `reward_value`; `build_step_tokens`
+    reads s/a/s_next/a_star and never `tr['r']`.
+    """
     max_actions = config.max_actions
     model.eval()
     context = model.get_init_context(1, n_actions, device)
@@ -1070,13 +1248,14 @@ def run_transformer_autonomous(
                 a = int(rng.integers(n_actions)) if t == 0 else pred_a
 
             r = float(R[s, a])
+            r_obs = r if reward_transform is None else float(reward_transform(r, s, a, R))
             s_next = int(rng.choice(n_states, p=P[s, a]))
             rewards[t] = r
 
-            tr = {'s': s, 'a': a, 'r': r, 's_next': s_next, 'a_star': 0}
+            tr = {'s': s, 'a': a, 'r': r_obs, 's_next': s_next, 'a_star': 0}
             token_list, r_off, s_off, u_off = build_step_tokens(tr, vocab, n_actions)
             token_ids = torch.tensor([token_list], dtype=torch.long, device=device)
-            reward_val = torch.tensor([r], dtype=torch.float32, device=device)
+            reward_val = torch.tensor([r_obs], dtype=torch.float32, device=device)
 
             select_logits, update_hidden = model.forward_step(
                 token_ids=token_ids,
@@ -1138,6 +1317,846 @@ def run_optimal_autonomous(
         rewards[t] = float(R[s, a])
         s = int(rng.choice(n_states, p=P[s, a]))
     return rewards
+
+
+# ---------------------------------------------------------------------------
+# Nonstationary (mid-episode switch) rollouts
+#
+# Same closed-loop protocol as the *_autonomous runners above, except the
+# environment is a schedule of phases: the agent is never told that the MDP
+# changed, so post-switch reward measures in-context re-adaptation. Every
+# agent keeps whatever internal state it had (transformer context, tabular Q)
+# across the boundary.
+# ---------------------------------------------------------------------------
+
+def expand_phases(
+    phases: List[Tuple[np.ndarray, np.ndarray, int]],
+) -> Tuple[List[np.ndarray], List[np.ndarray], List[int]]:
+    """[(P, R, n_steps), ...] -> per-timestep (P_t, R_t, phase_index) lists."""
+    Ps: List[np.ndarray] = []
+    Rs: List[np.ndarray] = []
+    ids: List[int] = []
+    for k, (P, R, n) in enumerate(phases):
+        Ps.extend([P] * n)
+        Rs.extend([R] * n)
+        ids.extend([k] * n)
+    return Ps, Rs, ids
+
+
+def run_transformer_nonstationary(
+    model: COCONUTTransformer,
+    phases: List[Tuple[np.ndarray, np.ndarray, int]],
+    n_states: int,
+    n_actions: int,
+    vocab: Dict,
+    config: COCONUTConfig,
+    device: torch.device,
+    epsilon: float,
+    rng: np.random.Generator,
+) -> np.ndarray:
+    Ps, Rs, _ = expand_phases(phases)
+    n_steps = len(Ps)
+    max_actions = config.max_actions
+    model.eval()
+    context = model.get_init_context(1, n_actions, device)
+    s = int(rng.integers(n_states))
+    rewards = np.zeros(n_steps, dtype=np.float32)
+    pred_a = 0
+
+    with torch.no_grad():
+        for t in range(n_steps):
+            P, R = Ps[t], Rs[t]
+            # Same draw order as run_transformer_autonomous, so the phase-1
+            # segment reproduces the stationary rollout exactly.
+            if rng.random() < epsilon:
+                a = int(rng.integers(n_actions))
+            else:
+                a = int(rng.integers(n_actions)) if t == 0 else pred_a
+
+            r = float(R[s, a])
+            s_next = int(rng.choice(n_states, p=P[s, a]))
+            rewards[t] = r
+
+            tr = {'s': s, 'a': a, 'r': r, 's_next': s_next, 'a_star': 0}
+            token_list, r_off, s_off, u_off = build_step_tokens(tr, vocab, n_actions)
+            token_ids = torch.tensor([token_list], dtype=torch.long, device=device)
+            reward_val = torch.tensor([r], dtype=torch.float32, device=device)
+
+            select_logits, update_hidden = model.forward_step(
+                token_ids=token_ids,
+                reward_value=reward_val,
+                reward_offset=r_off,
+                select_offset=s_off,
+                update_offset=u_off,
+                context=context,
+            )
+
+            if n_actions < max_actions:
+                select_logits[:, n_actions:] = float('-inf')
+            pred_a = int(select_logits[0].argmax().item())
+
+            new_context = context.clone()
+            new_context[0, a, :] = model.contextualize(update_hidden)[0]
+            context = new_context
+            s = s_next
+
+    return rewards
+
+
+def run_q_learner_nonstationary(
+    phases: List[Tuple[np.ndarray, np.ndarray, int]],
+    n_states: int,
+    n_actions: int,
+    alpha: float,
+    gamma: float,
+    epsilon: float,
+    rng: np.random.Generator,
+) -> np.ndarray:
+    Ps, Rs, _ = expand_phases(phases)
+    n_steps = len(Ps)
+    Q = np.zeros((n_states, n_actions), dtype=np.float32)
+    s = int(rng.integers(n_states))
+    rewards = np.zeros(n_steps, dtype=np.float32)
+
+    for t in range(n_steps):
+        P, R = Ps[t], Rs[t]
+        if rng.random() < epsilon:
+            a = int(rng.integers(n_actions))
+        else:
+            best = float(np.max(Q[s]))
+            ties = [ac for ac in range(n_actions) if Q[s, ac] == best]
+            a = int(rng.choice(ties))
+
+        r = float(R[s, a])
+        s_next = int(rng.choice(n_states, p=P[s, a]))
+        Q[s, a] = (1.0 - alpha) * Q[s, a] + alpha * (r + gamma * float(np.max(Q[s_next])))
+        rewards[t] = r
+        s = s_next
+
+    return rewards
+
+
+def run_optimal_nonstationary(
+    phases: List[Tuple[np.ndarray, np.ndarray, int]],
+    n_states: int,
+    n_actions: int,
+    gamma: float,
+    rng: np.random.Generator,
+    adapt: bool = True,
+) -> np.ndarray:
+    """Oracle reference. adapt=True recomputes Q* at every phase boundary (an
+    agent that instantly knows the new MDP); adapt=False keeps the phase-1
+    optimal policy forever (an agent that never notices the switch), which is
+    the floor that any real adaptation must beat.
+    """
+    Ps, Rs, phase_ids = expand_phases(phases)
+    n_steps = len(Ps)
+    q_cache: Dict[int, np.ndarray] = {}
+    s = int(rng.integers(n_states))
+    rewards = np.zeros(n_steps, dtype=np.float32)
+
+    for t in range(n_steps):
+        P, R = Ps[t], Rs[t]
+        key = phase_ids[t] if adapt else 0
+        if key not in q_cache:
+            src = t if adapt else 0
+            q_cache[key] = value_iteration(Ps[src], Rs[src], gamma)
+        Q_star = q_cache[key]
+
+        best = float(np.max(Q_star[s]))
+        ties = [ac for ac in range(n_actions) if Q_star[s, ac] == best]
+        a = int(rng.choice(ties))
+        rewards[t] = float(R[s, a])
+        s = int(rng.choice(n_states, p=P[s, a]))
+
+    return rewards
+
+
+def run_random_nonstationary(
+    phases: List[Tuple[np.ndarray, np.ndarray, int]],
+    n_states: int,
+    n_actions: int,
+    rng: np.random.Generator,
+) -> np.ndarray:
+    Ps, Rs, _ = expand_phases(phases)
+    n_steps = len(Ps)
+    s = int(rng.integers(n_states))
+    rewards = np.zeros(n_steps, dtype=np.float32)
+    for t in range(n_steps):
+        a = int(rng.integers(n_actions))
+        rewards[t] = float(Rs[t][s, a])
+        s = int(rng.choice(n_states, p=Ps[t][s, a]))
+    return rewards
+
+
+def collect_nonstationary(
+    model: Optional[COCONUTTransformer],
+    config: Optional[COCONUTConfig],
+    vocab: Optional[Dict],
+    n_states: int,
+    n_actions: int,
+    device: Optional[torch.device],
+    variant: str,
+    eval_seeds: List[int],
+    switch_step: int,
+    post_steps: int,
+    alpha: float,
+    gamma: float,
+    epsilon: float,
+    window: int,
+) -> Dict[str, np.ndarray]:
+    """Roll every agent through the two-phase MDP for each eval seed.
+
+    Returns cum_X / rate_X arrays of shape [n_mdps, switch_step + post_steps]:
+      t  = transformer (greedy)     o  = optimal, adapts at the switch
+      e  = ε-greedy tabular Q       st = optimal, frozen on phase 1
+      g  = greedy tabular Q         r  = uniform random
+    Pass model=None to compute the baselines only.
+    """
+    rew: Dict[str, List[np.ndarray]] = {k: [] for k in ('t', 'o', 'st', 'e', 'g', 'r')}
+    for seed in eval_seeds:
+        (P1, R1), (P2, R2) = generate_nonstationary_mdp(
+            n_states, n_actions, variant, seed=seed)
+        phases = [(P1, R1, switch_step), (P2, R2, post_steps)]
+        # Every agent gets its own generator seeded identically (same
+        # convention as the *_autonomous evaluations): same start state and
+        # the same random stream, so differences are policy differences.
+        new_rng = lambda: np.random.default_rng(seed + 100)
+
+        if model is not None:
+            rew['t'].append(run_transformer_nonstationary(
+                model, phases, n_states, n_actions, vocab, config, device,
+                epsilon=0.0, rng=new_rng()))
+        rew['o'].append(run_optimal_nonstationary(
+            phases, n_states, n_actions, gamma=gamma, rng=new_rng(), adapt=True))
+        rew['st'].append(run_optimal_nonstationary(
+            phases, n_states, n_actions, gamma=gamma, rng=new_rng(), adapt=False))
+        rew['e'].append(run_q_learner_nonstationary(
+            phases, n_states, n_actions, alpha=alpha, gamma=gamma,
+            epsilon=epsilon, rng=new_rng()))
+        rew['g'].append(run_q_learner_nonstationary(
+            phases, n_states, n_actions, alpha=alpha, gamma=gamma,
+            epsilon=0.0, rng=new_rng()))
+        rew['r'].append(run_random_nonstationary(
+            phases, n_states, n_actions, rng=new_rng()))
+
+    out: Dict[str, np.ndarray] = {}
+    for key, runs in rew.items():
+        if not runs:
+            continue
+        arr = np.stack(runs, axis=0)
+        out[f'cum_{key}'] = np.cumsum(arr, axis=1)
+        out[f'rate_{key}'] = trailing_rate(arr, window)
+    return out
+
+
+def trailing_rate(rewards: np.ndarray, window: int) -> np.ndarray:
+    """Trailing mean per-step reward over `window` steps, same length as
+    `rewards` (the first `window-1` entries average what exists so far).
+    Works on a [n_mdps, n_steps] array along the step axis.
+    """
+    cum = np.cumsum(rewards, axis=-1)
+    n = rewards.shape[-1]
+    idx = np.arange(n)
+    lo = np.maximum(idx - window, -1)
+    lagged = np.where(lo >= 0, cum[..., lo], 0.0)
+    counts = idx - lo
+    return (cum - lagged) / counts
+
+
+def summarize_nonstationary(
+    rate: np.ndarray,
+    opt_rate: np.ndarray,
+    switch_step: int,
+    window: int,
+) -> Dict[str, float]:
+    """Reward rate (and % of the adapting oracle) in three windows: just before
+    the switch, just after it, and at the end of the post-switch phase.
+    """
+    m = rate.mean(axis=0)
+    o = opt_rate.mean(axis=0)
+    pre_i = switch_step - 1
+    post_i = min(switch_step + window - 1, len(m) - 1)
+    end_i = len(m) - 1
+    out = {}
+    for tag, i in (('pre', pre_i), ('post', post_i), ('end', end_i)):
+        out[f'{tag}_rate'] = float(m[i])
+        out[f'{tag}_pct_opt'] = float(100.0 * m[i] / o[i]) if o[i] > 0 else float('nan')
+
+    # Steps after the switch until the trailing rate returns to its pre-switch
+    # level (on the mean curve); NaN if it never does.
+    target = m[pre_i]
+    recovered = np.nan
+    for t in range(switch_step, len(m)):
+        if m[t] >= target:
+            recovered = float(t - switch_step)
+            break
+    out['steps_to_recover'] = recovered
+    return out
+
+
+def plot_nonstationary(
+    results: List[Dict],
+    switch_step: int,
+    window: int,
+    n_mdps: int,
+    save_path: str,
+    label: str = 'Transformer',
+) -> None:
+    """Per-variant columns; top row cumulative reward, bottom row trailing
+    reward rate. The dashed vertical line is the mid-episode switch.
+    """
+    n = len(results)
+    fig, axes = plt.subplots(2, n, figsize=(5.0 * n, 8.6), squeeze=False)
+
+    series = [
+        ('Optimal (adapts instantly)', 'cum_o',  'rate_o',  'black',       '--', 1.6),
+        ('Optimal (never adapts)',     'cum_st', 'rate_st', '#9467bd',     ':',  1.6),
+        (label,                        'cum_t',  'rate_t',  'steelblue',   '-',  2.2),
+        ('ε-greedy Q (ε=0.2)',         'cum_e',  'rate_e',  'forestgreen', '-',  1.6),
+        ('Greedy Q (ε=0)',             'cum_g',  'rate_g',  'darkorange',  '-',  1.6),
+        ('Random policy',              'cum_r',  'rate_r',  'gray',        ':',  1.4),
+    ]
+
+    for j, res in enumerate(results):
+        n_steps = res['cum_t'].shape[1]
+        steps = np.arange(1, n_steps + 1)
+        ax_c, ax_r = axes[0][j], axes[1][j]
+
+        for name, ckey, rkey, color, ls, lw in series:
+            cum = res[ckey]
+            ax_c.plot(steps, cum.mean(0), color=color, linestyle=ls, linewidth=lw,
+                      label=f'{name} ({cum[:, -1].mean():.1f})')
+            if ls == '-':
+                ax_c.fill_between(steps, cum.mean(0) - cum.std(0),
+                                  cum.mean(0) + cum.std(0), color=color, alpha=0.12)
+            rate = res[rkey]
+            ax_r.plot(steps, rate.mean(0), color=color, linestyle=ls, linewidth=lw,
+                      label=name)
+
+        for ax in (ax_c, ax_r):
+            ax.axvline(switch_step, color='red', linestyle='--', linewidth=1.5,
+                       alpha=0.7)
+            ax.grid(True, alpha=0.3)
+            ax.set_xlabel('Timestep', fontsize=12)
+
+        ax_c.set_title(f"{res['label']}", fontsize=12.5)
+        ax_c.legend(fontsize=8.5, loc='upper left')
+        ax_r.set_ylim(0.0, 1.0)
+        if j == 0:
+            ax_c.set_ylabel('Cumulative reward', fontsize=13)
+            ax_r.set_ylabel(f'Reward rate ({window}-step trailing mean)', fontsize=12)
+            ax_c.text(switch_step, ax_c.get_ylim()[1] * 0.02, ' switch',
+                      color='red', fontsize=9, va='bottom')
+
+    fig.suptitle(
+        f'Nonstationary MDPs — the environment changes at t={switch_step} '
+        f'with no signal to the agent\n'
+        f'({switch_step} steps before, {results[0]["cum_t"].shape[1] - switch_step} '
+        f'after; mean ± std over {n_mdps} MDPs)',
+        fontsize=14,
+    )
+    fig.tight_layout(rect=(0, 0, 1, 0.94))
+    fig.savefig(save_path, dpi=150, bbox_inches='tight')
+    plt.close(fig)
+    print(f"  Saved: {save_path}")
+
+
+def run_nonstationary_eval(
+    model: COCONUTTransformer,
+    config: COCONUTConfig,
+    vocab: Dict,
+    n_states: int,
+    n_actions: int,
+    device: torch.device,
+    args: argparse.Namespace,
+    eval_seeds: List[int],
+    run_label: str,
+    figures_dir: str,
+) -> List[Dict]:
+    """Part 4d end to end: roll out every variant, print the summary table,
+    write nonstationary.png + nonstationary_summary.csv into `figures_dir`.
+    """
+    switch = args.nonstationary_switch_step
+    window = args.nonstationary_window
+    total = switch + args.nonstationary_post_steps
+    print(f"\n{'=' * 60}")
+    print(f"Part 4d: Nonstationary MDPs "
+          f"(switch at t={switch}, {args.nonstationary_post_steps} steps after, "
+          f"{len(NONSTATIONARY_VARIANTS)} variants × {len(eval_seeds)} MDPs)")
+    print(f"{'=' * 60}")
+
+    ns_results: List[Dict] = []
+    ns_rows: List[Dict] = []
+    agent_names = [('t', run_label), ('o', 'optimal (adapts)'),
+                   ('st', 'optimal (frozen)'), ('e', 'eps-greedy Q'),
+                   ('g', 'greedy Q'), ('r', 'random')]
+    for variant, vlabel in NONSTATIONARY_VARIANTS:
+        print(f"\n  Variant: {variant} — {vlabel}", flush=True)
+        res = collect_nonstationary(
+            model, config, vocab, n_states, n_actions, device,
+            variant=variant, eval_seeds=eval_seeds,
+            switch_step=switch, post_steps=args.nonstationary_post_steps,
+            alpha=args.alpha, gamma=args.gamma, epsilon=args.epsilon,
+            window=window,
+        )
+        res['name'] = variant
+        res['label'] = vlabel
+        ns_results.append(res)
+
+        print(f"    {'agent':<20}{'pre':>8}{'post':>8}{'end':>8}"
+              f"{'pre%opt':>9}{'post%opt':>10}{'end%opt':>9}{'recov':>8}")
+        for key, name in agent_names:
+            s = summarize_nonstationary(res[f'rate_{key}'], res['rate_o'],
+                                        switch_step=switch, window=window)
+            rec = ('never' if np.isnan(s['steps_to_recover'])
+                   else f"{s['steps_to_recover']:.0f}")
+            print(f"    {name:<20}{s['pre_rate']:>8.3f}{s['post_rate']:>8.3f}"
+                  f"{s['end_rate']:>8.3f}{s['pre_pct_opt']:>8.0f}%"
+                  f"{s['post_pct_opt']:>9.0f}%{s['end_pct_opt']:>8.0f}%{rec:>8}")
+            ns_rows.append({
+                'variant': variant, 'agent': name,
+                'final_cumreward': float(res[f'cum_{key}'][:, -1].mean()),
+                'pre_rate': s['pre_rate'], 'post_rate': s['post_rate'],
+                'end_rate': s['end_rate'],
+                'pre_pct_optimal': s['pre_pct_opt'],
+                'post_pct_optimal': s['post_pct_opt'],
+                'end_pct_optimal': s['end_pct_opt'],
+                'steps_to_recover': s['steps_to_recover'],
+            })
+
+    os.makedirs(figures_dir, exist_ok=True)
+    plot_nonstationary(
+        ns_results, switch_step=switch, window=window,
+        n_mdps=len(eval_seeds), label=f'{run_label} transformer',
+        save_path=os.path.join(figures_dir, 'nonstationary.png'),
+    )
+    csv_path = os.path.join(figures_dir, 'nonstationary_summary.csv')
+    with open(csv_path, 'w', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=list(ns_rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(ns_rows)
+    print(f"\n  Saved: {csv_path}   (horizon {total} steps)")
+    return ns_results
+
+
+# ---------------------------------------------------------------------------
+# Part 4e: Reward interventions
+#
+# Agreement with the tabular policy cannot distinguish a model that runs an
+# online RL update from one that has learned state/action statistics which
+# happen to correlate with the teacher. These interventions separate the two
+# causally: the reward the agent *observes* is corrupted while the reward it is
+# *scored on* stays the true environmental reward, so any drop in return is
+# attributable to the agent no longer being able to use reward feedback.
+#
+# `decorrelated` is the load-bearing condition. It resamples the observed
+# reward from the same reward matrix, so the marginal reward distribution the
+# agent sees is exactly unchanged and only its association with the transition
+# just taken is destroyed. An agent that merely needs a plausible scalar in the
+# reward slot is unaffected by it; an agent doing TD updates is not.
+#
+# `inverted` is the directional control: an agent running a value update on a
+# flipped reward should actively pursue the worst actions and fall *below* the
+# random-policy floor, which no amount of reward-independent policy prior can
+# produce.
+# ---------------------------------------------------------------------------
+
+REWARD_INTERVENTIONS: List[Tuple[str, str]] = [
+    ('intact',       'True reward (control)'),
+    ('zeroed',       'Reward always 0'),
+    ('constant',     'Reward always 0.5'),
+    ('decorrelated', 'Reward resampled from R (marginal preserved, link broken)'),
+    ('inverted',     'Reward flipped (1 - r)'),
+]
+
+
+def make_reward_transform(name: str, seed: int) -> Optional[Callable]:
+    """Build the `reward_transform(r, s, a, R) -> r_obs` callable for a
+    condition.
+
+    The closure owns a private RNG rather than borrowing the rollout's, so
+    corrupting the reward never perturbs the environment's transition draws:
+    every condition sees the same MDP dynamics and differs only in what the
+    agent is told about reward. `intact` returns None so that the control
+    condition runs the exact code path of the uninstrumented evaluation.
+    """
+    if name == 'intact':
+        return None
+    if name == 'zeroed':
+        return lambda r, s, a, R: 0.0
+    if name == 'constant':
+        return lambda r, s, a, R: 0.5
+    if name == 'inverted':
+        return lambda r, s, a, R: 1.0 - r
+    if name == 'decorrelated':
+        rng = np.random.default_rng(seed)
+        return lambda r, s, a, R: float(
+            R[rng.integers(R.shape[0]), rng.integers(R.shape[1])])
+    raise ValueError(f"Unknown reward intervention: {name!r}")
+
+
+def collect_reward_intervention(
+    model: COCONUTTransformer,
+    config: COCONUTConfig,
+    vocab: Dict,
+    n_states: int,
+    n_actions: int,
+    device: torch.device,
+    mdp_fn: Callable,
+    eval_seeds: List[int],
+    n_steps: int,
+    alpha: float,
+    gamma: float,
+    epsilon: float,
+) -> Dict:
+    """Roll out every intervention on one MDP family.
+
+    Returns per-condition final returns for the transformer and both tabular
+    Q-learners, plus the condition-independent optimal/random references (both
+    ignore observed reward, so they are computed once).
+    """
+    out: Dict[str, Dict[str, List[float]]] = {
+        name: {'transformer': [], 'epsgreedy': [], 'greedy': []}
+        for name, _ in REWARD_INTERVENTIONS
+    }
+    optimal, random_pol = [], []
+
+    for seed in eval_seeds:
+        P, R = mdp_fn(n_states, n_actions, seed=seed)
+
+        optimal.append(float(run_optimal_autonomous(
+            P, R, n_states, n_actions, n_steps, gamma=gamma,
+            rng=np.random.default_rng(seed + 100)).sum()))
+        random_pol.append(float(run_random_nonstationary(
+            [(P, R, n_steps)], n_states, n_actions,
+            rng=np.random.default_rng(seed + 100)).sum()))
+
+        for name, _ in REWARD_INTERVENTIONS:
+            # Same transform seed across agents/MDPs within a condition so the
+            # corruption stream is shared, and a fresh rollout RNG seeded
+            # exactly as in the uninstrumented eval.
+            rt = lambda: make_reward_transform(name, seed + 7777)
+            out[name]['transformer'].append(float(run_transformer_autonomous(
+                model, P, R, n_states, n_actions, n_steps, vocab, config,
+                device, epsilon=0.0, rng=np.random.default_rng(seed + 100),
+                reward_transform=rt()).sum()))
+            out[name]['epsgreedy'].append(float(run_q_learner_autonomous(
+                P, R, n_states, n_actions, n_steps, alpha=alpha, gamma=gamma,
+                epsilon=epsilon, rng=np.random.default_rng(seed + 100),
+                reward_transform=rt()).sum()))
+            out[name]['greedy'].append(float(run_q_learner_autonomous(
+                P, R, n_states, n_actions, n_steps, alpha=alpha, gamma=gamma,
+                epsilon=0.0, rng=np.random.default_rng(seed + 100),
+                reward_transform=rt()).sum()))
+
+    return {
+        'conditions': {k: {a: np.array(v, dtype=np.float64)
+                           for a, v in d.items()} for k, d in out.items()},
+        'optimal': np.array(optimal, dtype=np.float64),
+        'random':  np.array(random_pol, dtype=np.float64),
+    }
+
+
+def plot_reward_intervention(
+    results: List[Dict],
+    n_mdps: int,
+    n_steps: int,
+    label: str,
+    save_path: str,
+) -> None:
+    """One panel per MDP family; grouped bars of final return as % of optimal.
+
+    The random-policy floor is drawn as a reference line because on the
+    Beta(2,2) family it sits near 70% of optimal — without it the bars there
+    look like a large effect when they are not.
+    """
+    agents = [('transformer', f'{label} transformer', '#1f77b4'),
+              ('epsgreedy',   'ε-greedy tabular Q',   '#2ca02c'),
+              ('greedy',      'greedy tabular Q',     '#8c564b')]
+    names = [n for n, _ in REWARD_INTERVENTIONS]
+    xlabels = [d for _, d in REWARD_INTERVENTIONS]
+
+    fig, axes = plt.subplots(1, len(results), figsize=(9 * len(results), 5.6),
+                             squeeze=False)
+    for ax, res in zip(axes[0], results):
+        opt = res['data']['optimal'].mean()
+        x = np.arange(len(names))
+        width = 0.8 / len(agents)
+        for k, (key, alabel, color) in enumerate(agents):
+            vals = [100.0 * res['data']['conditions'][n][key].mean() / opt
+                    for n in names]
+            errs = [100.0 * res['data']['conditions'][n][key].std() / opt
+                    for n in names]
+            ax.bar(x + k * width - 0.4 + width / 2, vals, width, yerr=errs,
+                   capsize=3, color=color, label=alabel, alpha=0.9)
+        ax.axhline(100.0 * res['data']['random'].mean() / opt, color='black',
+                   linestyle=':', linewidth=1.6, label='random policy')
+        ax.axhline(100.0, color='black', linestyle='--', linewidth=1.4,
+                   label='optimal policy')
+        ax.set_xticks(x)
+        ax.set_xticklabels([t.replace(' (', '\n(') for t in xlabels],
+                           fontsize=9, rotation=20, ha='right')
+        ax.set_ylabel('final return (% of optimal)')
+        ax.set_title(f"{res['label']}\n({n_steps} steps, {n_mdps} MDPs)",
+                     fontsize=12)
+        ax.grid(True, axis='y', alpha=0.3)
+        # Headroom above the optimal line so the legend never covers a bar.
+        ax.set_ylim(0, 132)
+        ax.legend(fontsize=8.5, loc='upper center', ncol=3, framealpha=0.95)
+    fig.suptitle('Reward interventions — reward the agent OBSERVES is corrupted; '
+                 'reward it is SCORED on is not', fontsize=13)
+    fig.tight_layout(rect=(0, 0, 1, 0.94))
+    fig.savefig(save_path, dpi=200)
+    plt.close(fig)
+    print(f"  Saved: {save_path}")
+
+
+def run_reward_intervention_eval(
+    model: COCONUTTransformer,
+    config: COCONUTConfig,
+    vocab: Dict,
+    n_states: int,
+    n_actions: int,
+    device: torch.device,
+    args: argparse.Namespace,
+    eval_seeds: List[int],
+    run_label: str,
+    figures_dir: str,
+) -> List[Dict]:
+    """Part 4e end to end: sweep interventions × MDP families, print the table,
+    write reward_intervention.png + reward_intervention_summary.csv.
+    """
+    n_steps = args.reward_intervention_steps
+    print(f"\n{'=' * 60}")
+    print(f"Part 4e: Reward interventions "
+          f"({len(REWARD_INTERVENTIONS)} conditions × {len(MDP_FAMILIES)} "
+          f"families × {len(eval_seeds)} MDPs, {n_steps} steps)")
+    print(f"{'=' * 60}")
+
+    results: List[Dict] = []
+    rows: List[Dict] = []
+    for fam, fam_label, mdp_fn in MDP_FAMILIES:
+        print(f"\n  Family: {fam} — {fam_label}", flush=True)
+        data = collect_reward_intervention(
+            model, config, vocab, n_states, n_actions, device,
+            mdp_fn=mdp_fn, eval_seeds=eval_seeds, n_steps=n_steps,
+            alpha=args.alpha, gamma=args.gamma, epsilon=args.epsilon,
+        )
+        results.append({'name': fam, 'label': fam_label, 'data': data})
+
+        opt = data['optimal'].mean()
+        rnd = data['random'].mean()
+        print(f"    optimal {opt:.1f}   random {rnd:.1f} "
+              f"({100.0 * rnd / opt:.0f}% of optimal)")
+        print(f"    {'condition':<16}{'transformer':>14}{'eps-greedy Q':>15}"
+              f"{'greedy Q':>12}")
+        for name, desc in REWARD_INTERVENTIONS:
+            c = data['conditions'][name]
+            print(f"    {name:<16}"
+                  f"{100.0 * c['transformer'].mean() / opt:>13.0f}%"
+                  f"{100.0 * c['epsgreedy'].mean() / opt:>14.0f}%"
+                  f"{100.0 * c['greedy'].mean() / opt:>11.0f}%")
+            for key, agent in (('transformer', f'{run_label} transformer'),
+                               ('epsgreedy', 'eps-greedy Q'),
+                               ('greedy', 'greedy Q')):
+                rows.append({
+                    'family': fam, 'condition': name, 'description': desc,
+                    'agent': agent,
+                    'final_return': float(c[key].mean()),
+                    'final_return_std': float(c[key].std()),
+                    'pct_optimal': float(100.0 * c[key].mean() / opt),
+                    'optimal': float(opt), 'random': float(rnd),
+                    'random_pct_optimal': float(100.0 * rnd / opt),
+                })
+
+    os.makedirs(figures_dir, exist_ok=True)
+    plot_reward_intervention(
+        results, n_mdps=len(eval_seeds), n_steps=n_steps, label=run_label,
+        save_path=os.path.join(figures_dir, 'reward_intervention.png'),
+    )
+    csv_path = os.path.join(figures_dir, 'reward_intervention_summary.csv')
+    with open(csv_path, 'w', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(rows)
+    print(f"  Saved: {csv_path}")
+    return results
+
+
+# ---------------------------------------------------------------------------
+# Part 4f: State-action size sweep
+#
+# Every headline number in the paper is measured at the largest MDP the model
+# was trained on (|S|=8, |A|=4), which says nothing about how behaviour varies
+# with problem size. This sweeps the whole trained range.
+#
+# The vocabulary is deliberately NOT rebuilt per cell. Token ids are positional
+# (`TOK_S = range(2, 2+max_states)`, `TOK_R = 2+max_states+max_actions`), so a
+# vocab built at the smaller size would renumber every special token and the
+# model would read garbage without raising. Smaller MDPs simply use a prefix of
+# the full-size TOK_S/TOK_A lists, which is exactly what training did.
+# ---------------------------------------------------------------------------
+
+def collect_size_sweep(
+    model: COCONUTTransformer,
+    config: COCONUTConfig,
+    vocab: Dict,
+    device: torch.device,
+    args: argparse.Namespace,
+    eval_seeds: List[int],
+    run_label: str,
+) -> Dict:
+    """Sweep the trained |S| x |A| grid; returns grids + per-cell CSV rows.
+
+    Split out from `run_size_sweep_eval` so the continuous-vs-discrete
+    comparison can collect both models through this exact code path.
+    """
+    states = list(range(2, config.max_states + 1))
+    actions = list(range(2, config.max_actions + 1))
+    n_steps = args.size_sweep_steps
+
+    agree_grid = np.full((len(states), len(actions)), np.nan)
+    pct_grid = np.full((len(states), len(actions)), np.nan)
+    rnd_grid = np.full((len(states), len(actions)), np.nan)
+    rows: List[Dict] = []
+
+    for i, ns in enumerate(states):
+        for j, na in enumerate(actions):
+            agrees, rets, opts, rnds = [], [], [], []
+            for seed in eval_seeds:
+                # Teacher-forced agreement on the paper's Beta(2,2) family.
+                P, R = generate_eval_mdp(ns, na, seed=seed)
+                trajectory, _ = run_tabular_q_learning(
+                    P, R, ns, na, n_steps=args.n_steps, alpha=args.alpha,
+                    gamma=args.gamma, epsilon=args.epsilon, seed=seed)
+                preds, _ = run_action_inference(model, trajectory, vocab, na,
+                                                config, device)
+                targets = np.array([st['a_star'] for st in trajectory],
+                                   dtype=np.int32)
+                agrees.append(float((preds == targets).mean()))
+
+                # Closed-loop return on the contrast family, where reward has
+                # enough dynamic range to separate policies.
+                Pc, Rc = generate_contrast_mdp_seeded(ns, na, seed=seed)
+                rets.append(float(run_transformer_autonomous(
+                    model, Pc, Rc, ns, na, n_steps, vocab, config, device,
+                    epsilon=0.0, rng=np.random.default_rng(seed + 100)).sum()))
+                opts.append(float(run_optimal_autonomous(
+                    Pc, Rc, ns, na, n_steps, gamma=args.gamma,
+                    rng=np.random.default_rng(seed + 100)).sum()))
+                rnds.append(float(run_random_nonstationary(
+                    [(Pc, Rc, n_steps)], ns, na,
+                    rng=np.random.default_rng(seed + 100)).sum()))
+
+            opt_mean = float(np.mean(opts))
+            agree_grid[i, j] = float(np.mean(agrees))
+            pct_grid[i, j] = 100.0 * float(np.mean(rets)) / opt_mean
+            rnd_grid[i, j] = 100.0 * float(np.mean(rnds)) / opt_mean
+            print(f"  |S|={ns} |A|={na}: agreement {agree_grid[i, j]:.1%}  "
+                  f"return {pct_grid[i, j]:.0f}% of optimal "
+                  f"(random {rnd_grid[i, j]:.0f}%)", flush=True)
+            rows.append({
+                'n_states': ns, 'n_actions': na, 'agent': run_label,
+                'agreement': agree_grid[i, j],
+                'agreement_std': float(np.std(agrees)),
+                'chance_agreement': 1.0 / na,
+                'return_pct_optimal': pct_grid[i, j],
+                'random_pct_optimal': rnd_grid[i, j],
+                'final_return': float(np.mean(rets)),
+                'optimal_return': opt_mean,
+            })
+
+    return {'states': states, 'actions': actions, 'agreement': agree_grid,
+            'pct_optimal': pct_grid, 'random_pct_optimal': rnd_grid,
+            'rows': rows, 'n_steps': n_steps}
+
+
+def run_size_sweep_eval(
+    model: COCONUTTransformer,
+    config: COCONUTConfig,
+    vocab: Dict,
+    device: torch.device,
+    args: argparse.Namespace,
+    eval_seeds: List[int],
+    run_label: str,
+    figures_dir: str,
+) -> Dict:
+    """Part 4f end to end: collect the grid, write size_sweep.png +
+    size_sweep_summary.csv.
+    """
+    print(f"\n{'=' * 60}")
+    print(f"Part 4f: State-action size sweep "
+          f"(|S| in 2..{config.max_states} x |A| in 2..{config.max_actions}, "
+          f"{len(eval_seeds)} MDPs/cell)")
+    print(f"{'=' * 60}")
+
+    res = collect_size_sweep(model, config, vocab, device, args, eval_seeds,
+                             run_label)
+
+    os.makedirs(figures_dir, exist_ok=True)
+    plot_size_sweep(res['states'], res['actions'], res['agreement'],
+                    res['pct_optimal'], res['random_pct_optimal'],
+                    n_mdps=len(eval_seeds), n_steps=res['n_steps'],
+                    label=run_label,
+                    save_path=os.path.join(figures_dir, 'size_sweep.png'))
+    csv_path = os.path.join(figures_dir, 'size_sweep_summary.csv')
+    with open(csv_path, 'w', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=list(res['rows'][0].keys()))
+        writer.writeheader()
+        writer.writerows(res['rows'])
+    print(f"  Saved: {csv_path}")
+    return res
+
+
+def plot_size_sweep(
+    states: List[int],
+    actions: List[int],
+    agree_grid: np.ndarray,
+    pct_grid: np.ndarray,
+    rnd_grid: np.ndarray,
+    n_mdps: int,
+    n_steps: int,
+    label: str,
+    save_path: str,
+) -> None:
+    """Left: agreement heatmap. Middle: closed-loop return as % of optimal.
+    Right: the same return minus the random-policy floor for that cell, which
+    is the only one of the three that is comparable across |A| (chance
+    agreement and the random floor both move with the number of actions).
+    """
+    fig, axes = plt.subplots(1, 3, figsize=(17, 4.8))
+    grids = [
+        (agree_grid * 100.0, 'Action agreement (%)', 'viridis', None),
+        (pct_grid, 'Closed-loop return (% of optimal)', 'magma', None),
+        (pct_grid - rnd_grid, 'Return above random floor (pp)', 'coolwarm', 0.0),
+    ]
+    for ax, (grid, title, cmap, center) in zip(axes, grids):
+        vmax = np.nanmax(np.abs(grid)) if center is not None else None
+        im = ax.imshow(grid, cmap=cmap, aspect='auto',
+                       vmin=-vmax if center is not None else None,
+                       vmax=vmax if center is not None else None)
+        ax.set_xticks(range(len(actions)))
+        ax.set_xticklabels(actions)
+        ax.set_yticks(range(len(states)))
+        ax.set_yticklabels(states)
+        ax.set_xlabel('|A| (actions)')
+        ax.set_ylabel('|S| (states)')
+        ax.set_title(title, fontsize=12)
+        for i in range(grid.shape[0]):
+            for j in range(grid.shape[1]):
+                ax.text(j, i, f'{grid[i, j]:.0f}', ha='center', va='center',
+                        fontsize=9, color='white'
+                        if cmap != 'coolwarm' else 'black')
+        fig.colorbar(im, ax=ax, fraction=0.046)
+    fig.suptitle(f'{label} transformer — behaviour across the trained '
+                 f'state-action range '
+                 f'({n_mdps} MDPs/cell; return over {n_steps} steps on '
+                 f'contrast MDPs)', fontsize=13)
+    fig.tight_layout(rect=(0, 0, 1, 0.92))
+    fig.savefig(save_path, dpi=200)
+    plt.close(fig)
+    print(f"  Saved: {save_path}")
 
 
 def plot_long_horizon(
@@ -1926,11 +2945,11 @@ def trace_step_log(
 def main():
     parser = argparse.ArgumentParser(
         description='Evaluate trained recurrent context Q-learning transformer')
-    parser.add_argument('--checkpoint', type=str,
-                        default=os.path.join(_script_dir, '..', 'checkpoints',
-                                             'coconut_transformer.pt'))
-    parser.add_argument('--figures_dir', type=str,
-                        default=os.path.join(_script_dir, '..', 'figures'))
+    parser.add_argument('--model', choices=paths.MODELS, default=None,
+                        help='final model to evaluate; sets --checkpoint and --figures_dir '
+                             '(figures/<model>/evaluation)')
+    parser.add_argument('--checkpoint', type=str, default=None)
+    parser.add_argument('--figures_dir', type=str, default=None)
     parser.add_argument('--label', type=str, default=None,
                         help="Human label for this run used in figure titles/"
                              "legends (defaults to the checkpoint's context_mode, "
@@ -1939,6 +2958,27 @@ def main():
     parser.add_argument('--long_horizon_steps', type=int, default=200,
                         help='Steps for the long-horizon evaluation that '
                              'tests behavior past the training horizon.')
+    parser.add_argument('--nonstationary_switch_step', type=int, default=50,
+                        help='Steps in the first phase before the MDP changes '
+                             '(0 disables the nonstationary evaluation).')
+    parser.add_argument('--nonstationary_post_steps', type=int, default=100,
+                        help='Steps to keep running after the switch.')
+    parser.add_argument('--nonstationary_window', type=int, default=10,
+                        help='Trailing window for the reward-rate curves.')
+    parser.add_argument('--reward_intervention_steps', type=int, default=200,
+                        help='Closed-loop steps per reward-intervention '
+                             'condition (0 disables Part 4e).')
+    parser.add_argument('--size_sweep_steps', type=int, default=200,
+                        help='Closed-loop steps per |S|x|A| cell in the size '
+                             'sweep (0 disables Part 4f).')
+    parser.add_argument('--parts', type=str, default='all',
+                        help="Which parts to run: 'all' (default, full "
+                             "pipeline) or a comma-separated subset of "
+                             "'legacy' (Parts 1-6b: agreement, probes, "
+                             "attention, regret, nonstationary, traces), "
+                             "'reward_intervention' (4e), 'size_sweep' (4f). "
+                             "Lets the newer evals be regenerated without "
+                             "re-running the expensive probe/attention parts.")
     parser.add_argument('--alpha',         type=float, default=0.1)
     parser.add_argument('--gamma',         type=float, default=0.9)
     parser.add_argument('--epsilon',       type=float, default=0.2)
@@ -1948,6 +2988,12 @@ def main():
     parser.add_argument('--n_probe_eval',  type=int,   default=100)
     parser.add_argument('--probe_epochs',  type=int,   default=10)
     args = parser.parse_args()
+    if args.model:
+        args.checkpoint = args.checkpoint or str(paths.checkpoint(args.model))
+        args.figures_dir = args.figures_dir or str(paths.FIGURES / args.model / 'evaluation')
+        args.label = args.label or args.model
+    if args.checkpoint is None or args.figures_dir is None:
+        parser.error('give --model, or both --checkpoint and --figures_dir')
 
     os.makedirs(args.figures_dir, exist_ok=True)
 
@@ -1977,6 +3023,33 @@ def main():
     print(f"Context mode: {getattr(config, 'context_mode', 'continuous')}  |  label: {run_label}")
 
     eval_seeds = list(range(args.eval_seed, args.eval_seed + args.n_eval_mdps))
+
+    _parts = {p.strip() for p in args.parts.split(',') if p.strip()}
+    unknown = _parts - {'all', 'legacy', 'reward_intervention', 'size_sweep'}
+    if unknown:
+        raise SystemExit(f"Unknown --parts value(s): {sorted(unknown)}")
+    want = lambda part: ('all' in _parts) or (part in _parts)
+    print(f"Parts: {args.parts}")
+
+    # -----------------------------------------------------------------------
+    # Part 4e / 4f: reviewer-response evals.
+    #
+    # These run first so they can be regenerated on their own with
+    # `--parts reward_intervention,size_sweep`, which skips the probe and
+    # attention parts below (those dominate runtime and are unchanged).
+    # -----------------------------------------------------------------------
+    if want('reward_intervention') and args.reward_intervention_steps > 0:
+        run_reward_intervention_eval(model, config, vocab, n_states, n_actions,
+                                     device, args, eval_seeds, run_label,
+                                     args.figures_dir)
+    if want('size_sweep') and args.size_sweep_steps > 0:
+        run_size_sweep_eval(model, config, vocab, device, args, eval_seeds,
+                            run_label, args.figures_dir)
+
+    if not want('legacy'):
+        print(f"\nDone. Figures saved to {args.figures_dir}/ "
+              f"(legacy parts skipped via --parts).")
+        return
 
     # -----------------------------------------------------------------------
     # Part 1a: In-distribution action prediction
@@ -2350,6 +3423,17 @@ def main():
         rdist_results, n_mdps=args.n_eval_mdps,
         save_path=os.path.join(args.figures_dir, 'cumrew_by_reward_dist.png'),
     )
+
+    # -----------------------------------------------------------------------
+    # Part 4d: Nonstationary MDPs (the world changes mid-episode)
+    # -----------------------------------------------------------------------
+    if args.nonstationary_switch_step > 0 and args.nonstationary_post_steps > 0:
+        run_nonstationary_eval(model, config, vocab, n_states, n_actions,
+                               device, args, eval_seeds, run_label,
+                               args.figures_dir)
+    else:
+        print("\nPart 4d: Nonstationary eval skipped "
+              "(--nonstationary_switch_step/--nonstationary_post_steps = 0).")
 
     # -----------------------------------------------------------------------
     # Part 5: Effective alpha/gamma recovery

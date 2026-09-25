@@ -60,6 +60,10 @@ class COCONUTConfig:
     # When discrete: tie the token-decode head to tok_emb (logits = h @ E^T)
     # instead of a separate Linear. Keeps the discrete channel parameter-free.
     discrete_tie_embeddings: bool = True
+    # Continuous only: write the context slot of the executed action residually,
+    # c_a <- c_a + W h[UPDATE], instead of overwriting it with h[UPDATE]. Keeping
+    # the slot is then the default (the tabular Q update adds to Q(s, a)).
+    residual_context: bool = False
 
     @property
     def vocab_size(self) -> int:
@@ -241,6 +245,11 @@ class COCONUTTransformer(nn.Module):
                 config.d_model, config.vocab_size, bias=False
             )
 
+        self.context_delta = None
+        if config.residual_context:
+            assert config.context_mode == 'continuous', 'residual_context is continuous-only'
+            self.context_delta = nn.Linear(config.d_model, config.d_model)
+
         self._init_weights()
 
     def _init_weights(self):
@@ -411,6 +420,14 @@ class COCONUTTransformer(nn.Module):
         update_hidden = h[:, upd_idx, :]
 
         select_logits = self.action_head(select_hidden)
+
+        if self.context_delta is not None:
+            # Residual write: return the new slot value for the executed action a_t
+            # (token 3 of the step is TOK_A[a_t]), so every caller that stores
+            # contextualize(update_hidden) into slot a_t is unchanged.
+            a_t = token_ids[:, 3] - (2 + self.config.max_states)
+            update_hidden = context[torch.arange(B, device=context.device), a_t] \
+                + self.context_delta(update_hidden)
 
         if return_attention:
             return select_logits, update_hidden, all_attn

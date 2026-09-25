@@ -2,6 +2,9 @@
 __pycache__/
 *.py[cod]
 *$py.class
+# paper source, notes and rendered figures (the figure script is tracked)
+paper/*
+!paper/make_main_figures.py
 
 # C extensions
 *.so
@@ -226,3 +229,9 @@ wandb/
 # Experimental notebooks
 experiments/
 scratch/
+
+# Slurm / run logs stay local (they contain cluster paths and W&B run links)
+multiplicative_weights/logs/
+tabular_q_learning/logs/
+relaxation/logs/
+paper/logs/

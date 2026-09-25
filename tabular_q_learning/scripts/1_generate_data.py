@@ -38,6 +38,9 @@ Output per episode:
 
 import argparse
 import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import paths  # noqa: E402
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
@@ -142,7 +145,10 @@ def generate_episode(
     q_init: float = 0.0,
     rng: np.random.Generator = None,
     stochastic_rewards: bool = False,
+    reward_noise: float = 0.0,
 ) -> Dict:
+    """reward_noise > 0 adds N(0, reward_noise^2) to every observed reward, so the
+    reward of the last visit is no longer the mean reward of (s, a)."""
     if rng is None:
         rng = np.random.default_rng()
 
@@ -164,6 +170,8 @@ def generate_episode(
             r = float(rng.binomial(1, float(R[s, a])))
         else:
             r = float(R[s, a])
+        if reward_noise > 0:
+            r += float(reward_noise * rng.standard_normal())
         s_next = int(rng.choice(n_states, p=P[s, a]))
 
         max_q_next = float(np.max(Q[s_next]))
@@ -238,7 +246,19 @@ def generate_dataset(
     gamma: float = 0.9,
     seed: int = 42,
     stochastic_rewards: bool = False,
+    task_mix: Optional[List[str]] = None,
+    reward_shift: float = 0.5,
+    goal_step_cost: float = 0.1,
+    reward_noise: float = 0.0,
 ) -> List[Dict]:
+    """task_mix (optional) cycles episodes through MDP task types:
+      'orig'    — the reward families above, r in [0, 1] (default behaviour)
+      'shifted' — same families, r - reward_shift (mixed-sign rewards break the
+                  'first-tried action wins' lock-in of zero-initialised Q)
+      'goal'    — delayed reward: every action in one goal state pays
+                  1 - goal_step_cost, all others pay -goal_step_cost, so action
+                  values differ only through bootstrapped transitions
+    """
     rng = np.random.default_rng(seed)
     vocab = build_vocab(max_states, max_actions)
 
@@ -270,10 +290,18 @@ def generate_dataset(
         P, R = generate_random_mdp(n_s, n_a, rng=rng,
                                    reward_dist=reward_dist_name,
                                    trans_conc=trans_conc)
+        task = task_mix[i % len(task_mix)] if task_mix else 'orig'
+        if task == 'shifted':
+            R = (R - reward_shift).astype(np.float32)
+        elif task == 'goal':
+            R = np.full_like(R, -goal_step_cost)
+            R[int(rng.integers(n_s))] = 1.0 - goal_step_cost
+        elif task != 'orig':
+            raise ValueError(f'unknown task {task}')
         ep = generate_episode(
             P, R, n_s, n_a, n_steps,
             alpha=alpha, gamma=gamma, epsilon=epsilon, q_init=0.0,
-            rng=rng, stochastic_rewards=stochastic_rewards,
+            rng=rng, stochastic_rewards=stochastic_rewards, reward_noise=reward_noise,
         )
         ep = apply_permutations(ep, n_s, n_a, rng)
 
@@ -285,6 +313,7 @@ def generate_dataset(
             'n_actions':    n_a,
             'reward_dist':  reward_dist_name,
             'trans_conc':   trans_conc_name,
+            'task':         task,
         }
         sequences.append(seq)
 
@@ -333,9 +362,16 @@ def main():
     parser.add_argument('--seed',             type=int,   default=42)
     parser.add_argument('--stochastic_rewards', action='store_true',
                         help='Sample r_t ~ Bernoulli(R[s,a]) each step instead of using mean')
+    parser.add_argument('--task_mix', type=str, nargs='+', default=None,
+                        choices=['orig', 'shifted', 'goal'],
+                        help='Cycle episodes through these MDP task types (default: orig only)')
+    parser.add_argument('--reward_shift',     type=float, default=0.5)
+    parser.add_argument('--goal_step_cost',   type=float, default=0.1)
+    parser.add_argument('--reward_noise',     type=float, default=0.0,
+                        help='Std of Gaussian noise added to every observed reward')
     parser.add_argument('--output',           type=str,
-                        default=os.path.join(os.path.dirname(__file__),
-                                             '..', 'data', 'coconut_dataset.pt'))
+                        default=str(paths.DATA / 'dataset.pt'),
+                        help='the final models use data/qlv3_dataset.pt (scripts/jobs/train.sh)')
     args = parser.parse_args()
 
     if args.n_states is not None:
@@ -373,6 +409,10 @@ def main():
         gamma=args.gamma,
         seed=args.seed,
         stochastic_rewards=args.stochastic_rewards,
+        task_mix=args.task_mix,
+        reward_shift=args.reward_shift,
+        goal_step_cost=args.goal_step_cost,
+        reward_noise=args.reward_noise,
     )
 
     n_val   = args.n_sequences // 10
@@ -408,6 +448,10 @@ def main():
             'q_init':               0.0,
             'seed':                 args.seed,
             'stochastic_rewards':   args.stochastic_rewards,
+            'task_mix':             args.task_mix,
+            'reward_shift':         args.reward_shift,
+            'goal_step_cost':       args.goal_step_cost,
+            'reward_noise':         args.reward_noise,
             'reward_distributions': _REWARD_DIST_NAMES,
             'transition_concentrations': _TRANS_CONC_NAMES,
             'vocab_size':           vocab['vocab_size'],

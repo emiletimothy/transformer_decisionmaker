@@ -7,7 +7,7 @@ initialized to zero and updated via the off-policy temporal difference rule:
     Q(s_t, a_t) <- Q(s_t, a_t) + alpha * (r_t + gamma * max_a Q(s_{t+1}, a) - Q(s_t, a_t))
 
 All other (s, a) entries remain unchanged each step, exactly matching the
-construction validated by the transformer in transformer_handwired_q_learning.py.
+construction validated by the transformer in handwired_q_learning_v1.py.
 """
 
 import numpy as np

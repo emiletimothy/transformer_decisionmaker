@@ -21,6 +21,9 @@ BPTT loop per episode:
 import argparse
 import math
 import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import paths  # noqa: E402
 import random
 import time
 from typing import Dict, List, Optional, Tuple
@@ -482,6 +485,7 @@ def train(args) -> None:
         context_mode = args.context_mode,
         gumbel_tau   = args.gumbel_tau_end,
         discrete_tie_embeddings = not args.discrete_untied,
+        residual_context = args.residual_context,
     )
 
     vocab = build_vocab(max_states, max_actions)
@@ -515,6 +519,11 @@ def train(args) -> None:
 
     # ---- Model ----
     model = COCONUTTransformer(model_config).to(device)
+    if args.init_checkpoint:
+        init = torch.load(args.init_checkpoint, map_location='cpu', weights_only=False)
+        model.load_state_dict(init['model_state_dict'])
+        print(f"  initialised from {args.init_checkpoint} "
+              f"(epoch {init.get('epoch', '?')}, val_ce={init.get('val_ce_loss', float('nan')):.4f})")
     n_params = model.num_parameters()
     print(f"\nModel parameters: {n_params:,}")
     print(f"  vocab_size: {model_config.vocab_size}")
@@ -553,13 +562,17 @@ def train(args) -> None:
         wandb.init(
             project = "coconut-qlearning",
             name    = args.run_name if args.run_name else None,
-            tags    = ["recurrent-context", "bptt", f"context-{model_config.context_mode}"],
+            tags    = ["recurrent-context", "bptt", f"context-{model_config.context_mode}"]
+                      + (["residual-context"] if model_config.residual_context else [])
+                      + list(args.wandb_tags),
             config  = {
                 "architecture":    "Recurrent Context Transformer",
                 "context_mode":    model_config.context_mode,
                 "gumbel_tau_start": args.gumbel_tau_start,
                 "gumbel_tau_end":  args.gumbel_tau_end,
                 "discrete_tie_embeddings": model_config.discrete_tie_embeddings,
+                "residual_context": model_config.residual_context,
+                "data_path":       args.data_path,
                 "n_layers":        args.n_layers,
                 "n_heads":         args.n_heads,
                 "d_model":         args.d_model,
@@ -602,9 +615,8 @@ def train(args) -> None:
         model.train()
 
         # Curriculum: gradually introduce larger n_actions
-        allowed = curriculum_stage_for_epoch(
-            epoch, args.epochs, train_sampler.all_levels()
-        )
+        allowed = (train_sampler.all_levels() if args.no_curriculum else
+                   curriculum_stage_for_epoch(epoch, args.epochs, train_sampler.all_levels()))
         train_sampler.set_stage(allowed)
         print(f"[ep {epoch:02d}] curriculum stage: n_actions in {allowed}")
 
@@ -747,12 +759,8 @@ def main():
         description='Train Recurrent Context Q-Learning Transformer (BPTT)')
 
     # Data
-    parser.add_argument('--data_path', type=str,
-                        default=os.path.join(os.path.dirname(__file__),
-                                             '..', 'data', 'coconut_dataset.pt'))
-    parser.add_argument('--checkpoint_dir', type=str,
-                        default=os.path.join(os.path.dirname(__file__),
-                                             '..', 'checkpoints'))
+    parser.add_argument('--data_path', type=str, default=str(paths.DATASET))
+    parser.add_argument('--checkpoint_dir', type=str, default=str(paths.CHECKPOINTS))
 
     # Model hyperparameters
     parser.add_argument('--n_layers',    type=int,   default=4)
@@ -780,6 +788,14 @@ def main():
 
     # Training hyperparameters
     parser.add_argument('--epochs',       type=int,   default=25)
+    parser.add_argument('--init_checkpoint', type=str, default=None,
+                        help='continue from these model weights (fresh optimizer and LR schedule)')
+    parser.add_argument('--wandb_tags', type=str, nargs='*', default=[],
+                        help='extra W&B tags for this run')
+    parser.add_argument('--residual_context', action='store_true',
+                        help='continuous only: write c_a <- c_a + W h[UPDATE] instead of h[UPDATE]')
+    parser.add_argument('--no_curriculum', action='store_true',
+                        help='train on all n_actions from epoch 1 (e.g. when continuing)')
     parser.add_argument('--batch_size',   type=int,   default=32)
     parser.add_argument('--lr',           type=float, default=1e-4)
     parser.add_argument('--weight_decay', type=float, default=1e-2)
