@@ -15,7 +15,7 @@ FIGURES = PROJECT / "figures"
 LOGS = PROJECT / "logs"
 
 DATASET = DATA / "qlv3_dataset.pt"            # training / validation episodes of the final models
-ORIGINAL_DATASET = DATA / "earlier" / "coconut_dataset.pt"   # data of the submitted paper's models
+ORIGINAL_DATASET = DATA / "earlier" / "coconut_dataset.pt"   # data of the earlier models
 
 # memory channels: residual continuous latent (headline), overwrite continuous latent, discrete token
 MODELS = ("continuous_residual", "continuous_overwrite", "discrete")

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=ql_exploration
-#SBATCH --partition=yss,jsteinhardt
+#SBATCH --partition=<partition>        # set to your cluster's GPU partition
 #SBATCH --gpus=1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=32G
@@ -13,7 +13,7 @@
 # Usage (from tabular_q_learning/):  sbatch scripts/jobs/eval_exploration.sh
 set -euo pipefail
 [[ -f paths.py ]] || { echo "submit from tabular_q_learning/:  cd tabular_q_learning && sbatch scripts/jobs/$(basename "$0")"; exit 1; }
-export PATH=/system/linux/miniforge-3.13/bin:$PATH
+# activate a Python environment with requirements.txt installed
 export WANDB_MODE=disabled
 for m in continuous_residual continuous_overwrite discrete; do
   python3 -u scripts/eval_closed_loop.py --model "$m" --out_subdir closed_loop_exploration \

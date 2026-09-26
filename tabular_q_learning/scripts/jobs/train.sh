@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=ql_train
-#SBATCH --partition=yss,jsteinhardt
+#SBATCH --partition=<partition>        # set to your cluster's GPU partition
 #SBATCH --gpus=1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=32G
@@ -21,7 +21,7 @@
 #   sbatch --dependency=afterok:<data job> scripts/jobs/train.sh continuous_residual
 set -euo pipefail
 [[ -f paths.py ]] || { echo "submit from tabular_q_learning/:  cd tabular_q_learning && sbatch scripts/jobs/$(basename "$0")"; exit 1; }
-export PATH=/system/linux/miniforge-3.13/bin:$PATH
+# activate a Python environment with requirements.txt installed
 DATA=data/qlv3_dataset.pt
 MODEL=${1:?data | continuous_residual | continuous_overwrite | discrete}
 if [[ "$MODEL" == data ]]; then

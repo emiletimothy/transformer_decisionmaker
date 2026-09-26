@@ -52,7 +52,7 @@ def replay_labels(seq, rng, alpha=0.1):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--data', default=str(paths.ORIGINAL_DATASET),
-                    help='default: the submitted paper\'s dataset; the final data is paths.DATASET')
+                    help='default: the earlier dataset; the final data is paths.DATASET')
     ap.add_argument('--max_seqs', type=int, default=20000)
     args = ap.parse_args()
     d = torch.load(args.data, map_location='cpu', weights_only=False)

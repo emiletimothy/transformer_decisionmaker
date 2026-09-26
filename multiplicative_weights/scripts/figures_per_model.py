@@ -2,7 +2,7 @@
 """
 figures_per_model.py — the old MWU figures, recreated for the recurrent models.
 
-The submitted paper's MWU figures were made for the full-history ContinuousCoTTransformer.
+The earlier MWU figures were made for the full-history ContinuousCoTTransformer.
 This script redraws each of them for the recurrent latent-token models, keeping the old
 plot designs where the architecture allows. Output goes to --out_dir
 (default ../figures/continuous_residual):
@@ -53,8 +53,8 @@ N_EXP = 4
 
 BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1baf7a"
 INK, INK2, MUTED, GRID = "#0b0b0b", "#52514e", "#9a9994", "#e4e3df"
-STYLE = {"continuous": dict(color=BLUE, ls="-", label="continuous latent"),
-         "discrete": dict(color=ORANGE, ls="-", label="discrete token"),
+STYLE = {"continuous": dict(color=BLUE, ls="-", label="continuous transformer"),
+         "discrete": dict(color=ORANGE, ls="-", label="discrete transformer"),
          "full_hist": dict(color=AQUA, ls="-", label="raw history"),
          "mw": dict(color=INK2, ls="--", label="MW"),
          "bayes": dict(color=INK, ls="-.", label="Bayes")}
@@ -339,7 +339,7 @@ def fig_robustness(run, out, n_trials, rng, T=100):
     axes[0].axhline(0, color=INK2, lw=0.6)
     axes[0].set_ylabel(f"final regret (T={T})")
     axes[0].set_title("Final regret by scenario (mean ± SEM)", loc="left")
-    axes[0].legend(frameon=False, ncol=4, loc="upper left")
+    fig.legend(*axes[0].get_legend_handles_labels(), frameon=False, ncol=4, loc="outside upper center")
     axes[1].axhline(0.5, color=INK2, lw=0.8, ls="--")
     axes[1].set_ylim(0.4, 1.0)
     axes[1].set_ylabel("accuracy")
@@ -472,12 +472,6 @@ def fig_attention(run, out, rng, T=100, n=100):
     nL, nH = A.shape[2], A.shape[3]
     L = np.cumsum(np.array([s["losses"] for s in seqs]), 1)
     prevL = np.concatenate([np.zeros_like(L[:, :1]), L[:, :-1]], 1)
-
-    # mean attention over sequences and rounds 21..T (the token layout is the same every round),
-    # for paper/make_main_figures.py
-    os.makedirs(os.path.join(out, "attention"), exist_ok=True)
-    np.savez(os.path.join(out, "attention", "attention_mean.npz"), mean=A[:, 20:].mean((0, 1)),
-             tokens=np.array(TOKENS), types=np.array(TYPE_OF))
 
     # fig1: per-head heatmaps at one round of one sequence
     t_show = 49

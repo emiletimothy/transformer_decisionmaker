@@ -20,7 +20,7 @@ context slot `c_{a_t}` of the executed action (see `3_train.py` / `2_model.py`).
 | `data_shortcuts.py` | how often simpler rules give the teacher's label in a dataset | printed |
 | `handwired_q_learning.py` | the handwired construction (flag-free, standard components); running it verifies it | `figures/handwired/verification*.csv` |
 | `handwired_figure.py` | construction vs exact tabular Q-learning | `figures/handwired/` |
-| `handwired_q_learning_v1.py`, `tabular_q_learning.py` | the submitted paper's construction (used by `relaxation/`) and the tabular reference | – |
+| `handwired_q_learning_v1.py`, `tabular_q_learning.py` | the earlier construction (used by `relaxation/`) and the tabular reference | – |
 
 Jobs (`scripts/jobs/`, submit from this folder, e.g. `sbatch scripts/jobs/evaluate.sh`):
 `train.sh data | <model>`, `evaluate.sh` (every evaluation of the three final models),
@@ -33,9 +33,9 @@ Jobs (`scripts/jobs/`, submit from this folder, e.g. `sbatch scripts/jobs/evalua
 | `checkpoints/continuous_residual/` | slot write `c <- c + W h[UPDATE]` (headline) |
 | `checkpoints/continuous_overwrite/` | slot write `c <- h[UPDATE]` |
 | `checkpoints/discrete/` | slot snapped to a vocabulary token |
-| `checkpoints/earlier_runs/` | the submitted paper's models and the bootstrap-data models, with their result notes |
+| `checkpoints/earlier_runs/` | the earlier models and the bootstrap-data models, with their result notes |
 | `data/qlv3_dataset.pt` | final data: alpha 0.2, reward noise 0.3, 100–200-step episodes |
-| `data/earlier/` | the submitted paper's dataset (`coconut_dataset.pt`) and the bootstrap data |
+| `data/earlier/` | the earlier dataset (`coconut_dataset.pt`) and the bootstrap data |
 
 ## Figures (`figures/`)
 
@@ -46,6 +46,6 @@ continuous_residual/  continuous_overwrite/  discrete/      (same three folders 
   closed_loop_exploration/    the same long-horizon runs with eps-greedy exploration (eps 0 ... 0.3)
 comparison/
   clean_steps/  behavioural_fit/  q_probe/  drift/
-  earlier_runs/               clean-step and probe results of the submitted paper's / bootstrap models
+  earlier_runs/               clean-step and probe results of the earlier / bootstrap models
 handwired/                    construction vs tabular Q-learning, verification tables
 ```

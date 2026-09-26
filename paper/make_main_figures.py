@@ -2,12 +2,11 @@
 """
 Main-text figures and the matched-control table for the experiments section.
 
-  fig_mwu_regret.pdf    cumulative regret vs round, T = 1000
+  fig_mwu_main.pdf      regret vs round (T = 1000) and MW weights decoded from the latent
   fig_mwu_leak.pdf      latent retention rho vs regret at T = 1000, one point per trained model
   fig_mwu_steering.pdf  causal steering of the latent along probe directions
   fig_q_clean.pdf       clean-step margins: follows Q-learning minus follows the simpler rule
-  fig_q_closed.pdf      closed-loop % of optimal on 1000-step contrast MDPs (model's own a*)
-  table_matched.tex matched memory-channel table (MWU and Q-learning)
+  fig_q_main.pdf        reward when the model acts, Q-table probe, agreement with Q-learning
 
 Every input path is in CONFIG. Where a final result is not on disk yet, the
 script falls back to the best available one and prints DRAFT; re-run it once
@@ -17,6 +16,7 @@ the jobs finish.
 """
 import json
 import os
+import sys
 
 import matplotlib
 matplotlib.use("Agg")
@@ -28,7 +28,6 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MF = os.path.join(ROOT, "multiplicative_weights/figures")
 QL = os.path.join(ROOT, "tabular_q_learning/figures")
 OUT_FIG = os.path.join(ROOT, "paper/figures")
-OUT_TAB = os.path.join(ROOT, "paper/tables")
 EARLY = f"{MF}/comparison/earlier_runs"
 
 CONFIG = {
@@ -54,6 +53,8 @@ CONFIG = {
                  ("mech_existing.json", "mech_steer.json", "mech_all.json", "mech_disc_v5.json")],
     # MW weights vs weights decoded from the latents, one held-out sequence
     # (figures_per_model.py --only attention)
+    # theorem-matched data (one hidden expert, labels flipped w.p. 0.2); seed 43 learns WMA
+    "mwu_theorem": (f"{MF}/continuous_residual/theorem_matched/results.json", "seed43"),
     "mwu_weights": f"{MF}/continuous_residual/attention/weight_trajectories.npz",
     "mwu_steer_model": ["cont_v5res_s43", "cont_v2", "cont_v2_s42"],
     # Q-learning: clean-step disagreement (csv, continuous checkpoint key, discrete checkpoint key)
@@ -64,6 +65,8 @@ CONFIG = {
     "q_closed_eps": (f"{QL}/continuous_residual/closed_loop_exploration",
                      f"{QL}/discrete/closed_loop_exploration"),
     "q_eps": 0.2,                       # the tabular eps-greedy baseline's epsilon
+    # behavioural (alpha, gamma) fit on clean steps
+    "q_alpha_gamma": f"{QL}/comparison/behavioural_fit/alpha_gamma.json",
     # Q-table probe: (csv, continuous checkpoint key, discrete checkpoint key)
     "q_probe": [(f"{QL}/comparison/q_probe/q_probe.csv", "qlv3-residual", "qlv3-discrete")],
     # main Q figure: held-out probe predictions (eval_q_probe.py) and teacher-forced agreement
@@ -160,70 +163,50 @@ def fig_mwu():
     else:
         raise FileNotFoundError("no complete MWU eval")
     mech = load_mech()
-    # cumulative regret trajectories
-    fig, ax = new_ax(3.6, 2.5)
-    tr = res["trajectories"]
-    t = np.arange(1, len(tr["mw"]) + 1)
-    series = [("rec_cont", "continuous transformer", BLUE, "-"),
-              ("rec_disc", "discrete transformer", ORANGE, "-"),
-              ("mw", "MW", INK2, (0, (1.5, 1.5))),
-              ("bayes", "Bayes", INK, (0, (5, 1.5, 1, 1.5)))]
-    ends = []
-    for k, lab, c, ls in series:
-        if k in tr:
-            y = np.asarray(tr[k])
-            ax.plot(t, y, color=c, ls=ls, lw=1.3 if c in (BLUE, ORANGE, AQUA) else 1.0)
-            ends.append([y[-1], lab, c])
-    # direct labels at the right edge, nudged apart vertically
-    ends.sort(key=lambda e: e[0])
-    span = max(e[0] for e in ends) - min(e[0] for e in ends)
-    for i in range(1, len(ends)):
-        ends[i][0] = max(ends[i][0], ends[i - 1][0] + 0.095 * span)
-    for y, lab, c in ends:
-        ax.text(t[-1] * 1.02, y, lab, color=INK if c in (MUTED,) else c, va="center",
-                fontsize=LABEL_FS)
-    ax.set_xlim(0, t[-1])
-    lo, hi = ax.get_ylim()
-    ax.set_ylim(lo, max(e[0] for e in ends) + 0.08 * (hi - lo))
-    ax.set_xlabel("round $t$")
-    ax.set_ylabel("cumulative regret")
-    ax.set_title("Regret against the best expert", loc="left")
-    save(fig, "fig_mwu_regret")
+    fig_mwu_main(res["trajectories"])
 
     # retention rho vs regret at T=1000. rho comes from regressing the probe-decoded
     # state on its previous value, so it is only meaningful where the state is
     # decodable: models with MW-state probe R^2 < MIN_PROBE_R2 (every discrete model,
     # and two continuous runs) are left out.
     MIN_PROBE_R2 = 0.1
-    fig, ax = new_ax()
-    residual_pts, skipped = [], []
-    for label in CONFIG["mwu_runs"]:
-        m = mech.get(label) or mech.get(label.replace("_s42", ""))
-        r = run_regret(label)
-        if m is None or r is None or "update_rule" not in m:
-            continue
-        rho = m["update_rule"].get("6-95", {}).get("rho")
-        if rho is None:
-            continue
-        if m["probes"]["mw_state"]["linear"]["31-95"] < MIN_PROBE_R2:
-            skipped.append(label)
-            continue
-        ax.scatter(rho, r, s=30, color=BLUE, edgecolor="white", linewidth=0.6, zorder=3)
-        if "v5res" in label:
-            residual_pts.append((rho, r))
-    if residual_pts:
-        x, y = max(residual_pts)
-        ax.annotate("residual latent", (x, y), xytext=(-8, 0), textcoords="offset points",
-                    fontsize=LABEL_FS, color=INK2, ha="right", va="center")
-    if skipped:
-        print(f"MWU leak panel: left out (state probe R^2 < {MIN_PROBE_R2}): {', '.join(skipped)}")
-    mw = res["horizon"]["1000"]["mw"]["regret_mean"]
-    ax.axhline(mw, color=INK2, ls=(0, (1.5, 1.5)), lw=1.0)
-    ax.text(ax.get_xlim()[1], mw, "MW ", va="bottom", ha="right", fontsize=LABEL_FS, color=INK2)
-    ax.set_xlabel(r"retention $\rho$")
-    ax.set_ylabel("regret at $T=1000$")
-    ax.set_title("Memory leak vs. regret", loc="left")
-    save(fig, "fig_mwu_leak")
+    small = {"font.size": 6.5, "axes.titlesize": 7, "axes.labelsize": 6.5, "legend.fontsize": 6,
+             "xtick.labelsize": 6, "ytick.labelsize": 6}
+    with plt.rc_context(small):
+        fig, ax = new_ax(2.6, 2.0)
+        skipped = []
+        for label in CONFIG["mwu_runs"]:
+            m = mech.get(label) or mech.get(label.replace("_s42", ""))
+            r = run_regret(label)
+            if m is None or r is None or "update_rule" not in m:
+                continue
+            rho = m["update_rule"].get("6-95", {}).get("rho")
+            if rho is None:
+                continue
+            if m["probes"]["mw_state"]["linear"]["31-95"] < MIN_PROBE_R2:
+                skipped.append(label)
+                continue
+            res_w = "v5res" in label        # the residual write of Algorithm 1
+            ax.scatter(rho, r, s=18, color=BLUE if res_w else MUTED, edgecolor="white", linewidth=0.5,
+                       zorder=3)
+        if skipped:
+            print(f"MWU leak panel: left out (state probe R^2 < {MIN_PROBE_R2}): {', '.join(skipped)}")
+        mw = res["horizon"]["1000"]["mw"]["regret_mean"]
+        ax.axhline(mw, color=INK2, ls=(0, (1.5, 1.5)), lw=0.9)
+        ax.text(0.927, mw, "MW", va="bottom", ha="left", fontsize=6, color=INK2)
+        from matplotlib.lines import Line2D
+        ax.legend(handles=[Line2D([], [], ls="", marker="o", ms=3.5, color=BLUE, label="residual write"),
+                           Line2D([], [], ls="", marker="o", ms=3.5, color=MUTED, label="other latents")],
+                  frameon=False, loc="upper right", handletextpad=0.1, borderaxespad=0.2)
+        ax.set_xlim(0.925, 1.005)
+        ax.set_xlabel(r"retention $\rho$")
+        ax.set_ylabel("regret at $T=1000$")
+        # memory length of a latent that decays by rho per round
+        top = ax.secondary_xaxis("top")
+        ticks = [0.93, 0.95, 0.97, 0.99, 1.0]
+        top.set_xticks(ticks, ["14", "20", "33", "100", r"$\infty$"])
+        top.set_xlabel(r"memory $1/(1-\rho)$ (rounds)")
+        save(fig, "fig_mwu_leak")
 
     # steering
     fig, ax = new_ax(3.6, 2.4)
@@ -311,36 +294,73 @@ def load_closed():
     return out
 
 
-def fig_mwu_weights():
-    """MW's weights on a held-out sequence and the weights computed from the cumulative losses
-    that a linear probe decodes from the continuous transformer's latent (the discrete
-    transformer's latent decodes nothing, R^2 = -0.00, so it is left out)."""
-    z = np.load(CONFIG["mwu_weights"])
-    fig, ax = new_ax(3.6, 2.5)
-    t = np.arange(1, len(z["mw"]) + 1)
-    cols = [BLUE, ORANGE, AQUA, "#e87ba4"]
-    for e, c in enumerate(cols):
-        ax.plot(t, z["mw"][:, e], color=c, lw=2.2, alpha=0.45)
-        ax.plot(t, z["continuous"][:, e], color=c, lw=1.0)
-        ax.text(t[-1] * 1.02, z["mw"][-1, e], f"expert {e + 1}", color=c, va="center",
-                fontsize=LABEL_FS)
-    from matplotlib.lines import Line2D
-    ax.legend(handles=[Line2D([], [], color=INK2, lw=2.2, alpha=0.45, label="MW"),
-                       Line2D([], [], color=INK2, lw=1.0, label="decoded from $\\mathbf{z}_t$")],
-              frameon=False, loc="upper left", fontsize=7)
-    ax.set_xlim(0, t[-1])
-    ax.set_ylim(0, None)
-    ax.set_xlabel("round $t$")
-    ax.set_ylabel("expert weight")
-    ax.set_title("MW weights decoded from the latent", loc="left")
-    save(fig, "fig_mwu_weights")
+def fig_mwu_main(tr):
+    """Two panels, continuous vs discrete transformer: regret against the best expert, and MW's
+    weights vs the weights computed from the cumulative losses a linear probe decodes from the
+    latent of each transformer (dashed: discrete, whose latent decodes nothing, R^2 = -0.00)."""
+    small = {"font.size": 6.5, "axes.titlesize": 7, "axes.labelsize": 6.5, "legend.fontsize": 6,
+             "xtick.labelsize": 6, "ytick.labelsize": 6}
+    with plt.rc_context(small):
+        fig, axes = plt.subplots(1, 2, figsize=(5.5, 2.1), constrained_layout=True)
+        fig.get_layout_engine().set(w_pad=0.1, wspace=0.08)
+        # (left) cumulative regret
+        ax = axes[0]
+        t = np.arange(1, len(tr["mw"]) + 1)
+        for k, lab, c, ls in (("rec_cont", "continuous", BLUE, "-"),
+                              ("rec_disc", "discrete", ORANGE, "-"),
+                              ("majority", "majority vote", MUTED, (0, (4, 1.5))),
+                              ("mw", "MW", INK2, (0, (1.5, 1.5))),
+                              ("bayes", "Bayes", INK, (0, (5, 1.5, 1, 1.5)))):
+            ax.plot(t, np.asarray(tr[k]), color=c, ls=ls, lw=1.3 if c in (BLUE, ORANGE) else 1.0,
+                    label=lab, zorder=3 if c == MUTED else 2)
+        ax.axhline(0, color=GRID, lw=0.8, zorder=0)
+        ax.axvline(200, color=INK2, lw=0.7, ls=":", zorder=1)   # longest training sequence
+        ax.text(212, 0.52, "training horizon", transform=ax.get_xaxis_transform(), fontsize=5.5,
+                color=INK2, va="bottom", ha="left", rotation=90)
+        ax.set_xlim(0, t[-1])
+        ax.set_xlabel("round $t$")
+        ax.set_ylabel("cumulative regret")
+        ax.legend(frameon=False, loc="lower right", bbox_to_anchor=(1, 0.18), handlelength=1.8)
+        ax.set_title("Regret against the best expert", loc="left")
+        # (right) MW weights and the weights decoded from the latent
+        ax = axes[1]
+        z = np.load(CONFIG["mwu_weights"])
+        t = np.arange(1, len(z["mw"]) + 1)
+        cols = [BLUE, ORANGE, AQUA, "#e87ba4"]
+        for e, c in enumerate(cols):
+            ax.plot(t, z["mw"][:, e], color=c, lw=2.2, alpha=0.45)
+            ax.plot(t, z["continuous"][:, e], color=c, lw=1.0)
+            ax.plot(t, z["discrete"][:, e], color=c, lw=0.8, ls=(0, (3, 2)))
+        from matplotlib.lines import Line2D
+        style = ax.legend(handles=[Line2D([], [], color=INK2, lw=2.2, alpha=0.45, label="MW"),
+                                   Line2D([], [], color=INK2, lw=1.0, label="continuous"),
+                                   Line2D([], [], color=INK2, lw=0.8, ls=(0, (3, 2)), label="discrete")],
+                          frameon=False, loc="upper left", handlelength=1.5, borderaxespad=0.2)
+        ax.add_artist(style)
+        ax.legend(handles=[Line2D([], [], color=c, lw=1.2, label=f"expert {e + 1}")
+                           for e, c in enumerate(cols)],
+                  frameon=False, loc="upper right", ncol=2, handlelength=1.2, columnspacing=0.8,
+                  borderaxespad=0.2)
+        ax.set_xlim(0, t[-1])
+        ax.set_ylim(0, 0.72)                                # headroom for the legend
+        ax.set_xlabel("round $t$")
+        ax.set_ylabel("expert weight")
+        ax.set_title("MW weights decoded from the latent", loc="left")
+        save(fig, "fig_mwu_main")
 
 
 def fig_q_main():
-    """Three panels as in the submitted paper, continuous vs discrete transformer: closed-loop
+    """Three panels as in the earlier figure, continuous vs discrete transformer: closed-loop
     cumulative reward (eps-greedy), Q-table probe, teacher-forced agreement over the episode."""
-    fig, axes = plt.subplots(1, 3, figsize=(7.0, 2.2), constrained_layout=True,
-                             gridspec_kw={"width_ratios": [1.15, 1, 1]})
+    small = {"font.size": 7, "axes.titlesize": 7.5, "axes.labelsize": 7, "legend.fontsize": 6.5,
+             "xtick.labelsize": 6.5, "ytick.labelsize": 6.5}
+    with plt.rc_context(small):
+        _fig_q_main()
+
+
+def _fig_q_main():
+    fig, axes = plt.subplots(1, 3, figsize=(7.0, 2.1), constrained_layout=True)
+    fig.get_layout_engine().set(w_pad=0.06, wspace=0.08)
     eps = CONFIG["q_eps"]
     # (left) 1000-step contrast MDPs, model's own a*, eps-greedy behaviour policy
     ax = axes[0]
@@ -356,32 +376,33 @@ def fig_q_main():
         m, s = c.mean(0), c.std(0) / np.sqrt(len(c))
         ax.plot(t, m, color=col, ls=ls, label=lab)
         ax.fill_between(t, m - 1.96 * s, m + 1.96 * s, color=col, alpha=0.15, lw=0)
+    T_TRAIN = 200                                           # longest training episode
+    ax.axvline(T_TRAIN, color=INK2, lw=0.7, ls=":", zorder=1)
+    ax.text(T_TRAIN + 12, 0.3, "training horizon", transform=ax.get_xaxis_transform(),
+            fontsize=6, color=INK2, va="bottom", ha="left", rotation=90)
     ax.set_xlabel("step $t$")
     ax.set_ylabel("cumulative reward")
     ax.set_xlim(0, t[-1])
-    ax.set_ylim(0, None)
-    ax.legend(frameon=False, loc="upper left", handlelength=1.6)
-    ax.set_title(f"Closed loop, $\\epsilon$-greedy ($\\epsilon={eps:g}$)", loc="left")
-    # (middle) held-out Q-table probe from the context slots
+    ax.set_ylim(0, ax.get_ylim()[1] * 1.12)                 # headroom for the legend
+    ax.legend(frameon=False, loc="upper left", ncol=2, handlelength=1.6, columnspacing=1.0,
+              borderaxespad=0.2)
+    ax.set_title(f"Long-horizon rewards ($\\epsilon={eps:g}$)", loc="left")
+    # (middle) agreement with tabular Q-learners of every discount (alpha = 0.2)
     ax = axes[1]
-    path, ck, dk = CONFIG["q_probe_pred"]
-    zp = np.load(path)
-    rc, rd = q_probe()
-    rng = np.random.default_rng(0)
-    for k, lab, col, r2 in ((dk, "discrete", ORANGE, rd), (ck, "continuous", BLUE, rc)):
-        qt, qp = zp[f"{k}__true"], zp[f"{k}__pred"]
-        i = rng.choice(len(qt), size=min(4000, len(qt)), replace=False)
-        ax.scatter(qt[i], qp[i], s=2, alpha=0.25, color=col, lw=0, rasterized=True,
-                   label=f"{lab} ($R^2={round(r2, 2) + 0.0:.2f}$)")
-    lo, hi = np.percentile(zp[f"{ck}__true"], [0.5, 99.5])
-    ax.plot([lo, hi], [lo, hi], color=INK2, lw=0.8, ls="--")
-    ax.set_xlim(lo, hi)
-    ax.set_ylim(lo - 0.1 * (hi - lo), hi + 0.1 * (hi - lo))
-    ax.set_xlabel("teacher $Q(s, a)$")
-    ax.set_ylabel("probe from slot $\\mathbf{c}_a$")
-    h, l = ax.get_legend_handles_labels()
-    ax.legend(h[::-1], l[::-1], frameon=False, loc="upper left", markerscale=4, handletextpad=0.2)
-    ax.set_title("$Q$-table probe (held out)", loc="left")
+    with open(CONFIG["q_alpha_gamma"]) as f:
+        d = json.load(f)
+    ia, g = d["alphas"].index(0.2), np.array(d["gammas"])
+    ax.axvline(0.9, color=INK2, lw=0.7, ls=":", zorder=1)
+    ax.text(0.885, 0.33, "teacher's $\\gamma$", rotation=90, fontsize=6, color=INK2,
+            ha="right", va="bottom", transform=ax.get_xaxis_transform())
+    for key, lab, col in (("qlv3-residual", "continuous", BLUE), ("qlv3-discrete", "discrete", ORANGE)):
+        ax.plot(g, np.array(d["models"][key]["all"])[ia], color=col, marker="o", ms=2.5, label=lab)
+    ax.set_xlim(-0.03, 1.0)
+    ax.set_ylim(0.4, 1.0)
+    ax.set_xlabel("discount $\\gamma$ of the tabular learner")
+    ax.set_ylabel("agreement")
+    ax.legend(frameon=False, loc="center left", borderaxespad=0.2)
+    ax.set_title("Agreement vs. discount", loc="left")
     # (right) teacher-forced agreement with tabular Q-learning's greedy action
     ax = axes[2]
     W = 5                                                   # steps per window
@@ -394,13 +415,43 @@ def fig_q_main():
         ax.plot(steps, m, color=col, marker="o", ms=2.5, label=lab)
         ax.fill_between(steps, m - 1.96 * s, m + 1.96 * s, color=col, alpha=0.15, lw=0)
     ax.set_xlabel("step $t$ (teacher forced)")
-    ax.set_ylabel("agreement with $Q$-learning")
+    ax.set_ylabel("agreement")
     ax.set_ylim(0, 1.02)
     ax.set_xlim(0, W * len(m) + 2)
     ax.set_xticks(range(0, W * len(m) + 1, 10))
     ax.legend(frameon=False, loc="lower right")
-    ax.set_title("Greedy-action agreement", loc="left")
+    ax.set_title("Agreement over an episode", loc="left")
     save(fig, "fig_q_main")
+
+
+def fig_q_probe():
+    """Held-out linear probe from each context token c_a to the teacher's Q_t(., a) (eval_q_probe.py)."""
+    small = {"font.size": 6.5, "axes.titlesize": 7, "axes.labelsize": 6.5, "legend.fontsize": 6,
+             "xtick.labelsize": 6, "ytick.labelsize": 6}
+    with plt.rc_context(small):
+        fig, ax = new_ax(2.7, 2.3)
+        path, ck, dk = CONFIG["q_probe_pred"]
+        zp = np.load(path)
+        rc, rd = q_probe()
+        rng = np.random.default_rng(0)
+        for k, lab, col, r2 in ((dk, "discrete", ORANGE, rd), (ck, "continuous", BLUE, rc)):
+            qt, qp = zp[f"{k}__true"], zp[f"{k}__pred"]
+            i = rng.choice(len(qt), size=min(4000, len(qt)), replace=False)
+            ax.scatter(qt[i], qp[i], s=2, alpha=0.25, color=col, lw=0, rasterized=True,
+                       label=f"{lab} ($R^2={round(r2, 2) + 0.0:.2f}$)")
+        lo, hi = np.percentile(zp[f"{ck}__true"], [0.5, 99.5])
+        ax.plot([lo, hi], [lo, hi], color=INK2, lw=0.8, ls="--")
+        ax.set_xlim(lo, hi)
+        ax.set_ylim(lo - 0.1 * (hi - lo), hi + 0.1 * (hi - lo))
+        ax.set_xlabel("teacher $Q(s, a)$")
+        ax.set_ylabel("decoded from context token $\\mathbf{c}_a$")
+        h, l = ax.get_legend_handles_labels()
+        leg = ax.legend(h[::-1], l[::-1], loc="upper left", markerscale=4, handletextpad=0.2,
+                        borderaxespad=0.2, frameon=True, facecolor="white", edgecolor="none", framealpha=0.9)
+        for lh in leg.legend_handles:
+            lh.set_alpha(1)
+        ax.set_title("$Q$-values decoded from memory", loc="left")
+        save(fig, "fig_q_probe")
 
 
 def fig_q():
@@ -434,6 +485,7 @@ def fig_q():
     save(fig, "fig_q_clean")
 
     fig_q_main()
+    fig_q_probe()
     return dis, closed
 
 
@@ -456,76 +508,12 @@ def q_probe():
     return get(c_key), get(d_key)
 
 
-def table(res, mech, dis, closed):
-    h = res["horizon"]["1000"]
-    reg = res["regimes"]["anti_signal"]
-    cont_labels = [k for k in mech if k.startswith("cont_v5res")] or ["cont_v2"]
-    disc_labels = ([k for k in mech if k.startswith("disc_v5")]
-                   or [k for k in mech if k.startswith("disc_v2")] or ["disc_v2"])
-
-    def mech_stat(labels, f):
-        vals = [f(mech[l]) for l in labels if l in mech]
-        return np.mean(vals) if vals else np.nan
-    # MW-state probe (the latent carries MW's state; the Bayes log-odds probe fails past round 95)
-    r2 = lambda m: m["probes"]["mw_state"]["linear"]["31-95"]
-    rho = lambda m: m["update_rule"]["6-95"]["rho"]
-    qc, qd = q_probe()
-
-    def f2(x):   # two decimals, without a printed "-0.00"
-        return f"{round(x, 2) + 0.0:.2f}"
-
-    def pm(d):
-        return f"{d['regret_mean']:.1f} $\\pm$ {d['regret_sem']:.1f}"
-
-    def clean(model):
-        _, _, ft, fr = clean_margin(dis, model, "ALL", "q_g0")
-        return f"{ft:.0f} vs.\\ {fr:.0f}"
-
-    def closed_pct(model, agent="tf_self", agent_eps=None):
-        r = closed[model].loc[agent]
-        s = f"{r.pct_opt_mean:.1f}"
-        if agent_eps is not None:
-            s += f" / {closed[model].loc[agent_eps].pct_opt_mean:.1f}"
-        return s
-
-    rows = [
-        ("Continuous transformer", pm(h["rec_cont"]), f"{reg['rec_cont']['acc_mean']:.2f}",
-         f2(mech_stat(cont_labels, r2)), f"{mech_stat(cont_labels, rho):.3f}",
-         clean("continuous"), f2(qc), closed_pct("continuous", "tf_self", "tf_eps")),
-        ("Discrete transformer", pm(h["rec_disc"]), f"{reg['rec_disc']['acc_mean']:.2f}",
-         f2(mech_stat(disc_labels, r2)), "--",   # no decodable state, so no rho
-         clean("discrete"), f2(qd), closed_pct("discrete", "tf_self", "tf_eps")),
-        ("Raw history (1024 tok.)", pm(h["full_hist"]), f"{reg['full_hist']['acc_mean']:.2f}",
-         "--", "--", "--", "--", "--"),
-        (r"\midrule MW / tabular $Q$", f"{h['mw']['regret_mean']:.1f}",
-         f"{reg['mw']['acc_mean']:.2f}" if "mw" in reg else "--", "", "", "", "",
-         closed_pct("continuous", "greedy", "epsgreedy")),
-        ("Bayes / random", f"{h['bayes']['regret_mean']:.1f}",
-         f"{reg['bayes']['acc_mean']:.2f}" if "bayes" in reg else "--", "", "", "", "",
-         closed_pct("continuous", "random")),
-        ("Majority vote", f"{h['majority']['regret_mean']:.1f}",
-         f"{reg['majority']['acc_mean']:.2f}" if "majority" in reg else "--", "", "", "", "", ""),
-    ]
-    lines = [r"\begin{tabular}{lcccc|ccc}", r"\toprule",
-             r" & \multicolumn{4}{c|}{Experts (MWU)} & \multicolumn{3}{c}{Tabular $Q$-learning} \\",
-             r"Memory channel & Regret$_{T=1000}$ $\downarrow$ & Anti-signal acc. & Probe $R^2$ & "
-             r"Retention $\rho$ & Clean steps $\gamma{=}0.9$ vs.\ $0$ & Probe $R^2$ & "
-             r"Closed loop, greedy / $\epsilon$-greedy (\% opt.) \\", r"\midrule"]
-    lines += [" & ".join(r) + r" \\" for r in rows]
-    lines += [r"\bottomrule", r"\end{tabular}"]
-    os.makedirs(OUT_TAB, exist_ok=True)
-    with open(os.path.join(OUT_TAB, "table_matched.tex"), "w") as f:
-        f.write("\n".join(lines) + "\n")
-
-
 def main():
     os.makedirs(OUT_FIG, exist_ok=True)
     res, mech = fig_mwu()
-    fig_mwu_weights()
     dis, closed = fig_q()
-    table(res, mech, dis, closed)
-    print("wrote paper/figures/fig_mwu_{regret,leak,steering}, fig_q_{main,clean} "
-          "(.pdf/.png) and paper/tables/table_matched.tex")
+    print("wrote paper/figures/fig_mwu_{main,leak,steering}, fig_q_{main,clean,probe} "
+          "(.pdf/.png)")
     for d in DRAFT:
         print("DRAFT:", d)
 

@@ -6,7 +6,7 @@ Two checks on the 1000-step contrast-MDP closed loop (model's own a*, as in
 eval_closed_loop.py):
   1. reward rate per window (1-100, 101-200, 201-500, 501-1000) for the model,
      greedy / eps-greedy tabular Q and random, from the saved
-     long_horizon_rewards.npz of each reviewer suite;
+     long_horizon_rewards.npz of each evaluation suite;
   2. the norm of every value written into a context slot over the rollout,
      recorded by re-running the same rollout with a hook on contextualize().
 If the model is fine inside the training horizon (<= 200 steps) and degrades after,

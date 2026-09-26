@@ -12,10 +12,10 @@ latent memory token `M` between rounds (see `train.py` for the round layout).
 | `eval_matched_memory.py` | regret / accuracy of continuous vs discrete vs raw history vs MW, Bayes, majority | `figures/comparison/matched_memory/` |
 | `eval_mechanism.py` | state probes, retention rho, behavioural fit, causal steering | `figures/comparison/mechanism/` |
 | `eval_theorem_matched.py` | theorem-matched models vs weighted majority, adversarial tests | `figures/continuous_residual/theorem_matched/` |
-| `figures_per_model.py` | the submitted paper's figure layouts, redrawn for the final models | `figures/continuous_residual/` |
+| `figures_per_model.py` | the earlier figure layouts, redrawn for the final models | `figures/continuous_residual/` |
 | `handwired_mwu.py` | the handwired construction (flag-free, standard components) | – |
 | `handwired_figure.py` | construction vs exact MW weights | `figures/handwired/` |
-| `full_history_model.py`, `train_full_history.py` | the submitted paper's full-history model (the "raw history" baseline) | `checkpoints/full_history/` |
+| `full_history_model.py`, `train_full_history.py` | the earlier full-history model (the "raw history" baseline) | `checkpoints/full_history/` |
 | `multiplicative_weights.py` | reference MW implementation | – |
 | `full_history/` | analyses of the full-history model: attention (`eval_attention*.py`), long sequences, robustness, its data generator | `figures/full_history/` |
 

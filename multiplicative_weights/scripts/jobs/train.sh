@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=mwu_train
-#SBATCH --partition=yss,jsteinhardt
+#SBATCH --partition=<partition>        # set to your cluster's GPU partition
 #SBATCH --gpus=1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=32G
@@ -17,7 +17,7 @@
 # Usage (from multiplicative_weights/):  sbatch scripts/jobs/train.sh continuous_residual 42
 set -euo pipefail
 [[ -f paths.py ]] || { echo "submit from multiplicative_weights/:  cd multiplicative_weights && sbatch scripts/jobs/$(basename "$0")"; exit 1; }
-export PATH=/system/linux/miniforge-3.13/bin:$PATH
+# activate a Python environment with requirements.txt installed
 MODEL=${1:?model: continuous_residual | continuous_overwrite | discrete | theorem_matched}
 SEED=${2:-42}
 case "$MODEL" in

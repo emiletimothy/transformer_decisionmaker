@@ -3079,7 +3079,7 @@ def main():
     print(f"Parts: {args.parts}")
 
     # -----------------------------------------------------------------------
-    # Part 4e / 4f: reviewer-response evals.
+    # Part 4e / 4f: closed-loop evals.
     #
     # These run first so they can be regenerated on their own with
     # `--parts reward_intervention,size_sweep`, which skips the probe and

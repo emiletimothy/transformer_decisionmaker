@@ -2,7 +2,7 @@
 """
 eval_closed_loop.py — per-MDP (per-seed) re-evaluation of a trained checkpoint.
 
-Re-runs the reviewer-response evals from 4_evaluate.py / 5_compare_context_modes.py
+Re-runs the closed-loop evals from 4_evaluate.py / 5_compare_context_modes.py
 but saves every per-MDP number, so each row can be reported as mean ± SD / SEM:
 
   long_horizon         1000-step closed-loop return, `eval` + `contrast` families

@@ -1,6 +1,6 @@
 # Relaxing the idealized assumptions of the handwired constructions
 
-Answers the reviewer point that the constructions rely on orthonormal embeddings, disjoint
+Tests how much the constructions rely on orthonormal embeddings, disjoint
 buffer subspaces, fixed-offset routing and hard / limiting-softmax attention.
 
 | File | |
