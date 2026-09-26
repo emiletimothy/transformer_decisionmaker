@@ -1,0 +1,25 @@
+{
+  "checkpoint": "checkpoints/qlv3_discrete/coconut_transformer_qlv3-discrete.pt",
+  "label": "discrete",
+  "out_dir": "figures/discrete/closed_loop_exploration",
+  "parts": "long_horizon",
+  "astar_modes": [
+    "self",
+    "self_eps0.05",
+    "self_eps0.1",
+    "self_eps0.2",
+    "self_eps0.3"
+  ],
+  "n_mdps": 50,
+  "eval_seed": 9999,
+  "n_steps": 50,
+  "long_horizon_steps": 1000,
+  "ri_steps": 200,
+  "size_sweep_steps": 200,
+  "switch_step": 50,
+  "post_steps": 100,
+  "window": 10,
+  "alpha": 0.2,
+  "gamma": 0.9,
+  "epsilon": 0.2
+}
