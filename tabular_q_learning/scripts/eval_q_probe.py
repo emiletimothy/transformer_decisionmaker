@@ -82,12 +82,13 @@ def contexts(model, episodes, vocab, device):
     return np.stack(out, 1)
 
 
-def ridge_r2(Xtr, Ytr, Xte, Yte, lam=1e-3):
+def ridge_r2(Xtr, Ytr, Xte, Yte, lam=1e-3, return_pred=False):
     mx, my = Xtr.mean(0), Ytr.mean(0)
     A = Xtr - mx
     W = np.linalg.solve(A.T @ A + lam * len(A) * np.eye(A.shape[1]), A.T @ (Ytr - my))
     pred = (Xte - mx) @ W + my
-    return float(1 - ((Yte - pred) ** 2).sum() / ((Yte - Yte.mean(0)) ** 2).sum())
+    r2 = float(1 - ((Yte - pred) ** 2).sum() / ((Yte - Yte.mean(0)) ** 2).sum())
+    return (r2, pred) if return_pred else r2
 
 
 def main():
@@ -98,7 +99,10 @@ def main():
     ap.add_argument('--n_states', type=int, default=8)
     ap.add_argument('--t_min', type=int, default=10, help='skip the first rounds (tables ~0)')
     ap.add_argument('--out', default=str(paths.FIGURES / 'comparison' / 'q_probe' / 'q_probe.csv'))
+    ap.add_argument('--pred_out', default=str(paths.FIGURES / 'comparison' / 'q_probe' / 'q_probe_pred.npz'),
+                    help='held-out (true, predicted) Q-values of the q_g0.9 probe, subsampled')
     args = ap.parse_args()
+    preds = {}
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     d = torch.load(args.data, map_location='cpu', weights_only=False)
@@ -139,7 +143,12 @@ def main():
               f'(alpha={alpha}, {args.n_states}-state episodes, rows={len(X)})')
         for k, v in Y.items():
             v = np.concatenate(v)
-            r2 = ridge_r2(X[tr], v[tr], X[~tr], v[~tr])
+            r2, pred = ridge_r2(X[tr], v[tr], X[~tr], v[~tr], return_pred=True)
+            if k == 'q_g0.9':
+                idx = np.random.default_rng(0).choice(pred.size, size=min(20000, pred.size), replace=False)
+                key = name.replace('.pt', '')
+                preds[f'{key}__true'] = v[~tr].reshape(-1)[idx]
+                preds[f'{key}__pred'] = pred.reshape(-1)[idx]
             print(f'  probe slot c_a -> {k:8s} column: R^2 = {r2:.3f}')
             rows.append({'checkpoint': name, 'target': k, 'r2': r2, 'alpha': alpha,
                          'n_rows': int(len(X))})
@@ -150,6 +159,9 @@ def main():
             w.writeheader()
             w.writerows(rows)
         print(f'\nwrote {args.out}')
+    if args.pred_out:
+        np.savez(args.pred_out, **preds)
+        print(f'wrote {args.pred_out}')
 
 
 if __name__ == '__main__':

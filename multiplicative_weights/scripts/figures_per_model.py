@@ -473,6 +473,12 @@ def fig_attention(run, out, rng, T=100, n=100):
     L = np.cumsum(np.array([s["losses"] for s in seqs]), 1)
     prevL = np.concatenate([np.zeros_like(L[:, :1]), L[:, :-1]], 1)
 
+    # mean attention over sequences and rounds 21..T (the token layout is the same every round),
+    # for paper/make_main_figures.py
+    os.makedirs(os.path.join(out, "attention"), exist_ok=True)
+    np.savez(os.path.join(out, "attention", "attention_mean.npz"), mean=A[:, 20:].mean((0, 1)),
+             tokens=np.array(TOKENS), types=np.array(TYPE_OF))
+
     # fig1: per-head heatmaps at one round of one sequence
     t_show = 49
     fig, axes = plt.subplots(nL, nH, figsize=(3.1 * nH, 3.1 * nL), constrained_layout=True)
@@ -573,6 +579,12 @@ def fig_attention(run, out, rng, T=100, n=100):
     ax.set_title("MW weights vs. weights decoded from the latent (held-out sequence)", loc="left")
     ax.legend(frameon=False, ncol=3, fontsize=7)
     save(fig, out, "attention/fig7_weight_trajectories.png")
+    # the same probe and sequence for the discrete transformer, for paper/make_main_figures.py
+    Md = run.latents_attn("discrete", seqs, want_attn=False)[0]
+    probe_d = ridge(Md[:50, 4:].reshape(-1, Md.shape[-1]),
+                    (L - L.mean(-1, keepdims=True))[:50, 4:].reshape(-1, N_EXP))
+    np.savez(os.path.join(out, "attention", "weight_trajectories.npz"), mw=gt, continuous=pr,
+             discrete=mw_weights(probe_d(Md[k]).reshape(T, N_EXP), eta), eta=eta)
 
     # fig8 (analogue of CoT hidden PCA): PCA of the carried latent
     X = M[:, 4:].reshape(-1, M.shape[-1])

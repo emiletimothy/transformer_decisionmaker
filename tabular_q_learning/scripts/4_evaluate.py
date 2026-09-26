@@ -370,6 +370,10 @@ OOD_VARIANTS: List[Tuple[str, str]] = [
 ]
 
 
+# eps of the eps-greedy transformer rollouts drawn next to the greedy ones (set from --epsilon)
+TF_EPS = 0.2
+
+
 def run_tabular_q_learning(
     P: np.ndarray,
     R: np.ndarray,
@@ -1513,7 +1517,7 @@ def collect_nonstationary(
       g  = greedy tabular Q         r  = uniform random
     Pass model=None to compute the baselines only.
     """
-    rew: Dict[str, List[np.ndarray]] = {k: [] for k in ('t', 'o', 'st', 'e', 'g', 'r')}
+    rew: Dict[str, List[np.ndarray]] = {k: [] for k in ('t', 'te', 'o', 'st', 'e', 'g', 'r')}
     for seed in eval_seeds:
         (P1, R1), (P2, R2) = generate_nonstationary_mdp(
             n_states, n_actions, variant, seed=seed)
@@ -1527,6 +1531,9 @@ def collect_nonstationary(
             rew['t'].append(run_transformer_nonstationary(
                 model, phases, n_states, n_actions, vocab, config, device,
                 epsilon=0.0, rng=new_rng()))
+            rew['te'].append(run_transformer_nonstationary(
+                model, phases, n_states, n_actions, vocab, config, device,
+                epsilon=epsilon, rng=new_rng()))
         rew['o'].append(run_optimal_nonstationary(
             phases, n_states, n_actions, gamma=gamma, rng=new_rng(), adapt=True))
         rew['st'].append(run_optimal_nonstationary(
@@ -1613,6 +1620,7 @@ def plot_nonstationary(
         ('Optimal (adapts instantly)', 'cum_o',  'rate_o',  'black',       '--', 1.6),
         ('Optimal (never adapts)',     'cum_st', 'rate_st', '#9467bd',     ':',  1.6),
         (label,                        'cum_t',  'rate_t',  'steelblue',   '-',  2.2),
+        (f'{label}, ε-greedy',          'cum_te', 'rate_te', 'steelblue',   '--', 2.0),
         ('ε-greedy Q (ε=0.2)',         'cum_e',  'rate_e',  'forestgreen', '-',  1.6),
         ('Greedy Q (ε=0)',             'cum_g',  'rate_g',  'darkorange',  '-',  1.6),
         ('Random policy',              'cum_r',  'rate_r',  'gray',        ':',  1.4),
@@ -1624,6 +1632,8 @@ def plot_nonstationary(
         ax_c, ax_r = axes[0][j], axes[1][j]
 
         for name, ckey, rkey, color, ls, lw in series:
+            if ckey not in res:
+                continue
             cum = res[ckey]
             ax_c.plot(steps, cum.mean(0), color=color, linestyle=ls, linewidth=lw,
                       label=f'{name} ({cum[:, -1].mean():.1f})')
@@ -1688,7 +1698,7 @@ def run_nonstationary_eval(
 
     ns_results: List[Dict] = []
     ns_rows: List[Dict] = []
-    agent_names = [('t', run_label), ('o', 'optimal (adapts)'),
+    agent_names = [('t', run_label), ('te', f'{run_label}, eps-greedy'), ('o', 'optimal (adapts)'),
                    ('st', 'optimal (frozen)'), ('e', 'eps-greedy Q'),
                    ('g', 'greedy Q'), ('r', 'random')]
     for variant, vlabel in NONSTATIONARY_VARIANTS:
@@ -1817,7 +1827,7 @@ def collect_reward_intervention(
     ignore observed reward, so they are computed once).
     """
     out: Dict[str, Dict[str, List[float]]] = {
-        name: {'transformer': [], 'epsgreedy': [], 'greedy': []}
+        name: {'transformer': [], 'transformer_eps': [], 'epsgreedy': [], 'greedy': []}
         for name, _ in REWARD_INTERVENTIONS
     }
     optimal, random_pol = [], []
@@ -1840,6 +1850,10 @@ def collect_reward_intervention(
             out[name]['transformer'].append(float(run_transformer_autonomous(
                 model, P, R, n_states, n_actions, n_steps, vocab, config,
                 device, epsilon=0.0, rng=np.random.default_rng(seed + 100),
+                reward_transform=rt()).sum()))
+            out[name]['transformer_eps'].append(float(run_transformer_autonomous(
+                model, P, R, n_states, n_actions, n_steps, vocab, config,
+                device, epsilon=epsilon, rng=np.random.default_rng(seed + 100),
                 reward_transform=rt()).sum()))
             out[name]['epsgreedy'].append(float(run_q_learner_autonomous(
                 P, R, n_states, n_actions, n_steps, alpha=alpha, gamma=gamma,
@@ -1872,6 +1886,7 @@ def plot_reward_intervention(
     look like a large effect when they are not.
     """
     agents = [('transformer', f'{label} transformer', '#1f77b4'),
+              ('transformer_eps', f'{label} transformer, ε-greedy', '#9ecae1'),
               ('epsgreedy',   'ε-greedy tabular Q',   '#2ca02c'),
               ('greedy',      'greedy tabular Q',     '#8c564b')]
     names = [n for n, _ in REWARD_INTERVENTIONS]
@@ -1958,6 +1973,7 @@ def run_reward_intervention_eval(
                   f"{100.0 * c['epsgreedy'].mean() / opt:>14.0f}%"
                   f"{100.0 * c['greedy'].mean() / opt:>11.0f}%")
             for key, agent in (('transformer', f'{run_label} transformer'),
+                               ('transformer_eps', f'{run_label} transformer, eps-greedy'),
                                ('epsgreedy', 'eps-greedy Q'),
                                ('greedy', 'greedy Q')):
                 rows.append({
@@ -2018,12 +2034,13 @@ def collect_size_sweep(
 
     agree_grid = np.full((len(states), len(actions)), np.nan)
     pct_grid = np.full((len(states), len(actions)), np.nan)
+    pct_eps_grid = np.full((len(states), len(actions)), np.nan)
     rnd_grid = np.full((len(states), len(actions)), np.nan)
     rows: List[Dict] = []
 
     for i, ns in enumerate(states):
         for j, na in enumerate(actions):
-            agrees, rets, opts, rnds = [], [], [], []
+            agrees, rets, rets_eps, opts, rnds = [], [], [], [], []
             for seed in eval_seeds:
                 # Teacher-forced agreement on the paper's Beta(2,2) family.
                 P, R = generate_eval_mdp(ns, na, seed=seed)
@@ -2042,6 +2059,9 @@ def collect_size_sweep(
                 rets.append(float(run_transformer_autonomous(
                     model, Pc, Rc, ns, na, n_steps, vocab, config, device,
                     epsilon=0.0, rng=np.random.default_rng(seed + 100)).sum()))
+                rets_eps.append(float(run_transformer_autonomous(
+                    model, Pc, Rc, ns, na, n_steps, vocab, config, device,
+                    epsilon=args.epsilon, rng=np.random.default_rng(seed + 100)).sum()))
                 opts.append(float(run_optimal_autonomous(
                     Pc, Rc, ns, na, n_steps, gamma=args.gamma,
                     rng=np.random.default_rng(seed + 100)).sum()))
@@ -2052,6 +2072,7 @@ def collect_size_sweep(
             opt_mean = float(np.mean(opts))
             agree_grid[i, j] = float(np.mean(agrees))
             pct_grid[i, j] = 100.0 * float(np.mean(rets)) / opt_mean
+            pct_eps_grid[i, j] = 100.0 * float(np.mean(rets_eps)) / opt_mean
             rnd_grid[i, j] = 100.0 * float(np.mean(rnds)) / opt_mean
             print(f"  |S|={ns} |A|={na}: agreement {agree_grid[i, j]:.1%}  "
                   f"return {pct_grid[i, j]:.0f}% of optimal "
@@ -2062,13 +2083,14 @@ def collect_size_sweep(
                 'agreement_std': float(np.std(agrees)),
                 'chance_agreement': 1.0 / na,
                 'return_pct_optimal': pct_grid[i, j],
+                'return_pct_optimal_eps': pct_eps_grid[i, j],
                 'random_pct_optimal': rnd_grid[i, j],
                 'final_return': float(np.mean(rets)),
                 'optimal_return': opt_mean,
             })
 
     return {'states': states, 'actions': actions, 'agreement': agree_grid,
-            'pct_optimal': pct_grid, 'random_pct_optimal': rnd_grid,
+            'pct_optimal': pct_grid, 'pct_optimal_eps': pct_eps_grid, 'random_pct_optimal': rnd_grid,
             'rows': rows, 'n_steps': n_steps}
 
 
@@ -2099,7 +2121,8 @@ def run_size_sweep_eval(
                     res['pct_optimal'], res['random_pct_optimal'],
                     n_mdps=len(eval_seeds), n_steps=res['n_steps'],
                     label=run_label,
-                    save_path=os.path.join(figures_dir, 'size_sweep.png'))
+                    save_path=os.path.join(figures_dir, 'size_sweep.png'),
+                    pct_eps_grid=res.get('pct_optimal_eps'))
     csv_path = os.path.join(figures_dir, 'size_sweep_summary.csv')
     with open(csv_path, 'w', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=list(res['rows'][0].keys()))
@@ -2119,18 +2142,21 @@ def plot_size_sweep(
     n_steps: int,
     label: str,
     save_path: str,
+    pct_eps_grid: Optional[np.ndarray] = None,
 ) -> None:
     """Left: agreement heatmap. Middle: closed-loop return as % of optimal.
     Right: the same return minus the random-policy floor for that cell, which
     is the only one of the three that is comparable across |A| (chance
     agreement and the random floor both move with the number of actions).
     """
-    fig, axes = plt.subplots(1, 3, figsize=(17, 4.8))
     grids = [
         (agree_grid * 100.0, 'Action agreement (%)', 'viridis', None),
         (pct_grid, 'Closed-loop return (% of optimal)', 'magma', None),
         (pct_grid - rnd_grid, 'Return above random floor (pp)', 'coolwarm', 0.0),
     ]
+    if pct_eps_grid is not None:
+        grids.insert(2, (pct_eps_grid, f'Return, ε-greedy (ε={TF_EPS:g}) (% of opt.)', 'magma', None))
+    fig, axes = plt.subplots(1, len(grids), figsize=(5.7 * len(grids), 4.8))
     for ax, (grid, title, cmap, center) in zip(axes, grids):
         vmax = np.nanmax(np.abs(grid)) if center is not None else None
         im = ax.imshow(grid, cmap=cmap, aspect='auto',
@@ -2166,6 +2192,7 @@ def plot_long_horizon(
     train_horizon: int,
     n_mdps: int,
     save_path: str,
+    cumrew_transformer_eps: Optional[np.ndarray] = None,
 ) -> None:
     """Single panel: cumulative reward over a horizon longer than the
     training horizon, with a vertical marker at the training cutoff.
@@ -2180,10 +2207,14 @@ def plot_long_horizon(
         ('Greedy Q (ε=0)', cumrew_greedy, 'darkorange'),
         ('ε-greedy Q (ε=0.2)', cumrew_epsgreedy, 'forestgreen'),
     ]
-    for label, data, color in series:
+    if cumrew_transformer_eps is not None:
+        series.insert(1, (f'Transformer, ε-greedy (ε={TF_EPS:g})', cumrew_transformer_eps,
+                          'steelblue', '--'))
+    for label, data, color, *ls in series:
         mean = data.mean(axis=0)
         std = data.std(axis=0)
-        ax.plot(steps, mean, color=color, linewidth=2, label=label)
+        ax.plot(steps, mean, color=color, linewidth=2, label=label,
+                linestyle=ls[0] if ls else '-')
         ax.fill_between(steps, mean - std, mean + std, alpha=0.15, color=color)
 
     ax.axvline(train_horizon, color='red', linestyle='--', linewidth=1.5,
@@ -2211,6 +2242,7 @@ def plot_regret(
     cumrew_epsgreedy: np.ndarray,
     n_mdps: int,
     save_path: str,
+    cumrew_transformer_eps: Optional[np.ndarray] = None,
 ) -> None:
     """Single tall panel: cumulative reward for the three agents."""
     n_steps = cumrew_transformer.shape[1]
@@ -2224,10 +2256,14 @@ def plot_regret(
         ('ε-greedy Q (ε=0.2)', cumrew_epsgreedy, 'forestgreen'),
     ]
 
-    for label, data, color in series:
+    if cumrew_transformer_eps is not None:
+        series.insert(1, (f'Transformer, ε-greedy (ε={TF_EPS:g})', cumrew_transformer_eps,
+                          'steelblue', '--'))
+    for label, data, color, *ls in series:
         mean = data.mean(axis=0)
         std = data.std(axis=0)
-        ax.plot(steps, mean, color=color, linewidth=2, label=label)
+        ax.plot(steps, mean, color=color, linewidth=2, label=label,
+                linestyle=ls[0] if ls else '-')
         ax.fill_between(steps, mean - std, mean + std, alpha=0.15, color=color)
 
     ax.set_xlabel('Timestep', fontsize=13)
@@ -2264,6 +2300,7 @@ def plot_reward_dist_grid(
     series_spec = [
         ('Optimal',           'cumrew_o', 'black'),
         ('Transformer',       'cumrew_t', 'steelblue'),
+        ('Transformer, ε-greedy', 'cumrew_te', 'steelblue', '--'),
         ('Greedy Q (ε=0)',    'cumrew_g', 'darkorange'),
         ('ε-greedy Q',        'cumrew_e', 'forestgreen'),
     ]
@@ -2272,11 +2309,14 @@ def plot_reward_dist_grid(
         ax = axes[idx // ncols][idx % ncols]
         n_steps = res['cumrew_t'].shape[1]
         steps = np.arange(1, n_steps + 1)
-        for label, key, color in series_spec:
+        for label, key, color, *ls in series_spec:
+            if key not in res:
+                continue
             data = res[key]
             mean = data.mean(axis=0)
             std = data.std(axis=0)
-            ax.plot(steps, mean, color=color, linewidth=2, label=label)
+            ax.plot(steps, mean, color=color, linewidth=2, label=label,
+                    linestyle=ls[0] if ls else '-')
             ax.fill_between(steps, mean - std, mean + std, alpha=0.15, color=color)
         ax.set_title(res['label'], fontsize=13)
         ax.set_xlabel('Timestep')
@@ -2308,6 +2348,7 @@ def plot_combined_row(
     n_steps: int,
     save_path: str,
     n_bins: int = 3,
+    cumrew_transformer_eps: Optional[np.ndarray] = None,
 ) -> None:
     """Single-row figure: regret (left), probe scatter (middle), agreement (right)."""
     fig, axes = plt.subplots(1, 3, figsize=(18, 5))
@@ -2321,10 +2362,14 @@ def plot_combined_row(
         ('Greedy Q (ε=0)', cumrew_greedy, 'darkorange'),
         ('ε-greedy Q (ε=0.2)', cumrew_epsgreedy, 'forestgreen'),
     ]
-    for label, data, color in series:
+    if cumrew_transformer_eps is not None:
+        series.insert(1, (f'Transformer, ε-greedy (ε={TF_EPS:g})', cumrew_transformer_eps,
+                          'steelblue', '--'))
+    for label, data, color, *ls in series:
         mean = data.mean(axis=0)
         std = data.std(axis=0)
-        ax.plot(steps, mean, color=color, linewidth=2, label=label)
+        ax.plot(steps, mean, color=color, linewidth=2, label=label,
+                linestyle=ls[0] if ls else '-')
         ax.fill_between(steps, mean - std, mean + std, alpha=0.15, color=color)
     ax.set_xlabel('Timestep', fontsize=12)
     ax.set_ylabel('Cumulative Reward', fontsize=12)
@@ -2988,6 +3033,8 @@ def main():
     parser.add_argument('--n_probe_eval',  type=int,   default=100)
     parser.add_argument('--probe_epochs',  type=int,   default=10)
     args = parser.parse_args()
+    global TF_EPS
+    TF_EPS = args.epsilon
     if args.model:
         args.checkpoint = args.checkpoint or str(paths.checkpoint(args.model))
         args.figures_dir = args.figures_dir or str(paths.FIGURES / args.model / 'evaluation')
@@ -3255,6 +3302,7 @@ def main():
     print(f"{'=' * 60}")
 
     all_cumrew_transformer = []
+    all_cumrew_transformer_eps = []
     all_cumrew_greedy = []
     all_cumrew_epsgreedy = []
     all_cumrew_optimal = []
@@ -3272,6 +3320,10 @@ def main():
             model, P, R, n_states, n_actions, args.n_steps,
             vocab, config, device, epsilon=0.0, rng=rng_t,
         )
+        rew_te = run_transformer_autonomous(
+            model, P, R, n_states, n_actions, args.n_steps,
+            vocab, config, device, epsilon=args.epsilon, rng=np.random.default_rng(seed + 100),
+        )
         rew_g = run_q_learner_autonomous(
             P, R, n_states, n_actions, args.n_steps,
             alpha=args.alpha, gamma=args.gamma, epsilon=0.0, rng=rng_g,
@@ -3286,11 +3338,13 @@ def main():
         )
 
         all_cumrew_transformer.append(np.cumsum(rew_t))
+        all_cumrew_transformer_eps.append(np.cumsum(rew_te))
         all_cumrew_greedy.append(np.cumsum(rew_g))
         all_cumrew_epsgreedy.append(np.cumsum(rew_e))
         all_cumrew_optimal.append(np.cumsum(rew_o))
 
     cumrew_t = np.stack(all_cumrew_transformer, axis=0)
+    cumrew_te = np.stack(all_cumrew_transformer_eps, axis=0)
     cumrew_g = np.stack(all_cumrew_greedy, axis=0)
     cumrew_e = np.stack(all_cumrew_epsgreedy, axis=0)
     cumrew_o = np.stack(all_cumrew_optimal, axis=0)
@@ -3298,6 +3352,7 @@ def main():
     print(f"\n  Final cumulative reward (mean over {args.n_eval_mdps} MDPs):")
     print(f"    Optimal:        {cumrew_o[:, -1].mean():.2f} ± {cumrew_o[:, -1].std():.2f}")
     print(f"    Transformer:    {cumrew_t[:, -1].mean():.2f} ± {cumrew_t[:, -1].std():.2f}")
+    print(f"    Transformer, ε: {cumrew_te[:, -1].mean():.2f} ± {cumrew_te[:, -1].std():.2f}")
     print(f"    Greedy Q (ε=0): {cumrew_g[:, -1].mean():.2f} ± {cumrew_g[:, -1].std():.2f}")
     print(f"    ε-greedy Q:     {cumrew_e[:, -1].mean():.2f} ± {cumrew_e[:, -1].std():.2f}")
 
@@ -3305,6 +3360,7 @@ def main():
         cumrew_t, cumrew_g, cumrew_e,
         n_mdps=args.n_eval_mdps,
         save_path=os.path.join(args.figures_dir, 'regret.png'),
+        cumrew_transformer_eps=cumrew_te,
     )
 
     plot_combined_row(
@@ -3313,8 +3369,14 @@ def main():
         q_true=q_ev, q_pred=q_pred, r2=r2,
         dist_data=dist_data, n_steps=args.n_steps,
         save_path=os.path.join(args.figures_dir, 'combined_row.png'),
-        n_bins=3,
+        n_bins=3, cumrew_transformer_eps=cumrew_te,
     )
+    # raw data of the combined row, for paper/make_main_figures.py
+    np.savez(os.path.join(args.figures_dir, 'combined_row_data.npz'),
+             cumrew_tf=cumrew_t, cumrew_tf_eps=cumrew_te, cumrew_greedy=cumrew_g,
+             cumrew_epsgreedy=cumrew_e, q_true=q_ev, q_pred=q_pred, r2=r2,
+             dist_labels=np.array([l for l, _ in dist_data]),
+             **{f'agree_{i}': a for i, (_, a) in enumerate(dist_data)})
 
     # -----------------------------------------------------------------------
     # Part 4b: Long-horizon evaluation (past the training horizon)
@@ -3324,7 +3386,7 @@ def main():
         print(f"Part 4b: Long-horizon eval "
               f"({args.long_horizon_steps} steps, train horizon={args.n_steps})")
         print(f"{'=' * 60}")
-        long_t, long_g, long_e = [], [], []
+        long_t, long_te, long_g, long_e = [], [], [], []
         for seed_i, seed in enumerate(eval_seeds):
             print(f"  Long-horizon MDP {seed_i+1}/{args.n_eval_mdps} "
                   f"(seed={seed}) ...", flush=True)
@@ -3336,6 +3398,10 @@ def main():
                 model, P, R, n_states, n_actions, args.long_horizon_steps,
                 vocab, config, device, epsilon=0.0, rng=rng_t,
             )
+            long_te.append(np.cumsum(run_transformer_autonomous(
+                model, P, R, n_states, n_actions, args.long_horizon_steps,
+                vocab, config, device, epsilon=args.epsilon,
+                rng=np.random.default_rng(seed + 100))))
             rew_g = run_q_learner_autonomous(
                 P, R, n_states, n_actions, args.long_horizon_steps,
                 alpha=args.alpha, gamma=args.gamma, epsilon=0.0,
@@ -3357,6 +3423,7 @@ def main():
             train_horizon=args.n_steps,
             n_mdps=args.n_eval_mdps,
             save_path=os.path.join(args.figures_dir, 'long_horizon.png'),
+            cumrew_transformer_eps=np.stack(long_te, axis=0),
         )
 
     # -----------------------------------------------------------------------
@@ -3370,7 +3437,7 @@ def main():
     rdist_results: List[Dict] = []
     for dist_name, dist_label in REWARD_DISTRIBUTIONS:
         print(f"\n  Reward dist: {dist_name} — {dist_label}")
-        cum_t, cum_g, cum_e, cum_o = [], [], [], []
+        cum_t, cum_te, cum_g, cum_e, cum_o = [], [], [], [], []
         for seed_i, seed in enumerate(eval_seeds):
             print(f"    MDP {seed_i+1}/{args.n_eval_mdps} (seed={seed}) ...",
                   flush=True)
@@ -3385,6 +3452,10 @@ def main():
                 model, P, R, n_states, n_actions, args.n_steps,
                 vocab, config, device, epsilon=0.0, rng=rng_t,
             )
+            cum_te.append(np.cumsum(run_transformer_autonomous(
+                model, P, R, n_states, n_actions, args.n_steps,
+                vocab, config, device, epsilon=args.epsilon,
+                rng=np.random.default_rng(seed + 100))))
             rew_g = run_q_learner_autonomous(
                 P, R, n_states, n_actions, args.n_steps,
                 alpha=args.alpha, gamma=args.gamma, epsilon=0.0, rng=rng_g,
@@ -3415,7 +3486,7 @@ def main():
 
         rdist_results.append({
             'name': dist_name, 'label': dist_label,
-            'cumrew_t': ct, 'cumrew_g': cg,
+            'cumrew_t': ct, 'cumrew_te': np.stack(cum_te, axis=0), 'cumrew_g': cg,
             'cumrew_e': ce, 'cumrew_o': co,
         })
 

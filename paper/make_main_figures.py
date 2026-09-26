@@ -52,13 +52,26 @@ CONFIG = {
     # mechanistic results (rho, probes, steering); later files override earlier
     "mwu_mech": [f"{MF}/comparison/mechanism/{f}" for f in
                  ("mech_existing.json", "mech_steer.json", "mech_all.json", "mech_disc_v5.json")],
+    # MW weights vs weights decoded from the latents, one held-out sequence
+    # (figures_per_model.py --only attention)
+    "mwu_weights": f"{MF}/continuous_residual/attention/weight_trajectories.npz",
     "mwu_steer_model": ["cont_v5res_s43", "cont_v2", "cont_v2_s42"],
     # Q-learning: clean-step disagreement (csv, continuous checkpoint key, discrete checkpoint key)
     "q_disagree": [((f"{QL}/comparison/clean_steps/clean_steps.csv", "qlv3-residual", "qlv3-discrete"),)],
     # Q-learning: closed-loop suite (continuous dir, discrete dir), model's own a*
     "q_closed": [(f"{QL}/continuous_residual/closed_loop", f"{QL}/discrete/closed_loop")],
+    # the same long-horizon runs with an eps-greedy behaviour policy on the model's own argmax
+    "q_closed_eps": (f"{QL}/continuous_residual/closed_loop_exploration",
+                     f"{QL}/discrete/closed_loop_exploration"),
+    "q_eps": 0.2,                       # the tabular eps-greedy baseline's epsilon
     # Q-table probe: (csv, continuous checkpoint key, discrete checkpoint key)
     "q_probe": [(f"{QL}/comparison/q_probe/q_probe.csv", "qlv3-residual", "qlv3-discrete")],
+    # main Q figure: held-out probe predictions (eval_q_probe.py) and teacher-forced agreement
+    # (4_evaluate.py combined_row_data.npz) of the continuous and discrete models
+    "q_probe_pred": (f"{QL}/comparison/q_probe/q_probe_pred.npz",
+                     "coconut_transformer_qlv3-residual", "coconut_transformer_qlv3-discrete"),
+    "q_row": (f"{QL}/continuous_residual/evaluation/combined_row_data.npz",
+              f"{QL}/discrete/evaluation/combined_row_data.npz"),
 }
 
 # palette: categorical slots 1-3 of the reference palette (validated: all checks
@@ -151,10 +164,8 @@ def fig_mwu():
     fig, ax = new_ax(3.6, 2.5)
     tr = res["trajectories"]
     t = np.arange(1, len(tr["mw"]) + 1)
-    series = [("rec_cont", "continuous latent", BLUE, "-"),
-              ("rec_disc", "discrete token", ORANGE, "-"),
-              ("full_hist", "raw history", AQUA, "-"),
-              ("majority", "majority vote", MUTED, (0, (4, 2))),
+    series = [("rec_cont", "continuous transformer", BLUE, "-"),
+              ("rec_disc", "discrete transformer", ORANGE, "-"),
               ("mw", "MW", INK2, (0, (1.5, 1.5))),
               ("bayes", "Bayes", INK, (0, (5, 1.5, 1, 1.5)))]
     ends = []
@@ -235,7 +246,7 @@ def fig_mwu():
                     fontsize=LABEL_FS, va="center")
         ax.set_xlim(min(xs) - 0.05, max(xs) + 1.25)
         ax.set_xticks([-1, -0.5, 0, 0.5, 1])
-    ax.set_xlabel(r"latent shift (fraction of $\|M_t\|$)")
+    ax.set_xlabel(r"latent shift (fraction of $\|\mathbf{z}_t\|$)")
     ax.set_ylabel("follows expert $i$ (%)")
     ax.set_title("Steering the latent", loc="left")
     save(fig, "fig_mwu_steering")
@@ -293,7 +304,103 @@ def load_closed():
     for model, d in (("continuous", c_dir), ("discrete", d_dir)):
         df = pd.read_csv(os.path.join(d, "long_horizon_summary.csv"))
         out[model] = df[df.condition == "contrast"].set_index("agent")
+    for model, d in zip(("continuous", "discrete"), CONFIG["q_closed_eps"]):
+        df = pd.read_csv(os.path.join(d, "long_horizon_summary.csv"))
+        df = df[df.condition == "contrast"].set_index("agent")
+        out[model].loc["tf_eps"] = df.loc[f"tf_self_eps{CONFIG['q_eps']:g}"]
     return out
+
+
+def fig_mwu_weights():
+    """MW's weights on a held-out sequence and the weights computed from the cumulative losses
+    that a linear probe decodes from the continuous transformer's latent (the discrete
+    transformer's latent decodes nothing, R^2 = -0.00, so it is left out)."""
+    z = np.load(CONFIG["mwu_weights"])
+    fig, ax = new_ax(3.6, 2.5)
+    t = np.arange(1, len(z["mw"]) + 1)
+    cols = [BLUE, ORANGE, AQUA, "#e87ba4"]
+    for e, c in enumerate(cols):
+        ax.plot(t, z["mw"][:, e], color=c, lw=2.2, alpha=0.45)
+        ax.plot(t, z["continuous"][:, e], color=c, lw=1.0)
+        ax.text(t[-1] * 1.02, z["mw"][-1, e], f"expert {e + 1}", color=c, va="center",
+                fontsize=LABEL_FS)
+    from matplotlib.lines import Line2D
+    ax.legend(handles=[Line2D([], [], color=INK2, lw=2.2, alpha=0.45, label="MW"),
+                       Line2D([], [], color=INK2, lw=1.0, label="decoded from $\\mathbf{z}_t$")],
+              frameon=False, loc="upper left", fontsize=7)
+    ax.set_xlim(0, t[-1])
+    ax.set_ylim(0, None)
+    ax.set_xlabel("round $t$")
+    ax.set_ylabel("expert weight")
+    ax.set_title("MW weights decoded from the latent", loc="left")
+    save(fig, "fig_mwu_weights")
+
+
+def fig_q_main():
+    """Three panels as in the submitted paper, continuous vs discrete transformer: closed-loop
+    cumulative reward (eps-greedy), Q-table probe, teacher-forced agreement over the episode."""
+    fig, axes = plt.subplots(1, 3, figsize=(7.0, 2.2), constrained_layout=True,
+                             gridspec_kw={"width_ratios": [1.15, 1, 1]})
+    eps = CONFIG["q_eps"]
+    # (left) 1000-step contrast MDPs, model's own a*, eps-greedy behaviour policy
+    ax = axes[0]
+    zc, zd = (np.load(os.path.join(d, "long_horizon_rewards.npz")) for d in CONFIG["q_closed_eps"])
+    key = lambda a: f"contrast__{a}"
+    series = [(zc[key("epsgreedy")], "tabular $Q$", MUTED, "--"),
+              (zc[key(f"tf_self_eps{eps:g}")], "continuous", BLUE, "-"),
+              (zd[key(f"tf_self_eps{eps:g}")], "discrete", ORANGE, "-"),
+              (zc[key("random")], "random", "#c9c8c3", "-")]
+    t = np.arange(1, zc[key("optimal")].shape[1] + 1)
+    for r, lab, col, ls in series:
+        c = np.cumsum(r, axis=1)
+        m, s = c.mean(0), c.std(0) / np.sqrt(len(c))
+        ax.plot(t, m, color=col, ls=ls, label=lab)
+        ax.fill_between(t, m - 1.96 * s, m + 1.96 * s, color=col, alpha=0.15, lw=0)
+    ax.set_xlabel("step $t$")
+    ax.set_ylabel("cumulative reward")
+    ax.set_xlim(0, t[-1])
+    ax.set_ylim(0, None)
+    ax.legend(frameon=False, loc="upper left", handlelength=1.6)
+    ax.set_title(f"Closed loop, $\\epsilon$-greedy ($\\epsilon={eps:g}$)", loc="left")
+    # (middle) held-out Q-table probe from the context slots
+    ax = axes[1]
+    path, ck, dk = CONFIG["q_probe_pred"]
+    zp = np.load(path)
+    rc, rd = q_probe()
+    rng = np.random.default_rng(0)
+    for k, lab, col, r2 in ((dk, "discrete", ORANGE, rd), (ck, "continuous", BLUE, rc)):
+        qt, qp = zp[f"{k}__true"], zp[f"{k}__pred"]
+        i = rng.choice(len(qt), size=min(4000, len(qt)), replace=False)
+        ax.scatter(qt[i], qp[i], s=2, alpha=0.25, color=col, lw=0, rasterized=True,
+                   label=f"{lab} ($R^2={round(r2, 2) + 0.0:.2f}$)")
+    lo, hi = np.percentile(zp[f"{ck}__true"], [0.5, 99.5])
+    ax.plot([lo, hi], [lo, hi], color=INK2, lw=0.8, ls="--")
+    ax.set_xlim(lo, hi)
+    ax.set_ylim(lo - 0.1 * (hi - lo), hi + 0.1 * (hi - lo))
+    ax.set_xlabel("teacher $Q(s, a)$")
+    ax.set_ylabel("probe from slot $\\mathbf{c}_a$")
+    h, l = ax.get_legend_handles_labels()
+    ax.legend(h[::-1], l[::-1], frameon=False, loc="upper left", markerscale=4, handletextpad=0.2)
+    ax.set_title("$Q$-table probe (held out)", loc="left")
+    # (right) teacher-forced agreement with tabular Q-learning's greedy action
+    ax = axes[2]
+    W = 5                                                   # steps per window
+    for path, lab, col in zip(CONFIG["q_row"], ("continuous", "discrete"), (BLUE, ORANGE)):
+        z = np.load(path)
+        a = np.concatenate([z[f"agree_{i}"] for i in range(len(z["dist_labels"]))])  # [MDPs, T]
+        a = a[:, :a.shape[1] // W * W].reshape(len(a), -1, W).mean(-1)            # [MDPs, T/W]
+        m, s = a.mean(0), a.std(0) / np.sqrt(len(a))
+        steps = W * np.arange(len(m)) + (W + 1) / 2
+        ax.plot(steps, m, color=col, marker="o", ms=2.5, label=lab)
+        ax.fill_between(steps, m - 1.96 * s, m + 1.96 * s, color=col, alpha=0.15, lw=0)
+    ax.set_xlabel("step $t$ (teacher forced)")
+    ax.set_ylabel("agreement with $Q$-learning")
+    ax.set_ylim(0, 1.02)
+    ax.set_xlim(0, W * len(m) + 2)
+    ax.set_xticks(range(0, W * len(m) + 1, 10))
+    ax.legend(frameon=False, loc="lower right")
+    ax.set_title("Greedy-action agreement", loc="left")
+    save(fig, "fig_q_main")
 
 
 def fig_q():
@@ -326,24 +433,7 @@ def fig_q():
     ax.set_ylim(min(lo, -5) - 4, hi * 1.3)   # room for the value labels below / above the bars
     save(fig, "fig_q_clean")
 
-    # closed loop, own a*
-    fig, ax = new_ax(3.0, 2.5)
-    bars = [("continuous", closed["continuous"].loc["tf_self"], BLUE),
-            ("discrete", closed["discrete"].loc["tf_self"], ORANGE),
-            ("greedy Q", closed["continuous"].loc["greedy"], MUTED),
-            ("$\\epsilon$-greedy Q", closed["continuous"].loc["epsgreedy"], "#c9c8c3"),
-            ("random", closed["continuous"].loc["random"], "#e0dfda")]
-    for i, (lab, r, c) in enumerate(bars):
-        ax.bar(i, r.pct_opt_mean, color=c, width=0.7, yerr=1.96 * r.pct_opt_sem, capsize=1.5,
-               error_kw={"elinewidth": 0.7, "ecolor": INK2}, zorder=3)
-        ax.text(i, r.pct_opt_mean + 1.96 * r.pct_opt_sem + 1, f"{r.pct_opt_mean:.0f}",
-                ha="center", va="bottom", fontsize=LABEL_FS, color=INK)
-    ax.set_xticks(range(len(bars)))
-    ax.set_xticklabels([b[0] for b in bars], rotation=30, ha="right")
-    ax.set_ylabel("% of optimal return")
-    ax.set_ylim(0, max(b[1].pct_opt_mean for b in bars) * 1.25)
-    ax.set_title("Closed loop, 1000 steps (own $a^*$)", loc="left")
-    save(fig, "fig_q_closed")
+    fig_q_main()
     return dis, closed
 
 
@@ -391,22 +481,25 @@ def table(res, mech, dis, closed):
         _, _, ft, fr = clean_margin(dis, model, "ALL", "q_g0")
         return f"{ft:.0f} vs.\\ {fr:.0f}"
 
-    def closed_pct(model, agent="tf_self"):
+    def closed_pct(model, agent="tf_self", agent_eps=None):
         r = closed[model].loc[agent]
-        return f"{r.pct_opt_mean:.1f} $\\pm$ {r.pct_opt_sem:.1f}"
+        s = f"{r.pct_opt_mean:.1f}"
+        if agent_eps is not None:
+            s += f" / {closed[model].loc[agent_eps].pct_opt_mean:.1f}"
+        return s
 
     rows = [
-        ("Continuous latent", pm(h["rec_cont"]), f"{reg['rec_cont']['acc_mean']:.2f}",
+        ("Continuous transformer", pm(h["rec_cont"]), f"{reg['rec_cont']['acc_mean']:.2f}",
          f2(mech_stat(cont_labels, r2)), f"{mech_stat(cont_labels, rho):.3f}",
-         clean("continuous"), f2(qc), closed_pct("continuous")),
-        ("Discrete token", pm(h["rec_disc"]), f"{reg['rec_disc']['acc_mean']:.2f}",
+         clean("continuous"), f2(qc), closed_pct("continuous", "tf_self", "tf_eps")),
+        ("Discrete transformer", pm(h["rec_disc"]), f"{reg['rec_disc']['acc_mean']:.2f}",
          f2(mech_stat(disc_labels, r2)), "--",   # no decodable state, so no rho
-         clean("discrete"), f2(qd), closed_pct("discrete")),
+         clean("discrete"), f2(qd), closed_pct("discrete", "tf_self", "tf_eps")),
         ("Raw history (1024 tok.)", pm(h["full_hist"]), f"{reg['full_hist']['acc_mean']:.2f}",
          "--", "--", "--", "--", "--"),
-        (r"\midrule MW / greedy $Q$", f"{h['mw']['regret_mean']:.1f}",
+        (r"\midrule MW / tabular $Q$", f"{h['mw']['regret_mean']:.1f}",
          f"{reg['mw']['acc_mean']:.2f}" if "mw" in reg else "--", "", "", "", "",
-         closed_pct("continuous", "greedy")),
+         closed_pct("continuous", "greedy", "epsgreedy")),
         ("Bayes / random", f"{h['bayes']['regret_mean']:.1f}",
          f"{reg['bayes']['acc_mean']:.2f}" if "bayes" in reg else "--", "", "", "", "",
          closed_pct("continuous", "random")),
@@ -417,7 +510,7 @@ def table(res, mech, dis, closed):
              r" & \multicolumn{4}{c|}{Experts (MWU)} & \multicolumn{3}{c}{Tabular $Q$-learning} \\",
              r"Memory channel & Regret$_{T=1000}$ $\downarrow$ & Anti-signal acc. & Probe $R^2$ & "
              r"Retention $\rho$ & Clean steps $\gamma{=}0.9$ vs.\ $0$ & Probe $R^2$ & "
-             r"Closed loop (\% opt.) \\", r"\midrule"]
+             r"Closed loop, greedy / $\epsilon$-greedy (\% opt.) \\", r"\midrule"]
     lines += [" & ".join(r) + r" \\" for r in rows]
     lines += [r"\bottomrule", r"\end{tabular}"]
     os.makedirs(OUT_TAB, exist_ok=True)
@@ -428,9 +521,10 @@ def table(res, mech, dis, closed):
 def main():
     os.makedirs(OUT_FIG, exist_ok=True)
     res, mech = fig_mwu()
+    fig_mwu_weights()
     dis, closed = fig_q()
     table(res, mech, dis, closed)
-    print("wrote paper/figures/fig_mwu_{regret,leak,steering}, fig_q_{clean,closed} "
+    print("wrote paper/figures/fig_mwu_{regret,leak,steering}, fig_q_{main,clean} "
           "(.pdf/.png) and paper/tables/table_matched.tex")
     for d in DRAFT:
         print("DRAFT:", d)

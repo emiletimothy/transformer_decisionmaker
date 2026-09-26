@@ -5,8 +5,8 @@
 #SBATCH --mem=32G
 #SBATCH --time=02:00:00
 #SBATCH --output=logs/relax_sweeps_%j.out
-#SBATCH --error=relax_sweeps_%j.err
-# Relaxation sweeps for the handwired MWU and Q-learning constructions (CPU only).
+#SBATCH --error=logs/relax_sweeps_%j.err
+# Relaxation sweeps of the current handwired constructions (CPU only); EXTRA="--v1" for the earlier ones.
 # Run from relaxation/:  sbatch run_sweeps.sbatch
 set -euo pipefail
 export PATH=/system/linux/miniforge-3.13/bin:$PATH

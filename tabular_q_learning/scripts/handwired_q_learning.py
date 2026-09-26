@@ -11,9 +11,11 @@ residual context write of the trained residual models.
 Idealisations (the only ones):
   * hard attention is a softmax with a large inverse temperature (beta for routing heads,
     beta_max for the max head); error vs beta is reported by verify();
-  * one-hot token embeddings and one-hot absolute position embeddings (no role flags);
-  * a constant direction ONE shared by every token embedding (the attention-sink baseline
-    and the MLP bias path); context slots are not tokens and do not carry it;
+  * orthonormal token and absolute position embeddings (one-hot in this code, w.l.o.g.: any
+    orthonormal choice rotates every weight matrix and leaves the computation unchanged; no role flags);
+  (the attention sink needs no extra coordinate: the query direction sum_v u_v has inner product 1
+    with every token's identity and 0 with the context slots, which are not tokens; one-hot is just
+    the basis used here, any orthonormal embeddings give the same computation);
   * no LayerNorm.
 (The previous version with role flags in the position embedding is
 handwired_q_learning (flags variant, removed).py.)
@@ -22,41 +24,41 @@ Per step, positions (n = |A| of this MDP, o = n + 1):
   0 BOS | 1..n context slots c_1..c_n | o QCURR, o+1 s_t, o+2 a_t, o+3 R(r_t), o+4 QNEXT,
   o+5+2i s_{t+1}, o+6+2i a_i (i = 0..n-1) | o+5+2n SELECT, o+6+2n a*, o+7+2n UPDATE.
 Slot j is identified only by its POSITION 1 + j; its content is what the model wrote there
-(zeros at t = 0) plus its position embedding. The reward is a scalar feature RVAL of the R
-token (as reward_proj in the trained model).
+(zeros at t = 0) plus its position embedding. The reward token carries r_t u_r in buf2
+(the original construction's encoding; the trained model's reward_proj is the learned analogue).
 
-Residual stream: id (V) | pos (L_max) | ONE | buf1 (V) | buf2 (V), d = 3 V + L_max + 1.
-  buf1  token identities and scalars: PID + P2ID = identities of the tokens 1 and 2 back (action
-        tokens; they never collide), ST = u_{s_t} (UPDATE); scalars along special-token
-        directions: RVAL / RU (reward at R / UPDATE), QV (action tokens), IS_AT, IS_PAIR (roles of
-        action tokens), MAXQ, QCUR; ASEL (selected action) along the action directions
-  buf2  Q columns: SLOT = sum_s Q_t(s, a) u_s (slots), COL = column of this token's action
-        (action tokens), INC = TD increment (UPDATE)
+Residual stream: id (V) | pos (L_max) | buf1 (V) | buf2 (V), d = 3 V + L_max.
+  buf1  token identities: PID + P2ID = identities of the tokens 1 and 2 back (action tokens;
+        they never collide), ST = u_{s_t} (UPDATE), ASEL = u_{a*} (SELECT)
+  buf2  values: Q columns along the state directions (SLOT = sum_s Q_t(s, a) u_s at slots,
+        COL = column of this token's action at action tokens, INC = TD increment at UPDATE) and
+        scalars along their token directions: RVAL / RU = r_t u_r (R / UPDATE),
+        QV = Q_t(s, a) u_Qnext (action tokens), MAXQ = max_a Q_t(s_{t+1}, a) u_Qnext (SELECT /
+        UPDATE), QCUR = Q_t(s_t, a_t) u_Qcurr (UPDATE)
 
 Block 1 (attention on the input, then MLP1)
   H1.1  FO(A, -1): an action token at pos(i) attends to pos(i-1), value identity -> PID;
-        every other token scores higher on the BOS sink (query 2 beta (ONE - is_action)),
+        every other token scores higher on the BOS sink (query 2 beta (<sum_v u_v, id> - is_action)),
         whose value is 0, and reads nothing.
   H1.2  FO(A, -2): the same with pos(i-2), value identity -> P2ID.
-        (Context slots are not tokens: they carry no ONE, and nothing reads their PID/P2ID.)
+        (Context slots are not tokens: they have no identity, and nothing reads their PID/P2ID.)
   H1.3  slot fetch: a token with identity A_j queries pos(1 + j), value SLOT -> COL;
         other tokens fall to the BOS sink (value 0).
-  MLP1  (exact ReLU arithmetic on 0/1 features, |values| <= C)
-        QV       = sum_s PID[S_s] * COL[s]   via  e*c = ReLU(c - C(1-e)) - ReLU(-c - C(1-e))
-        IS_AT    = ReLU(is_action + P2ID[QCURR] - 1)
-        IS_PAIR  = ReLU(is_action - P2ID[QCURR] - PID[SELECT])
-        with is_action = sum_j id[A_j].
+  MLP1  QV = sum_s PID[S_s] * COL[s], exact via e*c = ReLU(c - C(1-e)) - ReLU(-c - C(1-e))
+        for 0/1 selectors e and |c| <= C.
 Block 2
-  H2.1  max head: queries with identity SELECT or UPDATE; keys IS_PAIR (large bonus) plus
-        beta_max * QV; values action identity -> ASEL, QV -> MAXQ.
-  H2.2  UPDATE -> key IS_AT; values QV -> QCUR, PID[S] (= u_{s_t}) -> ST.
+  H2.1  max head: queries with identity SELECT or UPDATE; keys: a large bonus on candidates,
+        is_action - P2ID[QCURR] - PID[SELECT] (linear: an action token that is neither two after
+        QCURR nor right after SELECT), plus beta_max * QV; values action identity -> ASEL,
+        QV -> MAXQ.
+  H2.2  UPDATE -> key P2ID[QCURR] (a_t is two after QCURR); values QV -> QCUR, PID[S] (= u_{s_t}) -> ST.
   H2.3  UPDATE -> key id[R]; value RVAL -> RU.
   MLP2  INC[s] = gate(ST[s], alpha (RU + gamma MAXQ - QCUR)).
-Sink: every attention query carries ONE, which scores 0.5 beta on the BOS key; BOS has
+Sink: every token's query has <sum_v u_v, identity> = 1, which scores 0.5 beta on the BOS key; BOS has
 value 0 in every field any head reads, so a query without a target reads nothing.
 
 The a* token also fetches a slot (H1.3) but its QV is 0 (its previous token is SELECT,
-not a state) and IS_PAIR = IS_AT = 0, so no block-2 head reads it; the computation never
+not a state) and neither H2.1 nor H2.2 selects it, so no block-2 head reads it; the computation never
 uses the a* token, so the model's own a* and the teacher's a* give identical results.
 Output: a* = argmax ASEL at SELECT. Recurrence: c_{a_t} <- c_{a_t} + W_ctx h[UPDATE],
 W_ctx: INC -> SLOT (the write target a_t is chosen by the recurrence protocol, as in
@@ -85,30 +87,26 @@ class Layout:
             off += k
             return s
         self.id, self.pos = f(self.V), f(self.Lmax)
-        self.ONE = f(1).start
         # two buffers of d_TE = V dimensions; a buffer holds several quantities along
         # orthogonal token directions (states / actions / special tokens) or at different positions
         self.B1, self.B2 = f(self.V), f(self.V)
         b1, b2 = self.B1.start, self.B2.start
         states = lambda b: slice(b + self.S[0], b + self.S[0] + max_states)
-        # buf1: token identities and scalars.
-        #   identities of the tokens 1 and 2 back (action tokens: 1 back is a state or SELECT,
-        #   2 back is QCURR, QNEXT or an action, so they never collide); u_{s_t} at UPDATE;
-        #   scalars along the special-token directions that are free where they are written
-        #   (at action tokens BOS, R, UPDATE; the role indicators avoid R, which carries the
-        #   reward at the R token and would otherwise enter heads 2.1 / 2.2 as a key);
-        #   the selected action along the action directions (SELECT / UPDATE)
+        # buf1: token identities: the tokens 1 and 2 back (action tokens: 1 back is a state or
+        #   SELECT, 2 back is QCURR, QNEXT or an action, so they never collide); u_{s_t} (UPDATE);
+        #   the selected action u_{a*} (SELECT)
         self.PID = self.P2ID = self.B1
         self.ST = states(b1)
-        self.RVAL = self.RU = b1 + self.R       # reward at R; copied to UPDATE
-        self.QV = b1 + self.R                   # Q value at action tokens
-        self.IS_AT = b1 + self.BOS              # role indicators at action tokens
-        self.IS_PAIR = b1 + self.UPDATE
-        self.MAXQ = b1 + self.SELECT            # max_a Q_t(s_{t+1}, a) at SELECT / UPDATE
-        self.QCUR = b1 + self.QCURR             # Q_t(s_t, a_t) at UPDATE
         self.ASEL = slice(b1 + self.A[0], b1 + self.A[0] + max_actions)
-        # buf2: Q columns: slot content (slots), fetched column (action tokens), TD increment (UPDATE)
+        # buf2: values: Q columns along the state directions (slot content at slots, fetched column
+        #   at action tokens, TD increment at UPDATE) and scalars along their own token directions,
+        #   as in the original construction: r along u_r, Q_t(s_t, a_t) along u_Qcurr,
+        #   Q_t(s_{t+1}, a) and its max along u_Qnext
         self.SLOT = self.COL = self.INC = states(b2)
+        self.RVAL = self.RU = b2 + self.R       # reward at R; copied to UPDATE
+        self.QV = b2 + self.QNEXT               # Q value at action tokens
+        self.MAXQ = b2 + self.QNEXT             # max_a Q_t(s_{t+1}, a) at SELECT / UPDATE
+        self.QCUR = b2 + self.QCURR             # Q_t(s_t, a_t) at UPDATE
         self.d = off
 
     def positions(self, n):
@@ -141,7 +139,9 @@ class MLP:
 
 class HandwiredQv2:
     def __init__(self, alpha=0.1, gamma=0.9, beta=1e3, beta_max=1e4,
-                 max_states=8, max_actions=4):
+                 max_states=8, max_actions=4, C_gate=C_GATE):
+        # C_gate bounds the gated values (Lemma: exact for |x| <= C); 2 R_max / (1 - gamma)
+        # suffices, and noise on a 0/1 selector is amplified by C, so tighter is more robust
         self.lay = Lay = Layout(max_states, max_actions)
         self.alpha, self.gamma = alpha, gamma
         d, nS, nA, V = Lay.d, max_states, max_actions, Lay.V
@@ -149,20 +149,20 @@ class HandwiredQv2:
         idc = lambda v: Lay.id.start + v
 
         def sink(WQ, WK):
-            WQ[0, Lay.ONE] = beta * SINK
+            WQ[0, Lay.id] = beta * SINK         # <sum_v u_v, u_tok> = 1: a constant score on BOS
             WK[0, idc(Lay.BOS)] = 1.0
 
         def offset_head(k, field):
-            # FO(A, -k): action tokens attend k positions back; every other token (ONE, not
+            # FO(A, -k): action tokens attend k positions back; every other token (<sum_v u_v, id> = 1, not
             # an action) scores 2 beta on the BOS key and reads BOS, whose value is 0
             WQ, WK, WV, WO = Z(Lay.Lmax + 1), Z(Lay.Lmax + 1), Z(V), Z(V).T.copy()
             for i in range(k, Lay.Lmax):
                 WQ[1 + i - k, Lay.pos.start + i] = beta
             for j in range(Lay.Lmax):
                 WK[1 + j, Lay.pos.start + j] = 1.0
-            WQ[0, Lay.ONE] = 2 * beta
+            WQ[0, Lay.id] = 2 * beta            # constant for every token ...
             for a in Lay.A:
-                WQ[0, idc(a)] = -2 * beta
+                WQ[0, idc(a)] = 0.0             # ... except action tokens
             WK[0, idc(Lay.BOS)] = 1.0
             for v in range(V):
                 if v != Lay.BOS:
@@ -184,32 +184,26 @@ class HandwiredQv2:
             WO[Lay.COL.start + s, s] = 1.0
         h13 = Head(WQ, WK, WV, WO)
 
-        # MLP1: QV (gated products) and the roles of action tokens
-        n_u = 2 * nS + 2
+        # MLP1: Q values (gated products)
+        n_u = 2 * nS
         W1, b1, W2 = np.zeros((n_u, d)), np.zeros(n_u), np.zeros((d, n_u))
         for s in range(nS):
             for sign, row in ((1.0, 2 * s), (-1.0, 2 * s + 1)):
                 W1[row, Lay.COL.start + s] = sign
-                W1[row, Lay.PID.start + Lay.S[s]] = C_GATE
-                b1[row] = -C_GATE
+                W1[row, Lay.PID.start + Lay.S[s]] = C_gate
+                b1[row] = -C_gate
                 W2[Lay.QV, row] = sign
-        r_at, r_pr = 2 * nS, 2 * nS + 1
-        for j in range(nA):
-            for r in (r_at, r_pr):
-                W1[r, idc(Lay.A[j])] = 1.0
-        W1[r_at, Lay.P2ID.start + Lay.QCURR] = 1.0
-        b1[r_at] = -1.0
-        W1[r_pr, Lay.P2ID.start + Lay.QCURR] = -1.0
-        W1[r_pr, Lay.PID.start + Lay.SELECT] = -1.0
-        W2[Lay.IS_AT, r_at] = W2[Lay.IS_PAIR, r_pr] = 1.0
         mlp1 = MLP(W1, b1, W2)
 
         # H2.1 max head
-        big = 4 * beta + 2 * beta_max * C_GATE
+        big = 4 * beta + 2 * beta_max * C_gate
         WQ, WK, WV, WO = Z(3), Z(3), Z(nA + 1), Z(nA + 1).T.copy()
         sink(WQ, WK)
         WQ[1, idc(Lay.SELECT)] = WQ[1, idc(Lay.UPDATE)] = big
-        WK[1, Lay.IS_PAIR] = 1.0
+        for j in range(nA):                  # candidate = action token, 2 back not QCURR, 1 back not SELECT
+            WK[1, idc(Lay.A[j])] = 1.0
+        WK[1, Lay.P2ID.start + Lay.QCURR] = -1.0
+        WK[1, Lay.PID.start + Lay.SELECT] = -1.0
         WQ[2, idc(Lay.SELECT)] = WQ[2, idc(Lay.UPDATE)] = beta_max
         WK[2, Lay.QV] = 1.0
         for a in range(nA):
@@ -223,7 +217,7 @@ class HandwiredQv2:
         WQ, WK, WV, WO = Z(2), Z(2), Z(nS + 1), Z(nS + 1).T.copy()
         sink(WQ, WK)
         WQ[1, idc(Lay.UPDATE)] = beta
-        WK[1, Lay.IS_AT] = 1.0
+        WK[1, Lay.P2ID.start + Lay.QCURR] = 1.0      # a_t: two positions after QCURR
         WV[0, Lay.QV] = 1.0
         WO[Lay.QCUR, 0] = 1.0
         for s in range(nS):
@@ -247,8 +241,8 @@ class HandwiredQv2:
                 W1[row, Lay.RU] = sign * alpha
                 W1[row, Lay.MAXQ] = sign * alpha * gamma
                 W1[row, Lay.QCUR] = -sign * alpha
-                W1[row, Lay.ST.start + s] = C_GATE
-                b1[row] = -C_GATE
+                W1[row, Lay.ST.start + s] = C_gate
+                b1[row] = -C_gate
                 W2[Lay.INC.start + s, row] = sign
         mlp2 = MLP(W1, b1, W2)
 
@@ -267,9 +261,8 @@ class HandwiredQv2:
         X = np.zeros((len(toks), Lay.d))
         for p, v in enumerate(toks):
             X[p, Lay.pos.start + p] = 1.0              # one-hot absolute position
-            if v is not None:                          # token embedding: identity + ONE
+            if v is not None:                          # token embedding: one-hot identity
                 X[p, Lay.id.start + v] = 1.0
-                X[p, Lay.ONE] = 1.0
         X[1:1 + n] += ctx                              # carried context slots
         X[self.lay.positions(n)['r'], Lay.RVAL] = r    # reward scalar on the R token
         return X
@@ -325,9 +318,7 @@ def random_mdp_trajectory(n_states, n_actions, T, seed, alpha=0.1, gamma=0.9, ep
 
 
 def _one(args):
-    beta, bm, nA, alpha, gamma, rew, seed, T = args
-    rng = np.random.default_rng(1000 * seed + 7)
-    nS = int(rng.integers(2, 9))
+    beta, bm, nA, nS, alpha, gamma, rew, seed, T = args
     shift, noise = {'clean': (0.0, 0.0), 'noisy_negative': (0.5, 0.3)}[rew]
     traj = random_mdp_trajectory(nS, nA, T, seed, alpha, gamma, shift=shift, noise=noise)
     m = HandwiredQv2(alpha, gamma, beta=beta, beta_max=bm)
@@ -345,11 +336,13 @@ def _one(args):
                 self_vs_teacher=float(diff))
 
 
-def verify(betas=(50, 1e3, 1e4), beta_maxes=(1e3, 1e4, 1e5), n_seeds=2, T=500, procs=16):
+def verify(betas=(50, 1e3, 1e4), beta_maxes=(1e3, 1e4, 1e5), n_seeds=1, T=500, procs=16):
+    """Every |S| in 2..8 x |A| in 2..4 x alpha x gamma x reward type (x n_seeds MDPs), per
+    (beta, beta_max); one construction instance (max 8 states, 4 actions) throughout."""
     from itertools import product
     from multiprocessing import Pool
-    tasks = [(b, bm, nA, al, g, rw, sd, T) for b, bm, nA, al, g, rw, sd in product(
-        betas, beta_maxes, (2, 3, 4), (0.1, 0.2, 0.5), (0.9, 0.95),
+    tasks = [(b, bm, nA, nS, al, g, rw, 100 * nS + sd, T) for b, bm, nA, nS, al, g, rw, sd in product(
+        betas, beta_maxes, (2, 3, 4), range(2, 9), (0.1, 0.2, 0.5), (0.9, 0.95),
         ('clean', 'noisy_negative'), range(n_seeds))]
     with Pool(procs) as pool:
         rows = pool.map(_one, tasks)
@@ -360,6 +353,9 @@ def verify(betas=(50, 1e3, 1e4), beta_maxes=(1e3, 1e4, 1e5), n_seeds=2, T=500, p
         greedy_agree=('greedy_agree', 'mean'), min_greedy_agree=('greedy_agree', 'min'),
         self_vs_teacher=('self_vs_teacher', 'max'), n=('max_err', 'size')).reset_index()
     print(summ.to_string(index=False))
+    print('\nby |S| (beta=1e3, beta_max=1e4):')
+    print(df[(df.beta == 1e3) & (df.beta_max == 1e4)].groupby('nS').agg(
+        max_err=('max_err', 'max'), greedy_agree=('greedy_agree', 'mean'), n=('max_err', 'size')).to_string())
     print('\nby |A| (beta=1e3, beta_max=1e4):')
     print(df[(df.beta == 1e3) & (df.beta_max == 1e4)].groupby('nA').agg(
         max_err=('max_err', 'max'), greedy_agree=('greedy_agree', 'mean')).to_string())

@@ -15,9 +15,10 @@ Sweeps (each point averaged over n_inst random instances, reported at T=100 and 
                  (W' = Phi^{+T} W Phi^+), plus physical residual noise sigma; beta_route = 50.
                  Exact up to noise, which is amplified by (Phi^T Phi)^{-1}.
 
-Outputs: {mwu,q}_relaxation_raw.csv (per instance) and {mwu,q}_relaxation.csv (mean, SEM).
---residual runs the residual-write constructions instead and writes
-{mwu,q}_relaxation_residual_raw.csv / {mwu,q}_relaxation_residual.csv.
+Default: the current constructions (relax_v2.py: HandwiredQv2 with two buffers, HandwiredMWUv2
+with one buffer) -> results/{mwu,q}_relaxation{_raw}.csv.
+--v1 [--residual] re-runs the earlier sweeps of the v1-style matrices (relax_q.py / relax_mwu.py)
+-> results/earlier_runs/{mwu,q}_relaxation_v1{_residual}{_raw}.csv.
 """
 import argparse
 import os
@@ -29,12 +30,15 @@ import pandas as pd
 from relax_common import random_unit_gram, overlap_blocks_gram, block_diag
 from relax_mwu import RelaxedMWU, expert_sequence
 from relax_q import RelaxedQ, random_mdp_trajectory
+from relax_v2 import RelaxedQv2, RelaxedMWUv2, full_gram, random_mdp_trajectory as traj_v2
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 N_EXPERTS, ETA = 4, 0.1
 RESIDUAL = False            # set by --residual (inherited by the worker processes)
+V1 = False                  # set by --v1
 SUFFIX = ""
+RESULTS = os.path.join(HERE, "results")
 NS, NA = 6, 3
 
 BETAS_1D = [1, 2, 5, 10, 20, 50, 100, 1e3, 1e4, 1e6]
@@ -88,9 +92,30 @@ def dual(G, p):
     return G, None
 
 
+def task_v2(construction, sweep, p, seed, T):
+    if construction == "mwu":
+        m = RelaxedMWUv2(N_EXPERTS, ETA)
+        rng = np.random.default_rng(10_000 + seed)
+        preds, labels = expert_sequence(N_EXPERTS, T, seed)
+        run = lambda G, Gn: m.run(preds, labels, G, beta=p.get("beta", 1e3), sigma=p.get("sigma", 0.0),
+                                  seed=seed, report_T=(100, T), Gnoise=Gn)
+    else:
+        m = RelaxedQv2(NS, NA)
+        rng = np.random.default_rng(20_000 + seed)
+        traj = traj_v2(NS, NA, T, seed)
+        run = lambda G, Gn: m.run(traj, G, beta=p.get("beta", 1e3), beta_max=p.get("beta_max", 1e4),
+                                  sigma=p.get("sigma", 0.0), seed=seed, report_T=(100, T), Gnoise=Gn)
+    Gb, maxcos = make_gram(m.dTE, len(m.token_blocks), 0, p, rng)
+    G, Gn = dual(full_gram(m.d, m.token_blocks, Gb), p)
+    with np.errstate(all="ignore"):
+        return run(G, Gn), maxcos
+
+
 def task(args):
     construction, sweep, p, seed, T = args
-    if construction == "mwu":
+    if not V1:
+        res, maxcos = task_v2(construction, sweep, p, seed, T)
+    elif construction == "mwu":
         m = RelaxedMWU(N_EXPERTS, ETA, residual=RESIDUAL)
         rng = np.random.default_rng(10_000 + seed)
         G, maxcos = make_gram(m.dTE, m.n_blocks, m.d - m.n_blocks * m.dTE, p, rng)
@@ -136,15 +161,20 @@ def main():
     ap.add_argument("--T", type=int, default=500)
     ap.add_argument("--procs", type=int, default=16)
     ap.add_argument("--only", choices=["mwu", "q"], default=None)
+    ap.add_argument("--v1", action="store_true",
+                    help="the earlier sweeps of the v1-style matrices (results/earlier_runs/)")
     ap.add_argument("--residual", action="store_true",
-                    help="residual-write constructions; writes *_relaxation_residual*.csv")
+                    help="with --v1: the residual-write v1 constructions")
     ap.add_argument("--sweeps", nargs="*", default=None,
                     help="subset of sweeps; results are merged into existing CSVs")
     args = ap.parse_args()
-    global RESIDUAL, SUFFIX
-    RESIDUAL = args.residual
-    SUFFIX = "_residual" if args.residual else ""
-    print(f"construction write rule: {'residual' if RESIDUAL else 'overwrite'}", flush=True)
+    global RESIDUAL, SUFFIX, V1, RESULTS
+    V1, RESIDUAL = args.v1, args.residual
+    if V1:
+        SUFFIX = "_v1_residual" if RESIDUAL else "_v1"
+        RESULTS = os.path.join(HERE, "results", "earlier_runs")
+    print("constructions:", ("v1 " + ("residual" if RESIDUAL else "overwrite")) if V1 else
+          "current (relax_v2.py)", flush=True)
 
     tasks = []
     for c in (["mwu", "q"] if args.only is None else [args.only]):
@@ -166,13 +196,13 @@ def main():
                "q": ["max_err", "final_err", "greedy_agree", "select_agree"]}
     for c in df.construction.unique():
         sub = df[df.construction == c]
-        raw_path = os.path.join(HERE, "results", f"{c}_relaxation{SUFFIX}_raw.csv")
+        raw_path = os.path.join(RESULTS, f"{c}_relaxation{SUFFIX}_raw.csv")
         if args.sweeps and os.path.exists(raw_path):
             old = pd.read_csv(raw_path)
             sub = pd.concat([old[~old.sweep.isin(args.sweeps)], sub], ignore_index=True)
         sub.to_csv(raw_path, index=False)
         s = summarize(sub.copy(), metrics[c])
-        s.to_csv(os.path.join(HERE, "results", f"{c}_relaxation{SUFFIX}.csv"), index=False)
+        s.to_csv(os.path.join(RESULTS, f"{c}_relaxation{SUFFIX}.csv"), index=False)
         print(f"wrote {c}: {len(s)} summary rows", flush=True)
 
 

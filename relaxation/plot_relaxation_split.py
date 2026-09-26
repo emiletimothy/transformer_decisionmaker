@@ -5,8 +5,8 @@ Same data, colours, titles, axis labels and legend text as relaxation_sweeps.pdf
 only the layout changes (legend below the panels, larger type).
 
   python3 plot_relaxation_split.py              ->  relaxation_{a,b,c,d}.{pdf,png}
-  python3 plot_relaxation_split.py --residual   ->  relaxation_residual_{a,b,c,d}.{pdf,png}
-                                                   (residual-write constructions)
+  python3 plot_relaxation_split.py --v1 [--residual]  ->  figures/earlier_runs/relaxation_v1{_residual}_{a,b,c,d}
+                                                   (the earlier sweeps of the v1-style matrices)
 """
 import argparse
 import os
@@ -31,10 +31,11 @@ NAMES = {"mwu": "Weighted Majority", "q": r"Tabular $Q$-learning"}
 
 
 SUFFIX = ""
+RES_DIR, FIG_DIR = "results", "figures"
 
 
 def load(c, T):
-    df = pd.read_csv(os.path.join(HERE, "results", f"{c}_relaxation{SUFFIX}.csv"))
+    df = pd.read_csv(os.path.join(HERE, RES_DIR, f"{c}_relaxation{SUFFIX}.csv"))
     return df[df["T"] == T]
 
 
@@ -94,15 +95,17 @@ def main(T=500):
                        handlelength=1.6, columnspacing=1.2)
         fig.suptitle(TITLES[part], x=0.02, ha="left", color=P.INK, fontsize=10)
         for ext, kw in (("pdf", {}), ("png", {"dpi": 220})):
-            fig.savefig(os.path.join(HERE, "figures", f"relaxation{SUFFIX}_{part}.{ext}"), **kw)
+            fig.savefig(os.path.join(HERE, FIG_DIR, f"relaxation{SUFFIX}_{part}.{ext}"), **kw)
         plt.close(fig)
     print(f"saved relaxation{SUFFIX}_{{a,b,c,d}}.{{pdf,png}}")
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
+    ap.add_argument("--v1", action="store_true")
     ap.add_argument("--residual", action="store_true")
     a = ap.parse_args()
-    if a.residual:
-        SUFFIX = "_residual"
+    if a.v1:
+        SUFFIX = "_v1_residual" if a.residual else "_v1"
+        RES_DIR, FIG_DIR = os.path.join("results", "earlier_runs"), os.path.join("figures", "earlier_runs")
     main()

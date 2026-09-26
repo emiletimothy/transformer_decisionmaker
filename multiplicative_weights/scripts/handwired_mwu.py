@@ -7,43 +7,43 @@ position embeddings. It uses the TRAINED round layout and vocabulary roles of
 train.py (the label y uses the same PRED_0 / PRED_1 tokens as expert predictions)
 and the residual latent write of the trained residual models.
 
-Idealisations (the only ones): hard attention as a softmax with large beta; one-hot token
-and one-hot absolute position embeddings; a constant direction ONE shared by every token
-embedding (the carried latent M is not a token and does not carry it); no LayerNorm.
-(The previous version with role flags in the position embedding is
-handwired_mwu (flags variant, removed).py.)
+Idealisations (the only ones): hard attention as a softmax with large beta; orthonormal token
+and absolute position embeddings (one-hot in this code, w.l.o.g.); no LayerNorm. (Queries that need a constant use the direction
+sum_v u_v: inner product 1 with every token's identity, 0 with the carried latent M, which is not a
+token. One-hot is just the basis used here; any orthonormal embeddings give the same computation.)
 
 Round layout (n = 4 experts, 20 positions):
   0 M (carried latent) | 1..8: E_1 p_1 ... E_n p_n | 9 SEP | 10 y |
   11..18: E_1 l_1 ... E_n l_n | 19 UPD
-p_i, y in {PRED_0, PRED_1}; l_i in {LOSS_0, LOSS_1}. M carries lambda = sum_i lambda_i u_{e_i}
-(lambda_i = eta * number of correct predictions of expert i, the paper's gamma = e^eta;
-the weights equal MWU on 0/1 losses, softmax being shift-invariant) in its LAT field.
-Position 0 (M) is the attention sink: its value is 0 in every field a head reads except LAT.
+p_i, y in {PRED_0, PRED_1}; l_i in {LOSS_0, LOSS_1}. Expert i's tokens sit at fixed positions,
+so a position identifies the expert (as a position identifies a slot in the Q construction).
+M carries lambda = sum_i lambda_i u_{e_i} (lambda_i = eta * number of correct predictions of
+expert i, the paper's gamma = e^eta; the weights equal MWU on 0/1 losses, softmax being
+shift-invariant).
 
-Residual stream fields: id (V) | pos (20) | ONE |
-  LAT (n) latent log-weights | EXP (n) expert id of the previous token |
-  LATQ (n) copy of M's LAT | PRED (1) exponential-weights P(y = 1) |
-  G (n) gated expert id ((1 - l_i) u_{e_i}) | INC (n) increment eta sum_i (1 - l_i) u_{e_i}
+Residual stream: id (V) | pos (20) | buf (V), d = 2 V + L. ONE buffer, holding, by position,
+  M      lambda (expert directions)
+  SEP    lambda, copied from M (expert directions); PRED = exponential-weights P(y = 1) (u_{PRED_1})
+  l_i    G = (1 - l_i) u_{e_i}: expert i was correct
+  UPD    INC = eta sum_i (1 - l_i) u_{e_i}
 
 Block 1
-  H1.1  previous-token head (query pos(i) -> key pos(i-1)); value expert id -> EXP.
-  H1.2  every token (query ONE) attends to position 0 (M); value LAT -> LATQ.
-  MLP1  G = AND(EXP, id[LOSS_0]) = ReLU(EXP[k] + id[LOSS_0] - 1), exact for 0/1 inputs.
+  H1    SEP reads the latent: every query attends to its own position (value: its buffer, empty
+        at the input except at M), SEP scores higher on position 0 and copies lambda.
+  MLP1  G at l_i = ReLU(pos[l_i] + id[LOSS_0] - 1) u_{e_i}, exact for 0/1 inputs.
 Block 2
-  H2.1  exponential-weights head: scores <LATQ_query, EXP_key> + large bonus on keys with
-        identity PRED_0 or PRED_1, i.e. softmax_i(lambda_i) over the n prediction tokens
-        (the label token, also a PRED token, comes after SEP and is masked); value
-        id[PRED_1] -> PRED. At SEP this is sum_i w_i 1{p_i = 1}, w = softmax(lambda).
-  H2.2  queries with identity UPD attend uniformly to keys with identity LOSS_0 or LOSS_1;
-        value G, output scaled by eta * n -> INC = eta sum_i (1 - l_i) u_{e_i}.
-Every query also carries ONE, which scores 0.5 beta on the sink (position 0).
-Decision: predict 1 iff PRED(SEP) > 1/2. Recurrence (residual):
-M_{t+1} = M_t + W_ctx h[UPD], W_ctx: INC -> LAT.
+  H2.1  exponential weights at SEP: scores <buf_query, u_{e_i}> on the key at p_i's position
+        (a fixed map from pos(p_i) to u_{e_i}) + a large bonus on keys with identity PRED_0 or
+        PRED_1, i.e. softmax_i(lambda_i) over the n prediction tokens (lambda >= 0, so the bonus
+        is independent of T; y, also a PRED token, comes after SEP); value id[PRED_1] -> PRED.
+  H2.2  UPD attends uniformly to keys with identity LOSS_0 or LOSS_1; value G, scaled by
+        eta * n -> INC.
+Layer-2 outputs at other positions are never read. Decision: predict 1 iff PRED(SEP) > 1/2.
+Recurrence (residual): M_{t+1} = M_t + W_ctx h[UPD], W_ctx = projection onto the buffer's
+expert directions.
 """
 import numpy as np
 
-SINK = 0.5
 
 
 class Head:
@@ -88,65 +88,54 @@ class HandwiredMWUv2:
             off += k
             return s
         self.id, self.pos = f(V), f(self.L)
-        self.one = f(1).start
-        self.LAT, self.EXP, self.LATQ = f(n), f(n), f(n)
-        self.PRED = f(1).start
-        self.G, self.INC = f(n), f(n)
+        self.buf = f(V)
+        self.LAT = slice(self.buf.start + self.E[0], self.buf.start + self.E[0] + n)   # expert directions
+        self.PRED = self.buf.start + self.P1
         d = self.d = off
         Z = lambda r: np.zeros((r, d))
+        ex = lambda k: self.buf.start + self.E[k]
 
-        # H1.1 previous token -> EXP
-        WQ, WK, WV, WO = Z(self.L), Z(self.L), Z(n), Z(n).T.copy()
-        for i in range(1, self.L):
-            WQ[i - 1, self.pos.start + i] = beta
-        for j in range(self.L):
-            WK[j, self.pos.start + j] = 1.0
+        # H1: every query attends to its own position; SEP scores higher on M (position 0)
+        WQ, WK, WV, WO = Z(self.L + 1), Z(self.L + 1), Z(n), Z(n).T.copy()
+        for p in range(self.L):
+            WQ[p, self.pos.start + p] = beta
+            WK[p, self.pos.start + p] = 1.0
+        WQ[self.L, self.id.start + self.SEP] = 2 * beta
+        WK[self.L, self.pos.start + 0] = 1.0
         for k in range(n):
-            WV[k, self.id.start + self.E[k]] = 1.0
-            WO[self.EXP.start + k, k] = 1.0
-        h11 = Head(WQ, WK, WV, WO)
-        # H1.2 every token attends to M (position 0) -> LATQ
-        WQ, WK, WV, WO = Z(1), Z(1), Z(n), Z(n).T.copy()
-        WQ[0, self.one] = beta
-        WK[0, self.pos.start + 0] = 1.0
-        for k in range(n):
-            WV[k, self.LAT.start + k] = 1.0
-            WO[self.LATQ.start + k, k] = 1.0
-        h12 = Head(WQ, WK, WV, WO)
-        # MLP1: G = AND(EXP, LOSS_0)  (expert k was correct this round)
+            WV[k, ex(k)] = 1.0
+            WO[ex(k), k] = 1.0
+        h1 = Head(WQ, WK, WV, WO)
+        # MLP1: G = (1 - l_i) u_{e_i} at l_i's position
         W1, b1, W2 = np.zeros((n, d)), -np.ones(n), np.zeros((d, n))
         for k in range(n):
-            W1[k, self.EXP.start + k] = 1.0
+            W1[k, self.pos.start + self.p_loss[k]] = 1.0
             W1[k, self.id.start + self.L0] = 1.0
-            W2[self.G.start + k, k] = 1.0
+            W2[ex(k), k] = 1.0
         mlp1 = MLP(W1, b1, W2)
         # H2.1 exponential weights over the prediction tokens
         big = 4 * beta
-        WQ, WK, WV, WO = Z(n + 2), Z(n + 2), Z(1), Z(1).T.copy()
-        WQ[0, self.one] = beta * SINK                  # sink baseline on M (position 0)
-        WK[0, self.pos.start + 0] = 1.0
-        WQ[1, self.one] = big                          # membership: PRED_0 / PRED_1 tokens
-        WK[1, self.id.start + self.P0] = WK[1, self.id.start + self.P1] = 1.0
-        for k in range(n):                             # lambda_k on expert k's p token
-            WQ[2 + k, self.LATQ.start + k] = 1.0
-            WK[2 + k, self.EXP.start + k] = 1.0
+        WQ, WK, WV, WO = Z(n + 1), Z(n + 1), Z(1), Z(1).T.copy()
+        WQ[0, self.id] = big                           # membership (<sum_v u_v, u_tok> = 1 on every token)
+        WK[0, self.id.start + self.P0] = WK[0, self.id.start + self.P1] = 1.0
+        for k in range(n):                             # lambda_k on the key at p_k's position
+            WQ[1 + k, ex(k)] = 1.0
+            WK[1 + k, self.pos.start + self.p_pred[k]] = 1.0
         WV[0, self.id.start + self.P1] = 1.0
         WO[self.PRED, 0] = 1.0
         h21 = Head(WQ, WK, WV, WO)
         # H2.2 UPD averages the gated loss vectors of the n loss tokens
-        WQ, WK, WV, WO = Z(2), Z(2), Z(n), Z(n).T.copy()
-        WQ[0, self.one] = beta * SINK
-        WK[0, self.pos.start + 0] = 1.0
-        WQ[1, self.id.start + self.UPD] = big         # UPD -> LOSS_0 / LOSS_1 tokens
-        WK[1, self.id.start + self.L0] = WK[1, self.id.start + self.L1] = 1.0
+        WQ, WK, WV, WO = Z(1), Z(1), Z(n), Z(n).T.copy()
+        WQ[0, self.id.start + self.UPD] = big          # UPD -> LOSS_0 / LOSS_1 tokens
+        WK[0, self.id.start + self.L0] = WK[0, self.id.start + self.L1] = 1.0
         for k in range(n):
-            WV[k, self.G.start + k] = 1.0
-            WO[self.INC.start + k, k] = eta * n
+            WV[k, ex(k)] = 1.0
+            WO[ex(k), k] = eta * n
         h22 = Head(WQ, WK, WV, WO)
-        self.blocks = [([h11, h12], mlp1), ([h21, h22], None)]
+        self.blocks = [([h1], mlp1), ([h21, h22], None)]
         self.W_ctx = np.zeros((d, d))
         for k in range(n):
-            self.W_ctx[self.LAT.start + k, self.INC.start + k] = 1.0
+            self.W_ctx[ex(k), ex(k)] = 1.0
         self.pos_emb = np.zeros((self.L, d))            # one-hot absolute positions only
         for p in range(self.L):
             self.pos_emb[p, self.pos.start + p] = 1.0
@@ -163,9 +152,8 @@ class HandwiredMWUv2:
         toks[self.p_sep] = self.SEP
         toks[self.p_y] = self.P1 if label == 1 else self.P0
         toks[self.p_upd] = self.UPD
-        for p, v in toks.items():                      # token embedding: identity + ONE
+        for p, v in toks.items():                      # token embedding: one-hot identity
             X[p, self.id.start + v] = 1.0
-            X[p, self.one] = 1.0
         return X
 
     def forward(self, X):
